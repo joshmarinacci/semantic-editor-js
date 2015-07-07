@@ -13,6 +13,11 @@ we have to detect dom changes using mutation observers
     color: red;
     font-weight: bold;
 }
+.italic {
+    color: green;
+    font-weight: normal;
+    font-style: italic;
+}
 .inline-code {
     font-weight: normal;
     color: #cccc00;
@@ -72,6 +77,7 @@ var model = [
         }
     ]
 },
+/*
     {
         id:genId(),
         type:'block',
@@ -84,6 +90,7 @@ var model = [
             }
         ]
     }
+    */
 /*{
     id:genId(),
     type:'block',
@@ -176,7 +183,8 @@ function saveSelection(ed) {
     return {
         id:node.id,
         path:path,
-        startOffset:range.startOffset
+        startOffset:range.startOffset,
+        endOffset:range.endOffset
     };
 }
 
@@ -201,10 +209,10 @@ function restoreSelection(ran) {
 }
 
 document.getElementById("editor").addEventListener("input", function(e) {
+    console.log("INPUT EVENT");
     var sel = saveSelection(editor);
     var changes = scanForChanges(editor,model);
     applyChanges(editor,model,changes);
-    console.log("now model = ", model);
     syncDom(editor,model);
     restoreSelection(sel);
 }, false);
@@ -224,6 +232,10 @@ function genModelFromDom(node) {
         }
         var style = 'bold';
         var type = 'inline';
+        if(Array.prototype.indexOf.call(node.classList,'italic') >= 0) {
+            type = 'inline';
+            style = 'italic';
+        }
         if(Array.prototype.indexOf.call(node.classList,'header') >= 0) {
             style = 'header';
             type = 'block';
@@ -375,14 +387,131 @@ function scanForChanges(root,model) {
     return changes;
 }
 
+function selectionToModelNode(info,model) {
+    for(var i=0; i<model.length; i++) {
+        var node = model[i];
+        if(node.id == info.id) {
+            info.path.forEach(function(index) {
+                node = node.content[index];
+            });
+            return node;
+        }
+    }
+    return null;
+}
+
+//TODO: this function is a hack. should be replaced by just giving children refs to parent
+function findParentOfModelNode(root,target) {
+//    console.log("looking for the parent of",target,root.length);
+    for(var i=0; i<root.content.length; i++) {
+        var node = root.content[i];
+//        console.log('chekcing',node.id);
+        if(node.id == target.id) {
+//            console.log("found the match");
+            return root;
+        }
+        if(node.type == 'block' || node.type == 'inline') {
+            var ans = findParentOfModelNode(node,target);
+            if(ans != null) return ans;
+        }
+    }
+    return null;
+}
+
+//TODO: this function is a hack. should be replaced by just giving children refs to parent
+function findIndexOfChild(parent,child) {
+    var n = 0;
+    for(var i=0; i<parent.content.length; i++) {
+//        console.log('checking ',parent.content[i],child);
+        if(parent.content[i] == child) return i;
+    }
+    return -1;
+}
+
+//replaces the first node in it's parent with the rest of the nodes
+function swapNode() {
+    var args = Array.prototype.slice.call(arguments);
+    var oldnode = args.shift();
+    var rest = args;
+    var parent = findParentOfModelNode({content:model},oldnode);
+    var index = findIndexOfChild(parent,oldnode);
+    var cargs = [index,1].concat(rest);
+    parent.content.splice.apply(parent.content,cargs);
+}
+
+function splitModelNode(n,mod) {
+    //console.log("splitting the model",mod,'at',n);
+    if(mod.type != 'text') {
+        console.log("ERROR: don't know how to split non text node yet");
+        return;
+    }
+    var a = {
+        type:mod.type,
+        id:genId(),
+        content:mod.content.substring(0,n)
+    };
+    var b = {
+        type:mod.type,
+        id:genId(),
+        content:mod.content.substring(n)
+    };
+
+    swapNode(mod,a,b);
+    return [a,b];
+}
+
+function wrapTextInInlineStyle(node,style) {
+    var inline = {
+        id:genId(),
+        type:'inline',
+        style:style,
+        content: [ {
+            id:genId(),
+            type:'text',
+            content:node.content
+        } ]
+    };
+    swapNode(node,inline);
+}
+
+function splitThree(node,index1,index2) {
+    var parts1 = splitModelNode(index1,node);
+    var parts2 = splitModelNode(index2-index1,parts1[1]);
+    return [parts1[0],parts2[0],parts2[1]];
+}
+
+function styleSelectionInline(style) {
+    var sel = window.getSelection();
+    var range = sel.getRangeAt(0);
+    if(range.collapsed) {
+        console.log("just change the state");
+        return;
+    }
+    var info = saveSelection(editor);
+    var mod = selectionToModelNode(info,model);
+    var parts = splitThree(mod,info.startOffset,info.endOffset)
+    wrapTextInInlineStyle(parts[1],style);
+    syncDom(editor,model);
+    restoreSelection(info);
+}
+
+function stopEvent(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
 
 document.getElementById('editor').addEventListener('keydown',function(e){
-    //console.log("key pressed down",e);
-    if(e.metaKey===true && e.shiftKey === true && e.keyCode == 67) { //cmd-shift-C
-        console.log("making selection into inline code");
-        e.preventDefault();
-        e.stopPropagation();
-        document.execCommand('bold',false,true);
+    if(e.metaKey===true && e.keyCode == 66) { //cmd-B
+        stopEvent(e);
+        styleSelectionInline('bold');
+    }
+    if(e.metaKey===true && e.keyCode == 73) { //cmd-I
+        stopEvent(e);
+        styleSelectionInline('italic');
+    }
+    if(e.metaKey===true && e.keyCode == 67 && e.shiftKey) { //cmd-shift-C
+        stopEvent(e);
+        styleSelectionInline('inline-code');
     }
 });
 
