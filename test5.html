@@ -55,6 +55,11 @@ div {
 </head>
 <body>
     <div id="editor" contenteditable="true" spellcheck="false"></div>
+    <div>
+        <button id="header">header</button>
+        <button id="body">body</button>
+        <button id="block-code">code block</button>
+    </div>
 </body>
 <script type='text/javascript'>
 
@@ -68,7 +73,7 @@ var model = [
 {
     id:genId(),
     type:'block',
-    style:'header',
+    style:'body',
     content:[
         {
             id:genId(),
@@ -515,5 +520,48 @@ document.getElementById('editor').addEventListener('keydown',function(e){
     }
 });
 
+function findParentBlockDom(elem) {
+    var parent = elem.parentElement;
+    if(parent.tagName == 'DIV') {
+        return parent;
+    }
+    return null;
+}
+function findModelForDom(root,target) {
+    for(var i=0; i<root.content.length; i++) {
+        var node = root.content[i];
+        if(node.id == target.id) {
+            return node;
+        }
+        if(node.type == 'block' || node.type == 'inline') {
+            var ans = findModelForDom(node,target);
+            if(ans != null) return ans;
+        }
+    }
+    return null;
+}
+
+function changeBlockStyle(style) {
+    var sel = window.getSelection();
+    var range = sel.getRangeAt(0);
+    var block = findParentBlockDom(range.commonAncestorContainer);
+    var mod_b = findModelForDom({content:model},block);
+    mod_b.style = style;
+    var ran = saveSelection(editor);
+    syncDom(editor,model);
+    restoreSelection(ran);
+}
+document.getElementById("header").addEventListener('click',function(e) {
+    stopEvent(e);
+    changeBlockStyle('header');
+});
+document.getElementById("body").addEventListener('click',function(e) {
+    stopEvent(e);
+    changeBlockStyle('body');
+});
+document.getElementById("block-code").addEventListener('click',function(e) {
+    stopEvent(e);
+    changeBlockStyle('block-code');
+});
 </script>
 </html>
