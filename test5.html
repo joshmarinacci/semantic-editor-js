@@ -54,37 +54,56 @@ div {
 <script src="node_modules/mutation-summary/src/mutation-summary.js"></script>
 <script type='text/javascript'>
 
+var count = 0;
+function genId() {
+    count++;
+    return "id_"+count;
+}
+
 var model = [
 {
+    id:genId(),
     type:'block',
     style:'header',
     content:[
         {
+            id:genId(),
             type:'text',
             content:'this is a header'
         }
     ]
 },
 {
+    id:genId(),
     type:'block',
     style:'body',
     content: [
         {
+            id:genId(),
             type:'text',
             content:'This is some '
         },
         {
+            id:genId(),
             type:'inline',
             style:'bold',
-            content:'bold',
+            content:[
+                {
+                    id:genId(),
+                    type:'text',
+                    content:'bold'
+                }
+            ]
         },
         {
+            id:genId(),
             type:'text',
             content:' text to read'
         }
     ]
 },
 {
+    id:genId(),
     type:'block',
     style:'block-code',
     content:[
@@ -97,27 +116,115 @@ var model = [
 ];
 
 var editor = document.getElementById('editor');
-model.forEach(function(block){
-    var blockElement = document.createElement('div');
-    blockElement.classList.add(block.style);
-    block.content.forEach(function(inline){
-        if(inline.type == 'text') {
-            blockElement.appendChild(document.createTextNode(inline.content));
-        }
-        if(inline.type == 'inline') {
-            var elem = document.createElement('span');
-            elem.classList.add(inline.style);
-            elem.appendChild(document.createTextNode(inline.content));
-            blockElement.appendChild(elem);
-        }
+function syncDom(editor,model) {
+    while (editor.firstChild) {
+        editor.removeChild(editor.firstChild);
+    }
+    model.forEach(function (block) {
+        var blockElement = document.createElement('div');
+        blockElement.id = block.id;
+        blockElement.classList.add(block.style);
+        block.content.forEach(function (inline) {
+            if (inline.type == 'text') {
+                blockElement.appendChild(document.createTextNode(inline.content));
+            }
+            if (inline.type == 'inline') {
+                var elem = document.createElement('span');
+                elem.id = inline.id;
+                elem.classList.add(inline.style);
+                elem.appendChild(document.createTextNode(inline.content[0].content));
+                blockElement.appendChild(elem);
+            }
+        });
+        editor.appendChild(blockElement);
     });
-    editor.appendChild(blockElement);
-});
+}
 
+syncDom(editor,model);
+
+function saveSelection(ed) {
+    var sel = window.getSelection();
+//    console.log("saving selection",sel);
+    var range = sel.getRangeAt(0);
+//    console.log("range = ", range);
+    var node = range.startContainer;
+    if(node.nodeType == Element.TEXT_NODE) {
+        node = node.parentNode;
+    }
+//    console.log("saving with node",node);
+    var n = -1;
+    for(var i=0; i<node.childNodes.length; i++) {
+        if(node.childNodes[i] == range.startContainer) n = i;
+    }
+//    console.log("index = ",n);
+    return {
+        id:node.id,
+        index:n,
+        startOffset:range.startOffset
+    };
+}
+
+function restoreSelection(ran) {
+    console.log("restoring selection",ran);
+    var range = document.createRange();
+    var node = document.getElementById(ran.id);
+    var ch = node.childNodes[ran.index];
+    range.setStart(ch, ran.startOffset);
+    range.collapse(true);
+    var wsel = window.getSelection();
+    wsel.removeAllRanges();
+    wsel.addRange(range);
+}
 
 document.getElementById("editor").addEventListener("input", function(e) {
-    console.log("input event fired",e);
+    var sel = saveSelection(editor);
+    var changes = scanForChanges(editor,model);
+    applyChanges(editor,model,changes);
+    //console.log("now model = ", model);
+    syncDom(editor,model);
+    restoreSelection(sel);
 }, false);
+
+function applyChanges(editor,model,changes) {
+    changes.forEach(function(ch){
+        //console.log("change = ", ch);
+        ch.model_node.content = ch.new_text;
+    });
+}
+
+function scanForChanges(root,model) {
+    var changes = [];
+    if(root.childNodes.length != model.length) {
+        console.log("length has changed");
+    }
+    for(var i=0; i<root.childNodes.length; i++) {
+        var dom_node = root.childNodes[i];
+        var model_node = model[i];
+        if(dom_node.nodeType == Element.ELEMENT_NODE) {
+        }
+        if(dom_node.nodeType == Element.TEXT_NODE) {
+            var dom_text = dom_node.nodeValue;
+            var model_text = model_node.content;
+            if(dom_text != model_text) {
+                console.log("text has changed",model_text,'->',dom_text);
+                changes.push({
+                    type:'text',
+                    old_text:model_text,
+                    new_text:dom_text,
+                    model_node:model_node,
+                    dom_node:dom_node
+                });
+            }
+        }
+        if(model_node.type == 'block') {
+            changes = changes.concat(scanForChanges(dom_node,model_node.content));
+        }
+        if(model_node.type == 'inline') {
+            changes = changes.concat(scanForChanges(dom_node,model_node.content));
+        }
+    };
+    return changes;
+}
 
 </script>
 </html>
