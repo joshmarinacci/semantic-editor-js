@@ -1,0 +1,107 @@
+<html>
+<head>
+<style type='text/css'>
+.bold {
+    color: red;
+    font-weight: bold;
+}
+.inline-code {
+    font-weight: normal;
+    color: #cccc00;
+    font-family: monospace;
+}
+.block-code {
+    color: #cccc00;
+    font-family: monospace;
+    border: 1px solid yellow;
+    padding: 0.5em;
+}
+.body {
+    color: darkgray;
+    border: 1px solid #ccc;
+}
+
+#editor {
+    border: 1px solid grey;
+    padding: 0.5em;
+}
+.header {
+    font-size: 150%;
+    background-color: #ffcccc;
+}
+</style>
+</head>
+<body>
+    <div id="editor" contenteditable="true" spellcheck="false"><p class="body"></p></div>
+    <div class='toolbar'>
+        <button id='bold'>bold</button>
+        <button id='inline-code'>inline code</button>
+        <button id='block-code'>block code</button>
+        <button id='header'>header</button>
+        <button id='body'>body</button>
+    </div>
+
+</body>
+<script type='text/javascript'>
+
+var editor = document.getElementById('editor');
+document.getElementById('bold').onclick = genFormatInline('bold');
+document.getElementById('inline-code').onclick = genFormatInline('inline-code');
+document.getElementById('block-code').onclick = genFormatBlock("block-code");
+document.getElementById('header').onclick = genFormatBlock("header");
+document.getElementById('body').onclick = genFormatBlock("body");
+
+var blockstyles = {
+    'header':'header',
+    'block-code':'block-code',
+    'body':'body'
+}
+
+function genFormatInline(stylename) {
+    return function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.execCommand('bold',false,true);
+        var sel = window.getSelection();
+        console.log("selection = ", sel);
+        var range = sel.getRangeAt(0);
+        console.log("range = ", range);
+        if(range.collapsed === false) {
+            var parent = range.commonAncestorContainer.parentElement;
+            console.log("parent = ", parent);
+            parent.classList.add(stylename);
+        }
+    }
+}
+
+function genFormatBlock(stylename) {
+    return function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        //document.execCommand('formatBlock',false,'p');
+        var sel = window.getSelection();
+        console.log("selection = ", sel);
+        var range = sel.getRangeAt(0);
+        console.log("range = ", range);
+        var parent = findParentBlock(range.commonAncestorContainer);
+        console.log('block parent = ', parent);
+        if(parent == editor) {
+            console.log("WARNING. parent is the top. need to insert a new one");
+        }
+
+        for(var name in blockstyles) {
+            if(parent.classList.contains(name)) parent.classList.remove(name);
+        }
+        parent.classList.add(stylename);
+    }
+}
+
+var blocknodes = ['P','DIV'];
+function findParentBlock(element) {
+    if(blocknodes.indexOf(element.nodeName) >= 0 ) return element;
+    var parent = element.parentElement;
+    if(blocknodes.indexOf(parent.nodeName)>=0) return parent;
+    return findParentBlock(parent);
+}
+</script>
+</html>

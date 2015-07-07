@@ -1,0 +1,66 @@
+<html>
+<head>
+
+<style type='text/css'>
+#editor {
+    border: 1px solid red;
+    margin: 1em;
+}
+.foo {
+border: 1px solid green;
+}
+</style>
+</head>
+<body>
+<div id="editor" contenteditable="true" spellcheck="false">
+this is a <b>text</b> editor
+</div>
+<button id='underline'>underline</button>
+</body>
+<script type='text/javascript'>
+console.log("im here");
+document.getElementById('underline').onclick = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    //document.execCommand('underline',false,null)
+    var obj = document.execCommand('bold',false,true);
+    console.log("obj = ", obj);
+
+    var sel = window.getSelection();
+    console.log("selection = ", sel);
+    var range = sel.getRangeAt(0);
+    console.log("range = ", range);
+    var parent = range.commonAncestorContainer.parentElement;
+    console.log("parent = ", parent);
+    parent.classList.add("foo");
+}
+</script>
+</html>
+<!--
+
+
+let content editable do the basic text input. I control all formatting.
+
+Reformat a selection by setting it to bold to split it.  then find the bold
+element using selection and switch it to the proper thing
+
+When formatting a block, find the current block and just modify it's style.
+
+When formatting an inline, insert a bold, then find the element and style it
+
+
+new demo should:
+
+style paragraphs with blue
+style div.code with yellow
+
+enter to split a paragraph normally
+enter inside of div.code expands the code, doesn't split it.
+
+switch paragraph or div.code to h1,h2,h3
+
+select part of paragraph text, turn it into bold.
+select part of paragraph text, turn it into italic.
+select part of paragraph text, turn it into code.
+
+-->

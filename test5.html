@@ -1,0 +1,123 @@
+<!--
+
+in this one we will sync a model to the dom and back.
+then we can do all modifications on the model and know it works right.
+we have to detect dom changes using mutation observers
+-->
+
+
+<html>
+<head>
+<style type='text/css'>
+.bold {
+    color: red;
+    font-weight: bold;
+}
+.inline-code {
+    font-weight: normal;
+    color: #cccc00;
+    font-family: monospace;
+}
+.block-code {
+    color: #cccc00;
+    font-family: monospace;
+    border: 1px solid yellow;
+    padding: 0.5em;
+    white-space: pre;
+
+}
+.body {
+    color: darkgray;
+    border: 1px solid #ccc;
+}
+
+#editor {
+    border: 1px solid grey;
+    padding: 0.5em;
+}
+.header {
+    font-size: 150%;
+    background-color: #ffcccc;
+}
+
+div {
+    border: 1px solid blue;
+    margin: 1em;
+    padding: 1em;
+}
+</style>
+
+</head>
+<body>
+    <div id="editor" contenteditable="true" spellcheck="false"></div>
+</body>
+<script src="node_modules/mutation-summary/src/mutation-summary.js"></script>
+<script type='text/javascript'>
+
+var model = [
+{
+    type:'block',
+    style:'header',
+    content:[
+        {
+            type:'text',
+            content:'this is a header'
+        }
+    ]
+},
+{
+    type:'block',
+    style:'body',
+    content: [
+        {
+            type:'text',
+            content:'This is some '
+        },
+        {
+            type:'inline',
+            style:'bold',
+            content:'bold',
+        },
+        {
+            type:'text',
+            content:' text to read'
+        }
+    ]
+},
+{
+    type:'block',
+    style:'block-code',
+    content:[
+        {
+            type:'text',
+            content:'for(var i=0; i<5; i++){\n    console.log("line",i);\n}'
+        }
+    ]
+}
+];
+
+var editor = document.getElementById('editor');
+model.forEach(function(block){
+    var blockElement = document.createElement('div');
+    blockElement.classList.add(block.style);
+    block.content.forEach(function(inline){
+        if(inline.type == 'text') {
+            blockElement.appendChild(document.createTextNode(inline.content));
+        }
+        if(inline.type == 'inline') {
+            var elem = document.createElement('span');
+            elem.classList.add(inline.style);
+            elem.appendChild(document.createTextNode(inline.content));
+            blockElement.appendChild(elem);
+        }
+    });
+    editor.appendChild(blockElement);
+});
+
+
+document.getElementById("editor").addEventListener("input", function(e) {
+    console.log("input event fired",e);
+}, false);
+
+</script>
+</html>

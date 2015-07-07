@@ -1,0 +1,94 @@
+<html>
+    <head>
+    <script src="Medium.js/node_modules/undo.js/undo.js"></script>
+    <script src="Medium.js/node_modules/rangy/lib/rangy-core.js"></script>
+    <script src="Medium.js/node_modules/rangy/lib/rangy-classapplier.js"></script>
+    <script src="Medium.js/medium.js"></script>
+<style type="text/css">
+#editor {
+/*    height: 300px;
+width: 300px;*/
+border: 1px solid red;
+}
+.foo {
+    background-color: blue;
+}
+.codeblock {
+    border: 1px solid yellow;
+    font-family: monospace;
+}
+</style>
+    </head>
+    <body>
+        editor here
+        <div id="editor"></div>
+        and now we are done
+        <button id='codeinline'>code inline</button>
+        <button id='codeblock'>code block</button>
+        <button id='header'>header</button>
+        <button id='body'>body</button>
+<script>
+    var el = document.getElementById('editor');
+    var m = new Medium({
+        element: el,
+        mode: Medium.richMode,
+        modifiers: {
+            'u':'bold',
+        },
+        beforeInvokeElement: function() {
+            this.setClean(false);
+        },
+        attributes:{
+            'remove':[]
+        },
+        tags: null,
+        keyContext: {
+            'enter': function(event,element) {
+                console.log("enter has been called",event,element);
+                event.preventDefault();
+                return null;
+            }
+        }
+        /*
+        tags: {
+          'break': 'br',
+          'horizontalRule': 'hr',
+          'paragraph': 'p',
+          'outerLevel': ['h1', 'h2', 'h3', 'pre', 'blockquote', 'figure'],
+          'innerLevel': ['a', 'b', 'u', 'i', 'img', 'strong']
+        }
+        */
+     });
+
+    document.getElementById('codeinline').onmousedown = function(event){
+        if (event.preventDefault) event.preventDefault();
+        //if (document.activeElement !== el)  return;
+        /*
+        el.medium.invokeElement('b', {
+            'className':'foo',
+            title: "I'm bold!",
+            // style: "color: #66d9ef"
+        });
+        */
+        el.medium.invokeElement('code',{
+            'className':'inline',
+            'title':'inline',
+        })
+    }
+    document.getElementById('header').onmousedown = function(event) {
+        if (event.preventDefault) event.preventDefault();
+        el.medium.invokeElement('h1',{
+            'className':'header'
+        });
+    }
+    document.getElementById('codeblock').onmousedown = function(event) {
+        if (event.preventDefault) event.preventDefault();
+        el.medium.invokeElement('div',{
+            'className':'codeblock'
+        });
+    }
+</script>
+
+
+    </body>
+</html>
