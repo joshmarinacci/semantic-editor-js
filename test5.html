@@ -51,7 +51,6 @@ div {
 <body>
     <div id="editor" contenteditable="true" spellcheck="false"></div>
 </body>
-<script src="node_modules/mutation-summary/src/mutation-summary.js"></script>
 <script type='text/javascript'>
 
 var count = 0;
@@ -73,7 +72,19 @@ var model = [
         }
     ]
 },
-{
+    {
+        id:genId(),
+        type:'block',
+        style:'body',
+        content: [
+            {
+                id:genId(),
+                type:'text',
+                content:'more'
+            }
+        ]
+    }
+/*{
     id:genId(),
     type:'block',
     style:'body',
@@ -112,7 +123,7 @@ var model = [
             content:'for(var i=0; i<5; i++){\n    console.log("line",i);\n}'
         }
     ]
-}
+}*/
 ];
 
 var editor = document.getElementById('editor');
@@ -148,28 +159,41 @@ function saveSelection(ed) {
     var range = sel.getRangeAt(0);
 //    console.log("range = ", range);
     var node = range.startContainer;
-    if(node.nodeType == Element.TEXT_NODE) {
+    var path = [];
+    while(node.nodeType == Element.TEXT_NODE || node.id == "") {
+//        console.log("no node of it's own. moving up");
+        var nn = -1;
+        for(var i=0; i<node.parentNode.childNodes.length; i++) {
+            if(node.parentNode.childNodes[i] == node) {
+                nn = i;
+            }
+        }
+//        console.log("index = ",nn);
+        path.unshift(nn);
         node = node.parentNode;
     }
-//    console.log("saving with node",node);
-    var n = -1;
-    for(var i=0; i<node.childNodes.length; i++) {
-        if(node.childNodes[i] == range.startContainer) n = i;
-    }
-//    console.log("index = ",n);
+//    console.log("saving with node:",node.id,':');
     return {
         id:node.id,
-        index:n,
+        path:path,
         startOffset:range.startOffset
     };
 }
 
 function restoreSelection(ran) {
-    console.log("restoring selection",ran);
+//    console.log("restoring selection",ran);
+    if(ran.id == "") {
+        console.log("WARNING. bad id");
+        return;
+    }
     var range = document.createRange();
     var node = document.getElementById(ran.id);
-    var ch = node.childNodes[ran.index];
-    range.setStart(ch, ran.startOffset);
+    ran.path.forEach(function(index){
+//        console.log("checking index",index);
+        node = node.childNodes[index];
+//        console.log("next ch = ", node);
+    });
+    range.setStart(node, ran.startOffset);
     range.collapse(true);
     var wsel = window.getSelection();
     wsel.removeAllRanges();
@@ -180,51 +204,160 @@ document.getElementById("editor").addEventListener("input", function(e) {
     var sel = saveSelection(editor);
     var changes = scanForChanges(editor,model);
     applyChanges(editor,model,changes);
-    //console.log("now model = ", model);
+    console.log("now model = ", model);
     syncDom(editor,model);
     restoreSelection(sel);
 }, false);
 
+function genModelFromDom(node) {
+    if(node.nodeType == Element.TEXT_NODE) {
+        return {
+            id:genId(),
+            type:'text',
+            content: node.nodeValue
+        }
+    }
+    if(node.nodeType == Element.ELEMENT_NODE) {
+        var content = [];
+        for(var i=0; i<node.childNodes.length; i++) {
+            content.push(genModelFromDom(node.childNodes[i]));
+        }
+        var style = 'bold';
+        var type = 'inline';
+        if(Array.prototype.indexOf.call(node.classList,'header') >= 0) {
+            style = 'header';
+            type = 'block';
+        }
+        return {
+            id:genId(),
+            type:type,
+            style:style,
+            content:content
+        }
+    }
+    console.log("ERROR. UNSUPPORTED NODE TYPE",node.nodeType,node);
+}
+
 function applyChanges(editor,model,changes) {
+    console.log('change count',changes.length);
     changes.forEach(function(ch){
-        //console.log("change = ", ch);
-        ch.model_node.content = ch.new_text;
+        console.log("change = ", ch);
+        if(ch.type=='text') {
+            ch.model_node.content = ch.new_text;
+        }
+        if(ch.type == 'append') {
+            console.log("applying an append",ch);
+            if(ch.dom_node.nodeType == Element.ELEMENT_NODE) {
+                console.log("adding an element");
+                ch.model.push(genModelFromDom(ch.dom_node));
+            }
+            if(ch.dom_node.nodeType == Element.TEXT_NODE) {
+                console.log("adding a text node");
+                ch.model.push(genModelFromDom(ch.dom_node));
+            }
+        }
+        if(ch.type == 'remove'){
+            console.log("applying a remove",ch.mod_i,ch.model.length);
+            ch.model.splice(ch.mod_i,1);
+        }
+        if(ch.type == 'insert') {
+            console.log("applying an insert");
+            var mod = genModelFromDom(ch.dom_node);
+            console.log("inserting new model chunk",mod);
+            ch.model.splice(ch.mod_i,0,mod);
+        }
     });
 }
 
 function scanForChanges(root,model) {
     var changes = [];
     if(root.childNodes.length != model.length) {
-        console.log("length has changed");
+        console.log("WARNING: length has changed");
     }
-    for(var i=0; i<root.childNodes.length; i++) {
-        var dom_node = root.childNodes[i];
-        var model_node = model[i];
-        if(dom_node.nodeType == Element.ELEMENT_NODE) {
+    var dom_i = 0;
+    var dom_len = root.childNodes.length;
+    var mod_i = 0;
+    var mod_len = model.length;
+    var prev_dom = null;
+    while(true) {
+        if(mod_i >= mod_len || dom_i >= dom_len) {
+            console.log("end of the list");
+            if(dom_i < dom_len) {
+                console.log("still more dom. must have added",dom_i,dom_len);
+                for(;dom_i<dom_len; dom_i++) {
+                    console.log("adding");
+                    changes.push({
+                        type:'append',
+                        model:model,
+                        dom_node:root.childNodes[dom_i]
+                    });
+                }
+            }
+            if(mod_i < mod_len) {
+                console.log("still more model. must have deleted",mod_i,mod_len);
+                for(;mod_i<mod_len;mod_i++) {
+                    console.log("removing");
+                    changes.push({
+                        type:'remove',
+                        model:model,
+                        mod_i:mod_i
+                    });
+                }
+            }
+            break;
         }
-        if(dom_node.nodeType == Element.TEXT_NODE) {
+
+        var dom_node = root.childNodes[dom_i];
+        var mod_node = model[mod_i];
+        if(mod_node.type == 'text' && dom_node.nodeType == Element.TEXT_NODE) {
+//            console.log("it a text node");
             var dom_text = dom_node.nodeValue;
-            var model_text = model_node.content;
+            var model_text = mod_node.content;
             if(dom_text != model_text) {
-                console.log("text has changed",model_text,'->',dom_text);
+//                console.log("text has changed",model_text,'->',dom_text);
                 changes.push({
                     type:'text',
                     old_text:model_text,
                     new_text:dom_text,
-                    model_node:model_node,
+                    model_node:mod_node,
                     dom_node:dom_node
                 });
             }
         }
-        if(model_node.type == 'block') {
-            changes = changes.concat(scanForChanges(dom_node,model_node.content));
+        if(mod_node.type == 'block') {
+            if(prev_dom != null && dom_node.id == prev_dom.id) {
+                console.log('this block was just split from the previous. must re-id it');
+                changes.push({
+                    type:'insert',
+                    mod_i:mod_i,
+                    model:model,
+                    dom_node:dom_node
+                });
+                dom_i++;
+            } else {
+                changes = changes.concat(scanForChanges(dom_node, mod_node.content));
+            }
         }
-        if(model_node.type == 'inline') {
-            changes = changes.concat(scanForChanges(dom_node,model_node.content));
+        if(mod_node.type == 'inline') {
+            changes = changes.concat(scanForChanges(dom_node,mod_node.content));
         }
+        dom_i++;
+        prev_dom = dom_node;
+        mod_i++;
     };
     return changes;
 }
+
+
+document.getElementById('editor').addEventListener('keydown',function(e){
+    //console.log("key pressed down",e);
+    if(e.metaKey===true && e.shiftKey === true && e.keyCode == 67) { //cmd-shift-C
+        console.log("making selection into inline code");
+        e.preventDefault();
+        e.stopPropagation();
+        document.execCommand('bold',false,true);
+    }
+});
 
 </script>
 </html>
