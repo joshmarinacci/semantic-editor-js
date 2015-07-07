@@ -260,6 +260,10 @@ function applyChanges(editor,model,changes) {
             console.log("applying a remove",ch.mod_i,ch.model.length);
             ch.model.splice(ch.mod_i,1);
         }
+        if(ch.type == 'delete'){
+            console.log("applying a remove",ch.mod_i,ch.model.length);
+            ch.model.splice(ch.mod_i,1);
+        }
         if(ch.type == 'insert') {
             console.log("applying an insert");
             var mod = genModelFromDom(ch.dom_node);
@@ -273,6 +277,12 @@ function scanForChanges(root,model) {
     var changes = [];
     if(root.childNodes.length != model.length) {
         console.log("WARNING: length has changed");
+    }
+    for(var i=0; i<root.childNodes.length; i++) {
+        console.log("dom id", root.childNodes[i].id);
+    }
+    for(var i=0; i<model.length; i++) {
+        console.log("mod id", model[i].id);
     }
     var dom_i = 0;
     var dom_len = root.childNodes.length;
@@ -325,16 +335,33 @@ function scanForChanges(root,model) {
             }
         }
         if(mod_node.type == 'block') {
-            if(prev_dom != null && dom_node.id == prev_dom.id) {
-                console.log('this block was just split from the previous. must re-id it');
-                changes.push({
-                    type:'insert',
-                    mod_i:mod_i,
-                    model:model,
-                    dom_node:dom_node
-                });
-                dom_i++;
+            if(dom_node.id != mod_node.id) {
+                console.log("nodes don't match",mod_node.id,dom_node.id);
+                if(prev_dom != null && dom_node.id == prev_dom.id) {
+                    console.log('this block was just split from the previous. must re-id it',dom_node.id);
+                    changes.push({
+                        type:'insert',
+                        mod_i:mod_i,
+                        model:model,
+                        dom_node:dom_node
+                    });
+                    dom_i++;
+                }
+                var next_mod = null;
+                if(mod_i+1 < mod_len ) {
+                    next_mod = model[mod_i+1];
+                }
+                if(next_mod != null && dom_node.id == next_mod.id) {
+                    console.log("deleted a dom node");
+                    changes.push({
+                        type:'delete',
+                        model:model,
+                        mod_i:mod_i
+                    });
+                    mod_i++;
+                }
             } else {
+                console.log("normal recurse",mod_node.id);
                 changes = changes.concat(scanForChanges(dom_node, mod_node.content));
             }
         }
