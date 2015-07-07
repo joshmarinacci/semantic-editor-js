@@ -82,21 +82,21 @@ var model = [
         }
     ]
 },
-/*
-    {
-        id:genId(),
-        type:'block',
-        style:'body',
-        content: [
-            {
-                id:genId(),
-                type:'text',
-                content:'more'
-            }
-        ]
-    }
-    */
-/*{
+
+{
+    id:genId(),
+    type:'block',
+    style:'body',
+    content: [
+        {
+            id:genId(),
+            type:'text',
+            content:'more body text'
+        }
+    ]
+},
+
+{
     id:genId(),
     type:'block',
     style:'body',
@@ -135,7 +135,7 @@ var model = [
             content:'for(var i=0; i<5; i++){\n    console.log("line",i);\n}'
         }
     ]
-}*/
+}
 ];
 
 var editor = document.getElementById('editor');
@@ -167,24 +167,19 @@ syncDom(editor,model);
 
 function saveSelection(ed) {
     var sel = window.getSelection();
-//    console.log("saving selection",sel);
     var range = sel.getRangeAt(0);
-//    console.log("range = ", range);
     var node = range.startContainer;
     var path = [];
     while(node.nodeType == Element.TEXT_NODE || node.id == "") {
-//        console.log("no node of it's own. moving up");
         var nn = -1;
         for(var i=0; i<node.parentNode.childNodes.length; i++) {
             if(node.parentNode.childNodes[i] == node) {
                 nn = i;
             }
         }
-//        console.log("index = ",nn);
         path.unshift(nn);
         node = node.parentNode;
     }
-//    console.log("saving with node:",node.id,':');
     return {
         id:node.id,
         path:path,
@@ -194,7 +189,6 @@ function saveSelection(ed) {
 }
 
 function restoreSelection(ran) {
-//    console.log("restoring selection",ran);
     if(ran.id == "") {
         console.log("WARNING. bad id");
         return;
@@ -202,9 +196,7 @@ function restoreSelection(ran) {
     var range = document.createRange();
     var node = document.getElementById(ran.id);
     ran.path.forEach(function(index){
-//        console.log("checking index",index);
         node = node.childNodes[index];
-//        console.log("next ch = ", node);
     });
     range.setStart(node, ran.startOffset);
     range.collapse(true);
@@ -256,35 +248,26 @@ function genModelFromDom(node) {
 }
 
 function applyChanges(editor,model,changes) {
-    console.log('change count',changes.length);
     changes.forEach(function(ch){
-        console.log("change = ", ch);
         if(ch.type=='text') {
             ch.model_node.content = ch.new_text;
         }
         if(ch.type == 'append') {
-            console.log("applying an append",ch);
             if(ch.dom_node.nodeType == Element.ELEMENT_NODE) {
-                console.log("adding an element");
                 ch.model.push(genModelFromDom(ch.dom_node));
             }
             if(ch.dom_node.nodeType == Element.TEXT_NODE) {
-                console.log("adding a text node");
                 ch.model.push(genModelFromDom(ch.dom_node));
             }
         }
         if(ch.type == 'remove'){
-            console.log("applying a remove",ch.mod_i,ch.model.length);
             ch.model.splice(ch.mod_i,1);
         }
         if(ch.type == 'delete'){
-            console.log("applying a remove",ch.mod_i,ch.model.length);
             ch.model.splice(ch.mod_i,1);
         }
         if(ch.type == 'insert') {
-            console.log("applying an insert");
             var mod = genModelFromDom(ch.dom_node);
-            console.log("inserting new model chunk",mod);
             ch.model.splice(ch.mod_i,0,mod);
         }
     });
@@ -295,12 +278,14 @@ function scanForChanges(root,model) {
     if(root.childNodes.length != model.length) {
         console.log("WARNING: length has changed");
     }
+    /*
     for(var i=0; i<root.childNodes.length; i++) {
         console.log("dom id", root.childNodes[i].id);
     }
     for(var i=0; i<model.length; i++) {
         console.log("mod id", model[i].id);
     }
+    */
     var dom_i = 0;
     var dom_len = root.childNodes.length;
     var mod_i = 0;
@@ -308,11 +293,9 @@ function scanForChanges(root,model) {
     var prev_dom = null;
     while(true) {
         if(mod_i >= mod_len || dom_i >= dom_len) {
-            console.log("end of the list");
             if(dom_i < dom_len) {
                 console.log("still more dom. must have added",dom_i,dom_len);
                 for(;dom_i<dom_len; dom_i++) {
-                    console.log("adding");
                     changes.push({
                         type:'append',
                         model:model,
@@ -323,7 +306,6 @@ function scanForChanges(root,model) {
             if(mod_i < mod_len) {
                 console.log("still more model. must have deleted",mod_i,mod_len);
                 for(;mod_i<mod_len;mod_i++) {
-                    console.log("removing");
                     changes.push({
                         type:'remove',
                         model:model,
@@ -353,9 +335,7 @@ function scanForChanges(root,model) {
         }
         if(mod_node.type == 'block') {
             if(dom_node.id != mod_node.id) {
-                console.log("nodes don't match",mod_node.id,dom_node.id);
                 if(prev_dom != null && dom_node.id == prev_dom.id) {
-                    console.log('this block was just split from the previous. must re-id it',dom_node.id);
                     changes.push({
                         type:'insert',
                         mod_i:mod_i,
@@ -369,7 +349,6 @@ function scanForChanges(root,model) {
                     next_mod = model[mod_i+1];
                 }
                 if(next_mod != null && dom_node.id == next_mod.id) {
-                    console.log("deleted a dom node");
                     changes.push({
                         type:'delete',
                         model:model,
@@ -378,7 +357,6 @@ function scanForChanges(root,model) {
                     mod_i++;
                 }
             } else {
-                console.log("normal recurse",mod_node.id);
                 changes = changes.concat(scanForChanges(dom_node, mod_node.content));
             }
         }
@@ -407,12 +385,9 @@ function selectionToModelNode(info,model) {
 
 //TODO: this function is a hack. should be replaced by just giving children refs to parent
 function findParentOfModelNode(root,target) {
-//    console.log("looking for the parent of",target,root.length);
     for(var i=0; i<root.content.length; i++) {
         var node = root.content[i];
-//        console.log('chekcing',node.id);
         if(node.id == target.id) {
-//            console.log("found the match");
             return root;
         }
         if(node.type == 'block' || node.type == 'inline') {
@@ -427,7 +402,6 @@ function findParentOfModelNode(root,target) {
 function findIndexOfChild(parent,child) {
     var n = 0;
     for(var i=0; i<parent.content.length; i++) {
-//        console.log('checking ',parent.content[i],child);
         if(parent.content[i] == child) return i;
     }
     return -1;
@@ -445,7 +419,6 @@ function swapNode() {
 }
 
 function splitModelNode(n,mod) {
-    //console.log("splitting the model",mod,'at',n);
     if(mod.type != 'text') {
         console.log("ERROR: don't know how to split non text node yet");
         return;
