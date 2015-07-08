@@ -1,0 +1,12 @@
+{
+  "name": "semantic_editor",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build-ui": "browserify -r ./src/model.js:model -o bundle.js --debug --verbose"
+  },
+  "author": "",
+  "license": "ISC"
+}

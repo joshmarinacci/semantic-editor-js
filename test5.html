@@ -1,8 +1,51 @@
 <!--
 
-in this one we will sync a model to the dom and back.
-then we can do all modifications on the model and know it works right.
-we have to detect dom changes using mutation observers
+next up:
+
+add a debug tree to show the model
+
+move all model manipulation code to separate module. start using browserify
+model nodes have ref to parent. should simplify model manipulation code
+model has function to change style on a node
+model has function to load a new model
+model has function to fetch model as JSON
+
+util function for deleting children from a DOM node
+
+make a wrapper function which saves selection, executes action, syncs the dom, then updates selection again
+
+handle the case where you delete a selection across block boundaries
+special case enter key inside of a code block
+special case tab key inside of code block: indent/outdent
+
+make prettier styles
+add semantic type style using after:content: css
+
+redo demo layout with proper scrolling, flexbox, etc.
+
+remove duplicate change events. should just be add, delete, and text
+
+
+abstract keyboard handling into a separate class.
+attach commands to keystrokes with a map
+
+implement making a link with command-shift-A
+invokes a callback to open a dialog and set the result.
+
+implement list support
+    switch block type to list item
+    enter to make next list item
+    switch from numbered to bulleted items
+    indent/outdent
+
+implement a model extension for images and other embedded media. forms, etc.
+
+
+more content types:
+blockquote
+several header levels: title, subtitle, section
+
+
 -->
 
 
@@ -60,8 +103,13 @@ div {
         <button id="body">body</button>
         <button id="block-code">code block</button>
     </div>
+    <div id="debug-tree"></div>
 </body>
+<script src="bundle.js"></script>
 <script type='text/javascript'>
+
+var model = require('model');
+model.check();
 
 var count = 0;
 function genId() {
@@ -140,6 +188,7 @@ var model = [
 
 var editor = document.getElementById('editor');
 function syncDom(editor,model) {
+    renderTree();
     while (editor.firstChild) {
         editor.removeChild(editor.firstChild);
     }
@@ -165,6 +214,8 @@ function syncDom(editor,model) {
 
 syncDom(editor,model);
 
+function renderTree() {
+}
 function saveSelection(ed) {
     var sel = window.getSelection();
     var range = sel.getRangeAt(0);
@@ -204,15 +255,6 @@ function restoreSelection(ran) {
     wsel.removeAllRanges();
     wsel.addRange(range);
 }
-
-document.getElementById("editor").addEventListener("input", function(e) {
-    console.log("INPUT EVENT");
-    var sel = saveSelection(editor);
-    var changes = scanForChanges(editor,model);
-    applyChanges(editor,model,changes);
-    syncDom(editor,model);
-    restoreSelection(sel);
-}, false);
 
 function genModelFromDom(node) {
     if(node.nodeType == Element.TEXT_NODE) {
@@ -418,6 +460,7 @@ function swapNode() {
     parent.content.splice.apply(parent.content,cargs);
 }
 
+//splits a text node in half at the requested offset
 function splitModelNode(n,mod) {
     if(mod.type != 'text') {
         console.log("ERROR: don't know how to split non text node yet");
@@ -478,21 +521,6 @@ function stopEvent(e) {
     e.stopPropagation();
 }
 
-document.getElementById('editor').addEventListener('keydown',function(e){
-    if(e.metaKey===true && e.keyCode == 66) { //cmd-B
-        stopEvent(e);
-        styleSelectionInline('bold');
-    }
-    if(e.metaKey===true && e.keyCode == 73) { //cmd-I
-        stopEvent(e);
-        styleSelectionInline('italic');
-    }
-    if(e.metaKey===true && e.keyCode == 67 && e.shiftKey) { //cmd-shift-C
-        stopEvent(e);
-        styleSelectionInline('inline-code');
-    }
-});
-
 function findParentBlockDom(elem) {
     var parent = elem.parentElement;
     if(parent.tagName == 'DIV') {
@@ -500,6 +528,7 @@ function findParentBlockDom(elem) {
     }
     return null;
 }
+
 function findModelForDom(root,target) {
     for(var i=0; i<root.content.length; i++) {
         var node = root.content[i];
@@ -524,6 +553,31 @@ function changeBlockStyle(style) {
     syncDom(editor,model);
     restoreSelection(ran);
 }
+
+document.getElementById("editor").addEventListener("input", function(e) {
+    console.log("INPUT EVENT");
+    var sel = saveSelection(editor);
+    var changes = scanForChanges(editor,model);
+    applyChanges(editor,model,changes);
+    syncDom(editor,model);
+    restoreSelection(sel);
+}, false);
+
+document.getElementById('editor').addEventListener('keydown',function(e){
+    if(e.metaKey===true && e.keyCode == 66) { //cmd-B
+        stopEvent(e);
+        styleSelectionInline('bold');
+    }
+    if(e.metaKey===true && e.keyCode == 73) { //cmd-I
+        stopEvent(e);
+        styleSelectionInline('italic');
+    }
+    if(e.metaKey===true && e.keyCode == 67 && e.shiftKey) { //cmd-shift-C
+        stopEvent(e);
+        styleSelectionInline('inline-code');
+    }
+});
+
 document.getElementById("header").addEventListener('click',function(e) {
     stopEvent(e);
     changeBlockStyle('header');
