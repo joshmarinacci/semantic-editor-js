@@ -8,9 +8,98 @@ exports.genId = function() {
     return "id_"+_id_count;
 }
 
-exports.check = function() {
-    console.log("checking");
+var DEFAULT_BLOCK_STYLE = 'body';
+
+function DNode(type,text) {
+    this.type = type;
+    this.id = exports.genId();
+    this.style = DEFAULT_BLOCK_STYLE;
+
+    if(type == 'block' || type == 'span' || type == 'root') {
+        this.content = [];
+        this.append = function(node) {
+            this.content.push(node);
+        }
+        this.child = function(index) {
+            return this.content[index];
+        }
+    }
+    if(type == 'text') {
+        this.text = text;
+    }
 }
+
+var TEXT = 'text';
+
+function countChars(par) {
+    var total = 0;
+    if(par.content) {
+        par.content.forEach(function(n){
+            total += countChars(n);
+        })
+    }
+    if(par.type == TEXT) {
+        return par.text.length;
+    }
+    return total;
+}
+
+function flattenChars(par) {
+    if(par.content) return par.content.map(flattenChars).join("");
+    if(par.type == TEXT) return par.text;
+    throw new Error("SHOULDNT BE HERE");
+}
+
+function DModel() {
+    var root = new DNode('root');
+
+    this.makeBlock = function() {
+        return new DNode('block');
+    };
+    this.makeText = function(text) {
+        return new DNode(TEXT,text);
+    };
+    this.append = function(node) {
+        root.append(node);
+    };
+
+    this.countCharacters = function() {
+        return countChars(root);
+    };
+
+    this.insertText = function(node, offset, text) {
+        if(node.type == TEXT) {
+            node.text = node.text.substring(0,offset) + text + node.text.substring(offset);
+        }
+    };
+
+    this.deleteText = function(startNode, startOffset, endNode, endOffset) {
+        if(startNode !== endNode) {
+            startNode.text = startNode.text.substring(0, startOffset);
+            endNode.text = endNode.text.substring(endOffset);
+            return;
+        }
+
+        if(startNode.type !== TEXT) throw new Error("can't delete from non text yet");
+        if(startOffset > endOffset) throw new Error("start offset can't be greater than end offset");
+        startNode.text = startNode.text.substring(0,startOffset)
+            + startNode.text.substring(endOffset);
+    };
+
+    this.toPlainText = function() {
+        return flattenChars(root);
+    };
+
+    this.getRoot = function() { return root};
+}
+
+exports.makeModel = function() {
+    return new DModel();
+};
+
+
+
+
 
 var _model = null;
 exports.load = function(json) {
@@ -20,6 +109,7 @@ exports.load = function(json) {
 exports.model = function() {
     return _model;
 }
+
 
 
 //TODO: this function is a hack. should be replaced by just giving children refs to parent
