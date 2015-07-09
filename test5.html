@@ -119,92 +119,39 @@ div {
 <script type='text/javascript'>
 
 var doc = require('model');
-doc.load([
-    {
-        id:doc.genId(),
-        type:'block',
-        style:'body',
-        content:[
-            {
-                id:doc.genId(),
-                type:'text',
-                content:'this is a header'
-            }
-        ]
-    },
+var model = doc.makeModel();
+var block1 = model.makeBlock();
+model.setBlockStyle(block1,'header');
+var text1 = model.makeText("header");
+block1.append(text1);
+model.getRoot().append(block1);
 
-    {
-        id:doc.genId(),
-        type:'block',
-        style:'body',
-        content: [
-            {
-                id:doc.genId(),
-                type:'text',
-                content:'more body text'
-            }
-        ]
-    },
+var block2 = model.makeBlock();
+model.getRoot().append(block2);
+model.setBlockStyle(block2,'body');
+block2.append(model.makeText("body"));
 
-    {
-        id:doc.genId(),
-        type:'block',
-        style:'body',
-        content: [
-            {
-                id:doc.genId(),
-                type:'text',
-                content:'This is some '
-            },
-            {
-                id:doc.genId(),
-                type:'inline',
-                style:'bold',
-                content:[
-                    {
-                        id:doc.genId(),
-                        type:'text',
-                        content:'bold'
-                    }
-                ]
-            },
-            {
-                id:doc.genId(),
-                type:'text',
-                content:' text to read'
-            }
-        ]
-    },
-    {
-        id:doc.genId(),
-        type:'block',
-        style:'block-code',
-        content:[
-            {
-                type:'text',
-                content:'for(var i=0; i<5; i++){\n    console.log("line",i);\n}'
-            }
-        ]
-    }
-]);
 
+var block3 = model.makeBlock();
+model.getRoot().append(block3);
+model.setBlockStyle(block3,'block-code');
+block3.append(model.makeText("block\ncode"));
 
 var editor = document.getElementById('editor');
-function syncDom(editor,doc) {
-    var model = doc.model();
+function syncDom(editor,model) {
     renderTree();
     while (editor.firstChild) {
         editor.removeChild(editor.firstChild);
     }
-    model.forEach(function (block) {
+    model.getRoot().content.forEach(function (block) {
         var blockElement = document.createElement('div');
         blockElement.id = block.id;
         blockElement.classList.add(block.style);
         block.content.forEach(function (inline) {
-            if (inline.type == 'text') {
-                blockElement.appendChild(document.createTextNode(inline.content));
+            if (inline.type == doc.TEXT) {
+                blockElement.appendChild(document.createTextNode(inline.text));
             }
-            if (inline.type == 'inline') {
+            if (inline.type == doc.SPAN) {
                 var elem = document.createElement('span');
                 elem.id = inline.id;
                 elem.classList.add(inline.style);
@@ -216,7 +163,7 @@ function syncDom(editor,doc) {
     });
 }
 
-syncDom(editor,doc);
+syncDom(editor,model);
 
 function renderTree() {
 }
@@ -463,10 +410,10 @@ function changeBlockStyle(style) {
     var sel = window.getSelection();
     var range = sel.getRangeAt(0);
     var block = findParentBlockDom(range.commonAncestorContainer);
-    var mod_b = doc.findModelForDom({content:doc.model()},block);
+    var mod_b = doc.findModelForDom(model.getRoot(),block);
     mod_b.style = style;
     var ran = saveSelection(editor);
-    syncDom(editor,doc);
+    syncDom(editor,model);
     restoreSelection(ran);
 }
 
@@ -494,7 +441,6 @@ document.getElementById('editor').addEventListener('keydown',function(e){
 });
 document.getElementById("header").addEventListener('click',function(e) {
     stopEvent(e);
-    console.log("doing a header");
     changeBlockStyle('header');
 });
 document.getElementById("body").addEventListener('click',function(e) {

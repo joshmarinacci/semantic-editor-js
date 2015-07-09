@@ -129,6 +129,7 @@ function DNodeIterator(thecurrent) {
 
 function DModel() {
     var root = new DNode('root');
+    this._root = root;
 
     this.makeBlock = function() {
         return new DNode(exports.BLOCK);
@@ -203,7 +204,11 @@ function DModel() {
 
     this.getIterator = function(node) {
         return new DNodeIterator(node);
-    }
+    };
+
+    this.setBlockStyle = function(node, styleName) {
+        node.style = styleName;
+    };
 }
 
 exports.makeModel = function() {
@@ -287,7 +292,7 @@ exports.findModelForDom = function(root,target) {
         if(node.id == target.id) {
             return node;
         }
-        if(node.type == 'block' || node.type == 'inline') {
+        if(node.type == exports.BLOCK || node.type == exports.SPAN) {
             var ans = exports.findModelForDom(node,target);
             if(ans != null) return ans;
         }
