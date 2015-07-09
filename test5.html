@@ -5,18 +5,13 @@ next up:
 add a debug tree to show the model
 
 //move all model manipulation code to separate module. start using browserify
-
-build unit tests
-
-
-description of the data structure and operations
+//build unit tests
+//description of the data structure and operations
 
 
+//model nodes have ref to parent. should simplify model manipulation code
+//model has function to change style on a node
 
-
-
-model nodes have ref to parent. should simplify model manipulation code
-model has function to change style on a node
 model has function to load a new model
 model has function to fetch model as JSON
 
@@ -155,7 +150,7 @@ function syncDom(editor,model) {
                 var elem = document.createElement('span');
                 elem.id = inline.id;
                 elem.classList.add(inline.style);
-                elem.appendChild(document.createTextNode(inline.content[0].content));
+                elem.appendChild(document.createTextNode(inline.child(0).text));
                 blockElement.appendChild(elem);
             }
         });
@@ -243,7 +238,7 @@ function genModelFromDom(node) {
 function applyChanges(editor,model,changes) {
     changes.forEach(function(ch){
         if(ch.type=='text') {
-            ch.model_node.content = ch.new_text;
+            ch.model_node.text = ch.new_text;
         }
         if(ch.type == 'append') {
             if(ch.dom_node.nodeType == Element.ELEMENT_NODE) {
@@ -266,23 +261,15 @@ function applyChanges(editor,model,changes) {
     });
 }
 
-function scanForChanges(root,model) {
+function scanForChanges(root,mod_root) {
     var changes = [];
-    if(root.childNodes.length != model.length) {
+    if(root.childNodes.length != mod_root.childCount()) {
         console.log("WARNING: length has changed");
     }
-    /*
-    for(var i=0; i<root.childNodes.length; i++) {
-        console.log("dom id", root.childNodes[i].id);
-    }
-    for(var i=0; i<model.length; i++) {
-        console.log("mod id", model[i].id);
-    }
-    */
     var dom_i = 0;
     var dom_len = root.childNodes.length;
     var mod_i = 0;
-    var mod_len = model.length;
+    var mod_len = mod_root.childCount();
     var prev_dom = null;
     while(true) {
         if(mod_i >= mod_len || dom_i >= dom_len) {
@@ -291,7 +278,7 @@ function scanForChanges(root,model) {
                 for(;dom_i<dom_len; dom_i++) {
                     changes.push({
                         type:'append',
-                        model:model,
+                        model:mod_root,
                         dom_node:root.childNodes[dom_i]
                     });
                 }
@@ -301,7 +288,7 @@ function scanForChanges(root,model) {
                 for(;mod_i<mod_len;mod_i++) {
                     changes.push({
                         type:'remove',
-                        model:model,
+                        model:mod_root,
                         mod_i:mod_i
                     });
                 }
@@ -310,8 +297,8 @@ function scanForChanges(root,model) {
         }
 
         var dom_node = root.childNodes[dom_i];
-        var mod_node = model[mod_i];
-        if(mod_node.type == 'text' && dom_node.nodeType == Element.TEXT_NODE) {
+        var mod_node = mod_root.child(mod_i);
+        if(mod_node.type == doc.TEXT && dom_node.nodeType == Element.TEXT_NODE) {
 //            console.log("it a text node");
             var dom_text = dom_node.nodeValue;
             var model_text = mod_node.content;
@@ -332,29 +319,29 @@ function scanForChanges(root,model) {
                     changes.push({
                         type:'insert',
                         mod_i:mod_i,
-                        model:model,
+                        model:mod_root,
                         dom_node:dom_node
                     });
                     dom_i++;
                 }
                 var next_mod = null;
                 if(mod_i+1 < mod_len ) {
-                    next_mod = model[mod_i+1];
+                    next_mod = mod_root.child(mod_i+1);
                 }
                 if(next_mod != null && dom_node.id == next_mod.id) {
                     changes.push({
                         type:'delete',
-                        model:model,
+                        model:mod_root,
                         mod_i:mod_i
                     });
                     mod_i++;
                 }
             } else {
-                changes = changes.concat(scanForChanges(dom_node, mod_node.content));
+                changes = changes.concat(scanForChanges(dom_node, mod_node));
             }
         }
         if(mod_node.type == 'inline') {
-            changes = changes.concat(scanForChanges(dom_node,mod_node.content));
+            changes = changes.concat(scanForChanges(dom_node,mod_node));
         }
         dom_i++;
         prev_dom = dom_node;
@@ -364,11 +351,12 @@ function scanForChanges(root,model) {
 }
 
 function selectionToModelNode(info,model) {
-    for(var i=0; i<model.length; i++) {
-        var node = model[i];
+    var root = model.getRoot();
+    for(var i=0; i<root.childCount(); i++) {
+        var node = root.child(i);
         if(node.id == info.id) {
             info.path.forEach(function(index) {
-                node = node.content[index];
+                node = node.child(index);
             });
             return node;
         }
@@ -385,10 +373,10 @@ function styleSelectionInline(style) {
         return;
     }
     var info = saveSelection(editor);
-    var mod = selectionToModelNode(info,doc.model());
-    var parts = doc.splitThree(mod,info.startOffset,info.endOffset)
-    doc.wrapTextInInlineStyle(parts[1],style);
-    syncDom(editor,doc);
+    var mod = selectionToModelNode(info,model);
+    var parts = doc.splitThree(mod,info.startOffset,info.endOffset,model)
+    doc.wrapTextInInlineStyle(parts[1],style,model);
+    syncDom(editor,model);
     restoreSelection(info);
 }
 
@@ -420,9 +408,9 @@ function changeBlockStyle(style) {
 document.getElementById("editor").addEventListener("input", function(e) {
     console.log("INPUT EVENT");
     var sel = saveSelection(editor);
-    var changes = scanForChanges(editor,doc.model());
-    applyChanges(editor,doc.model(),changes);
-    syncDom(editor,doc);
+    var changes = scanForChanges(editor,model.getRoot());
+    applyChanges(editor,model,changes);
+    syncDom(editor,model);
     restoreSelection(sel);
 }, false);
 document.getElementById('editor').addEventListener('keydown',function(e){

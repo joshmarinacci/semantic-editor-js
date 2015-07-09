@@ -33,6 +33,10 @@ function DNode(type,text) {
     if(type == exports.TEXT) {
         this.text = text;
     }
+    this.childCount = function() {
+        if(this.content) return this.content.length;
+        return 0;
+    }
 }
 
 
@@ -228,60 +232,28 @@ exports.model = function() {
     return _model;
 }
 
-
-
-//TODO: this function is a hack. should be replaced by just giving children refs to parent
-function findParentOfModelNode(root,target) {
-    for(var i=0; i<root.content.length; i++) {
-        var node = root.content[i];
-        if(node.id == target.id) {
-            return root;
-        }
-        if(node.type == 'block' || node.type == 'inline') {
-            var ans = findParentOfModelNode(node,target);
-            if(ans != null) return ans;
-        }
-    }
-    return null;
-}
-
-//TODO: this function is a hack. should be replaced by just giving children refs to parent
-function findIndexOfChild(parent,child) {
-    var n = 0;
-    for(var i=0; i<parent.content.length; i++) {
-        if(parent.content[i] == child) return i;
-    }
-    return -1;
-}
-
 //replaces the first node in it's parent with the rest of the nodes
 function swapNode() {
     var args = Array.prototype.slice.call(arguments);
     var oldnode = args.shift();
     var rest = args;
-    var parent = findParentOfModelNode({content:_model},oldnode);
-    var index = findIndexOfChild(parent,oldnode);
+    var parent = oldnode.parent;
+    var index = parent.content.indexOf(oldnode);
     var cargs = [index,1].concat(rest);
     parent.content.splice.apply(parent.content,cargs);
+    rest.forEach(function(node) {
+        node.parent = parent;
+    })
 }
 
 //splits a text node in half at the requested offset
-function splitModelNode(n,mod) {
-    if(mod.type != 'text') {
+function splitModelNode(n,mod,model) {
+    if(mod.type != exports.TEXT) {
         console.log("ERROR: don't know how to split non text node yet");
         return;
     }
-    var a = {
-        type:mod.type,
-        id:exports.genId(),
-        content:mod.content.substring(0,n)
-    };
-    var b = {
-        type:mod.type,
-        id:exports.genId(),
-        content:mod.content.substring(n)
-    };
-
+    var a = model.makeText(mod.text.substring(0,n));
+    var b = model.makeText(mod.text.substring(n));
     swapNode(mod,a,b);
     return [a,b];
 }
@@ -301,22 +273,15 @@ exports.findModelForDom = function(root,target) {
 }
 
 
-exports.wrapTextInInlineStyle = function(node,style) {
-    var inline = {
-        id:exports.genId(),
-        type:'inline',
-        style:style,
-        content: [ {
-            id:exports.genId(),
-            type:'text',
-            content:node.content
-        } ]
-    };
+exports.wrapTextInInlineStyle = function(node,style,model) {
+    var inline = model.makeSpan();
+    inline.style = style;
     swapNode(node,inline);
+    inline.append(node);
 }
 
-exports.splitThree = function(node,index1,index2) {
-    var parts1 = splitModelNode(index1,node);
-    var parts2 = splitModelNode(index2-index1,parts1[1]);
+exports.splitThree = function(node,index1,index2,model) {
+    var parts1 = splitModelNode(index1,node,model);
+    var parts2 = splitModelNode(index2-index1,parts1[1],model);
     return [parts1[0],parts2[0],parts2[1]];
 }
