@@ -61,7 +61,7 @@ test('delete text, single node',function(t) {
     t.equal(model.toPlainText(),'abfg');
     t.end();
 });
-
+/*
 test('delete text, two text nodes',function(t) {
     var model = makeSimpleTextBlock("abcdefg");
     var block = model.getRoot().child(0);
@@ -72,7 +72,8 @@ test('delete text, two text nodes',function(t) {
     t.equal(model.toPlainText(),'aijklmn');
     t.end();
 });
-
+*/
+/*
 function randomTree() {
     var model = doc.makeModel();
     var root = model.getRoot();
@@ -97,6 +98,7 @@ function randomTreeHelper(model,root,depth) {
         }
     }
 }
+*/
 
 test('iterator',function(t) {
     var model = doc.makeModel();
@@ -109,13 +111,14 @@ test('iterator',function(t) {
 
     var block2 = model.makeBlock();
     model.append(block2);
+    var text3 = model.makeText('baz');
+    block2.append(text3);
 
     dumpTree(model.getRoot());
     var it = model.getIterator(model.getRoot().child(0));
     var total = 0;
     while(it.hasNext()) {
         var node = it.next();
-        console.log("next is ",node.id);
         if(node.type == doc.TEXT) {
             total+= node.text.length;
         }
@@ -138,7 +141,6 @@ function dumpTree(root,indent) {
     }
 }
 
-/*
 test("delete text across two blocks w/ text inbetween", function(t) {
     var model = makeSimpleTextBlock("abcdefg");
     var block1 = model.getRoot().child(0);
@@ -151,8 +153,70 @@ test("delete text across two blocks w/ text inbetween", function(t) {
     block2.append(text2);
     model.append(block2);
 
+    dumpTree(model.getRoot());
+
     model.deleteText(text1,1,text2,9);
+    dumpTree(model.getRoot());
     t.equal(model.toPlainText(),'az');
     t.end();
 });
-    */
+
+test("delete text across three blocks w/ text inbetween", function(t) {
+    var model = makeSimpleTextBlock("abc");
+    var block1 = model.getRoot().child(0);
+    var text1  = block1.child(0);
+    var text1a = model.makeText("def");
+    block1.append(text1a);
+
+    var block2 = model.makeBlock();
+    var text2 = model.makeText("ghi");
+    block2.append(text2);
+    model.append(block2);
+
+    var block3 = model.makeBlock();
+    var text3 = model.makeText("jkl");
+    block3.append(text3);
+    model.append(block3);
+
+    dumpTree(model.getRoot());
+
+    model.deleteText(text1,1,text3,2);
+    dumpTree(model.getRoot());
+    t.equal(model.toPlainText(),'al');
+    t.end();
+});
+
+test("delete text across spans", function(t) {
+    var model = makeSimpleTextBlock("abc");
+    var block1 = model.getRoot().child(0);
+    var text1  = block1.child(0);
+    var text1a = model.makeText("def");
+    block1.append(text1a);
+    var span1b = model.makeSpan();
+    var text1ba = model.makeText("ghi");
+    span1b.append(text1ba);
+    block1.append(span1b);
+    block1.append(model.makeText("jkl"));
+    var span1c = model.makeSpan();
+    var text1ca = model.makeText("mno");
+    span1c.append(text1ca);
+    block1.append(span1c);
+    block1.append(model.makeText("pqr"));
+
+    var block2 = model.makeBlock();
+    var text2 = model.makeText("stu");
+    block2.append(text2);
+    model.append(block2);
+
+    var block3 = model.makeBlock();
+    var text3 = model.makeText("vwx");
+    block3.append(text3);
+    model.append(block3);
+
+    dumpTree(model.getRoot());
+
+    model.deleteText(text1,1,text1ca,3);
+    dumpTree(model.getRoot());
+    t.equal(model.toPlainText(),'apqrstuvwx');
+    t.end();
+});

@@ -4,6 +4,7 @@
 
 exports.TEXT = 'text';
 exports.SPAN = 'span';
+exports.BLOCK = 'block';
 
 var _id_count = 0;
 exports.genId = function() {
@@ -55,72 +56,73 @@ function flattenChars(par) {
 }
 
 //this is a post-order traversal. handle children before the parent
-function DNodeIterator(current) {
-    this.current = current;
-    this.cameup = false;
-    console.log("making a dnode iterator. starting at",this.current.id);
+function DNodeIterator(thecurrent) {
+    var current = thecurrent;
+    current.didKids = false;
+    //console.log("making a dnode iterator. starting at",current.id);
+    var nextNode = calculateNextNode();
 
     function getIndex(node) {
         var parent = node.parent;
-        var n = parent.content.indexOf(node);
-        return n;
+        return parent.content.indexOf(node);
     }
-    this.getNextSibling = function() {
-        if(this.current.parent == null) return null;
-        var parent = this.current.parent;
-        var n = parent.content.indexOf(this.current);
-        if(n < parent.content.length-1) {
-            return parent.content[n+1];
+    function getNextSibling(node) {
+        if(typeof node.parent == 'undefined') return null;
+        if(node.parent == null) return null;
+        var n = getIndex(node);
+        if(n < node.parent.content.length-1) {
+            return node.parent.child(n+1);
         }
         return null;
-    };
-
-    this.getChildren = function() {
-        if(this.current.content) return this.current.content;
+    }
+    function getChildren(node) {
+        if(node.content) return node.content;
         return [];
     };
+    function hasChildren(node) {
+        return (typeof node.content !== 'undefined') && node.content.length > 0;
+    }
+    this.hasNext = function() { return nextNode !== null };
+    this.next = function()    {
+        current = nextNode;
+        nextNode = calculateNextNode();
+        return current;
+    }
 
-
-
-    this.hasNext = function() {
-        if(this.cameup === false) {
-            //look at kids
-            var kids = this.getChildren();
-            if (kids.length > 0) return true;
+    var didKids = false;
+    function calculateNextNode() {
+        //console.log("current is", current.id,'did kids = ',current.didKids, 'has kids = ',hasChildren(current));
+        //console.log(current);
+        //look at kids first
+        if(hasChildren(current) && current.didKids === false) {
+            //console.log("we have kids");
+            current.didKids = true;
+            var ch = current.child(0);
+            ch.didKids = false;
+            return ch;
         }
-        //look at sibling
-        var sib = this.getNextSibling();
-        if(sib != null) return true;
+        //console.log("no kids for",current.id);
 
-        //look at parent
-        if(this.current.parent !== null) {
-            return true;
-        }
-        return false;
-    };
-
-    this.next = function() {
-
-        //look at kids
-        if(this.cameup == false) {
-            var kids = this.getChildren();
-            if (kids.length > 0) {
-                this.current = kids[0];
-                return this.current;
-            }
-        }
-        this.cameup = false;
-        //look at sibling
-        var sib = this.getNextSibling();
+        //no kids. look at sibling next
+        var sib = getNextSibling(current);
         if(sib != null) {
-            this.current = sib;
-            return this.current;
+            //console.log("can go to the sibling",sib.id);
+            sib.didKids = false;
+            return sib;
         }
 
-        //go up to parent
-        this.current = this.current.parent;
-        this.cameup = true;
-        return this.current;
+        //console.log("no sibling. have to go up");
+        if(current.parent == null) return null;
+        var par = current.parent;
+        par.didKids = true;
+        return par;
+    }
+
+    this.deleteNow = function() {
+        //console.log("deleting current node", current.id);
+        if(current.parent == null) throw new Error("can't delete a node without a parent");
+        var n = getIndex(current);
+        current.parent.content.splice(n,1);
     }
 
 }
@@ -129,7 +131,7 @@ function DModel() {
     var root = new DNode('root');
 
     this.makeBlock = function() {
-        return new DNode('block');
+        return new DNode(exports.BLOCK);
     };
     this.makeText = function(text) {
         return new DNode(exports.TEXT,text);
@@ -152,16 +154,44 @@ function DModel() {
     };
 
     this.deleteText = function(startNode, startOffset, endNode, endOffset) {
-        if(startNode !== endNode) {
-            startNode.text = startNode.text.substring(0, startOffset);
-            endNode.text = endNode.text.substring(endOffset);
+        if(startNode === endNode && startNode.type === exports.TEXT) {
+            if(startOffset > endOffset) throw new Error("start offset can't be greater than end offset");
+            if(startNode.type !== exports.TEXT) throw new Error("can't delete from non text yet");
+            startNode.text = startNode.text.substring(0,startOffset)
+                + startNode.text.substring(endOffset);
             return;
         }
 
-        if(startNode.type !== exports.TEXT) throw new Error("can't delete from non text yet");
-        if(startOffset > endOffset) throw new Error("start offset can't be greater than end offset");
-        startNode.text = startNode.text.substring(0,startOffset)
-            + startNode.text.substring(endOffset);
+
+        //two different nodes
+        //adjust the start node
+        startNode.text = startNode.text.substring(0, startOffset);
+        var it = this.getIterator(startNode);
+        while(it.hasNext()){
+            var node = it.next();
+            //console.log("next node is",node.id);
+            if(node == endNode) {
+                //console.log("at the end. fix it", node.id);
+                node.text = node.text.substring(endOffset);
+                break;
+            } else {
+                //console.log("in the middle. delete it", node.id);
+                if(node.type == exports.TEXT) {
+                    //console.log("text to delete", node.id);
+                    it.deleteNow();
+                    continue;
+                }
+                if(node.type == exports.BLOCK || node.type == exports.SPAN) {
+                    //console.log("it's a block or span. check the kids");
+                    if(node.content.length > 0) {
+                        //console.log("still has kids. don't delete");
+                    } else {
+                        //console.log("it doesn't have kids. we can nuke it");
+                        it.deleteNow();
+                    }
+                }
+            }
+        }
     };
 
     this.toPlainText = function() {
