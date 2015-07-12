@@ -98,17 +98,33 @@ div {
     margin: 1em;
     padding: 1em;
 }
+    body {
+        display: flex;
+        display: -webkit-flex;
+        flex-direction: row;
+        -webkit-flex-direction: row;
+        border: 1px solid red;
+    }
+    #left-col, #right-col {
+        border: 1px solid red;
+        flex: 1;
+        -webkit-flex: 1;
+    }
 </style>
 
 </head>
 <body>
-    <div id="editor" contenteditable="true" spellcheck="false"></div>
-    <div>
-        <button id="header">header</button>
-        <button id="body">body</button>
-        <button id="block-code">code block</button>
+    <div id="left-col">
+        <div id="editor" contenteditable="true" spellcheck="false"></div>
+        <div>
+            <button id="header">header</button>
+            <button id="body">body</button>
+            <button id="block-code">code block</button>
+        </div>
     </div>
-    <div id="debug-tree"></div>
+    <div id="right-col">
+        <div id="model-tree"></div>
+    </div>
 </body>
 <script src="bundle.js"></script>
 <script type='text/javascript'>
@@ -134,7 +150,7 @@ block3.append(model.makeText("block\ncode"));
 
 var editor = document.getElementById('editor');
 function syncDom(editor,model) {
-    renderTree();
+    renderTree(model);
     while (editor.firstChild) {
         editor.removeChild(editor.firstChild);
     }
@@ -160,14 +176,35 @@ function syncDom(editor,model) {
 
 syncDom(editor,model);
 
-function renderTree() {
+function clearChildren(root) {
+    while (root.firstChild) root.removeChild(root.firstChild);
+}
+function renderTree(model) {
+    function renderTreeChild(mnode) {
+        var ul = document.createElement('ul');
+        ul.appendChild(document.createTextNode(mnode.type));
+        if(mnode.type == doc.TEXT) {
+            ul.appendChild(document.createTextNode(":"+mnode.text));
+        }
+        for(var i=0; i<mnode.childCount(); i++) {
+            var child = mnode.child(i);
+            var child_dom = renderTreeChild(child);
+            var li = document.createElement('li');
+            li.appendChild(child_dom);
+            ul.appendChild(li);
+        }
+        return ul;
+    }
+    var root = document.getElementById("model-tree");
+    clearChildren(root);
+    root.appendChild(renderTreeChild(model.getRoot()));
 }
 function saveSelection(ed) {
     var sel = window.getSelection();
     var range = sel.getRangeAt(0);
     var node = range.startContainer;
     var path = [];
-    while(node.nodeType == Element.TEXT_NODE || node.id == "") {
+    while(node.nodeType == Node.TEXT_NODE || node.id == "") {
         var nn = -1;
         for(var i=0; i<node.parentNode.childNodes.length; i++) {
             if(node.parentNode.childNodes[i] == node) {
@@ -186,7 +223,7 @@ function saveSelection(ed) {
 }
 
 function restoreSelection(ran) {
-    if(ran.id == "") {
+    if(!ran.id || ran.id == "") {
         console.log("WARNING. bad id");
         return;
     }
@@ -261,16 +298,42 @@ function applyChanges(editor,model,changes) {
     });
 }
 
-function scanForChanges(root,mod_root) {
+function scanForChanges(dom_root,mod_root) {
     var changes = [];
-    if(root.childNodes.length != mod_root.childCount()) {
+    if(dom_root.childNodes.length != mod_root.childCount()) {
         console.log("WARNING: length has changed");
     }
+    console.log("model root = ", mod_root);
+    console.log("dom   root = ", dom_root);
+
+    //do children first
     var dom_i = 0;
-    var dom_len = root.childNodes.length;
+    var dom_len = dom_root.childNodes.length;
     var mod_i = 0;
     var mod_len = mod_root.childCount();
-    var prev_dom = null;
+    if(mod_len > 0 && dom_len > 0) {
+        while(true) {
+            var dom_node = dom_root.childNodes[dom_i];
+            var mod_node = mod_root.child(mod_i);
+            changes = changes.concat(scanForChanges(dom_node,mod_node));
+            break;
+        }
+    }
+
+    //note itself
+    if(dom_root.nodeType == Node.TEXT_NODE) {
+        if(mod_root.text != dom_root.nodeValue) {
+            changes.push({
+                type:'text',
+                old_text:mod_root.text,
+                new_text:dom_root.nodeValue.toString(),
+                model_node:mod_root,
+                dom_node:dom_root
+            });
+        }
+    }
+    return changes;
+    /*
     while(true) {
         if(mod_i >= mod_len || dom_i >= dom_len) {
             if(dom_i < dom_len) {
@@ -347,7 +410,7 @@ function scanForChanges(root,mod_root) {
         prev_dom = dom_node;
         mod_i++;
     };
-    return changes;
+    */
 }
 
 function selectionToModelNode(info,model) {
