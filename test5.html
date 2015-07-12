@@ -131,6 +131,21 @@ div {
 
 var doc = require('model');
 var model = doc.makeModel();
+model.setStyles({
+    block:{
+        //name of style : css classname
+        header:'header',
+        body:'body',
+        'block-code':'block-code'
+    },
+    inline: {
+        bold:'bold',
+        italic:'italic',
+        'inline-code':'inline-code'
+    }
+});
+
+
 var block1 = model.makeBlock();
 model.setBlockStyle(block1,'header');
 var text1 = model.makeText("header");
@@ -479,28 +494,28 @@ document.getElementById("editor").addEventListener("input", function(e) {
 document.getElementById('editor').addEventListener('keydown',function(e){
     if(e.metaKey===true && e.keyCode == 66) { //cmd-B
         stopEvent(e);
-        styleSelectionInline('bold');
+        styleSelectionInline(model.getStyles().inline.bold);
     }
     if(e.metaKey===true && e.keyCode == 73) { //cmd-I
         stopEvent(e);
-        styleSelectionInline('italic');
+        styleSelectionInline(model.getStyles().inline.italic);
     }
     if(e.metaKey===true && e.keyCode == 67 && e.shiftKey) { //cmd-shift-C
         stopEvent(e);
-        styleSelectionInline('inline-code');
+        styleSelectionInline(model.getStyles().inline['inline-code']);
     }
 });
 document.getElementById("header").addEventListener('click',function(e) {
     stopEvent(e);
-    changeBlockStyle('header');
+    changeBlockStyle(model.getStyles().block.header);
 });
 document.getElementById("body").addEventListener('click',function(e) {
     stopEvent(e);
-    changeBlockStyle('body');
+    changeBlockStyle(model.getStyles().block.body);
 });
 document.getElementById("block-code").addEventListener('click',function(e) {
     stopEvent(e);
-    changeBlockStyle('block-code');
+    changeBlockStyle(model.getStyles().block['block-code']);
 });
 </script>
 </html>

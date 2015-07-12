@@ -134,6 +134,14 @@ function DNodeIterator(thecurrent) {
 function DModel() {
     var root = new DNode('root');
     this._root = root;
+    this.styles = {
+        block:{
+            body:'body'
+        },
+        inline: {
+            bold:'bold'
+        }
+    };
 
     this.makeBlock = function() {
         return new DNode(exports.BLOCK);
@@ -143,7 +151,7 @@ function DModel() {
     };
     this.makeSpan = function() {
         return new DNode(exports.SPAN);
-    }
+    };
     this.append = function(node) {
         root.append(node);
     };
@@ -213,6 +221,13 @@ function DModel() {
     this.setBlockStyle = function(node, styleName) {
         node.style = styleName;
     };
+
+    this.setStyles = function(styles) {
+        this.styles = styles;
+    }
+    this.getStyles = function() {
+        return this.styles;
+    }
 }
 
 exports.makeModel = function() {
