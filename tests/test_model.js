@@ -220,3 +220,24 @@ test("delete text across spans", function(t) {
     t.equal(model.toPlainText(),'apqrstuvwx');
     t.end();
 });
+
+test('split in middle text', function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    model.getRoot().append(block1);
+    block1.append(model.makeText("abc"));
+    block1.append(model.makeText("def"));
+    block1.append(model.makeText("ghi"));
+
+    doc.splitBlockAt(block1.child(1),1,model);
+    dumpTree(model.getRoot());
+    t.equal(model.toPlainText(),"abcdefghi");
+    t.equal(model.getRoot().childCount(),2);
+    t.equal(model.getRoot().child(0).childCount(),2);
+    t.equal(model.getRoot().child(0).child(0).text, 'abc');
+    t.equal(model.getRoot().child(0).child(1).text, 'd');
+    t.equal(model.getRoot().child(1).child(0).text, 'ef');
+    t.equal(model.getRoot().child(1).child(1).text, 'ghi');
+
+    t.end();
+});

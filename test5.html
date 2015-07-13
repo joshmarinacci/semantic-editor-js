@@ -94,21 +94,26 @@ several header levels: title, subtitle, section
 }
 
 div {
-    border: 1px solid blue;
-    margin: 1em;
-    padding: 1em;
+    padding: 0.5em;
+    margin: 0.5em;
 }
     body {
         display: flex;
         display: -webkit-flex;
         flex-direction: row;
         -webkit-flex-direction: row;
-        border: 1px solid red;
     }
     #left-col, #right-col {
-        border: 1px solid red;
         flex: 1;
         -webkit-flex: 1;
+        margin:0;
+        padding:0;
+    }
+
+    #model-tree ul {
+        margin:0;
+        padding:0;
+        padding-left: 0.5em;
     }
 </style>
 
@@ -148,8 +153,12 @@ model.setStyles({
 
 var block1 = model.makeBlock();
 model.setBlockStyle(block1,'header');
-var text1 = model.makeText("header");
+var text1 = model.makeText("part1");
 block1.append(text1);
+var text2 = model.makeText("part2");
+block1.append(text2);
+var text3 = model.makeText("part3");
+block1.append(text3);
 model.getRoot().append(block1);
 
 var block2 = model.makeBlock();
@@ -195,24 +204,28 @@ function clearChildren(root) {
     while (root.firstChild) root.removeChild(root.firstChild);
 }
 function renderTree(model) {
-    function renderTreeChild(mnode) {
-        var ul = document.createElement('ul');
-        ul.appendChild(document.createTextNode(mnode.type));
-        if(mnode.type == doc.TEXT) {
-            ul.appendChild(document.createTextNode(":"+mnode.text));
-        }
-        for(var i=0; i<mnode.childCount(); i++) {
-            var child = mnode.child(i);
-            var child_dom = renderTreeChild(child);
-            var li = document.createElement('li');
-            li.appendChild(child_dom);
-            ul.appendChild(li);
-        }
-        return ul;
-    }
     var root = document.getElementById("model-tree");
     clearChildren(root);
     root.appendChild(renderTreeChild(model.getRoot()));
+}
+function renderTreeChild(mnode) {
+    var ul = document.createElement('ul');
+    for(var i=0; i<mnode.childCount(); i++) {
+        var li = document.createElement('li');
+
+        var child = mnode.child(i);
+        var text = child.type + " " + child.id;
+        li.appendChild(document.createTextNode(text));
+        if(child.type == doc.TEXT) {
+            li.appendChild(document.createTextNode(': "'+child.text+'"'));
+        }
+        if(child.childCount() > 0) {
+            var child_dom = renderTreeChild(child);
+            li.appendChild(child_dom);
+        }
+        ul.appendChild(li);
+    }
+    return ul;
 }
 function saveSelection(ed) {
     var sel = window.getSelection();
@@ -504,7 +517,19 @@ document.getElementById('editor').addEventListener('keydown',function(e){
         stopEvent(e);
         styleSelectionInline(model.getStyles().inline['inline-code']);
     }
+    if(e.keyCode == 13) { //enter key
+        stopEvent(e);
+        splitBlock();
+    }
 });
+
+function splitBlock() {
+    var info = saveSelection(editor);
+    var mod = selectionToModelNode(info,model);
+    doc.splitBlockAt(mod,info.startOffset,model);
+    syncDom(editor,model);
+    //restoreSelection(info);
+}
 document.getElementById("header").addEventListener('click',function(e) {
     stopEvent(e);
     changeBlockStyle(model.getStyles().block.header);
