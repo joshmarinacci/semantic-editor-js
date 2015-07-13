@@ -5,6 +5,7 @@
 exports.TEXT = 'text';
 exports.SPAN = 'span';
 exports.BLOCK = 'block';
+var DEFAULT_BLOCK_STYLE = 'body';
 
 var _id_count = 0;
 exports.genId = function() {
@@ -12,7 +13,6 @@ exports.genId = function() {
     return "id_"+_id_count;
 }
 
-var DEFAULT_BLOCK_STYLE = 'body';
 
 function DNode(type,text) {
     this.type = type;
