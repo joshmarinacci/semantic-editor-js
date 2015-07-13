@@ -338,7 +338,7 @@ function dupeAndSplit(node,offset,model) {
 }
 
 exports.splitBlockAt = function(node, offset, model) {
-    dupeAndSplit(node,offset,model);
+    return dupeAndSplit(node,offset,model);
 }
 
 
