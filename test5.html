@@ -481,7 +481,7 @@ function applyChanges(editor,model,changes) {
             ch.model.splice(ch.mod_i,1);
         }
         if(ch.type == 'delete'){
-            ch.model.splice(ch.mod_i,1);
+             ch.model.content.splice(ch.mod_i,1);
         }
         if(ch.type == 'insert') {
             var mod = genModelFromDom(ch.dom_node);
@@ -509,6 +509,16 @@ function scanForChanges(dom_root,mod_root) {
             mod_i++;
             dom_i++;
             if(mod_i >= mod_len || dom_i >= dom_len ) break;
+        }
+        if(mod_i < mod_len) {
+             changes.push({
+                type:'delete',
+                model:mod_root,
+                mod_i:mod_i
+            });
+        }
+        if(dom_i < dom_len) {
+            console.log("there was an extra dom   node. insertion");
         }
     }
 
