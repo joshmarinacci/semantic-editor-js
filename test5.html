@@ -54,83 +54,212 @@ several header levels: title, subtitle, section
 -->
 
 
-<html>
+<html lang="en">
 <head>
-<style type='text/css'>
-.bold {
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Semantic Editor</title>
+
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css"/>
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap-theme.css"/>
+
+    <style type='text/css'>
+
+#editor {
+    border: 1px dotted #ddd;
+    padding: 0.5em;
+    margin: 1em 0em;
+}
+#editor:focus {
+    outline: none;
+    border: 1px solid #ddd;
+}
+
+#editor div {
+    margin: 0.5em;
+    padding: 0.5em;
+    position: relative;
+    line-height: 140%;
+}
+
+#editor.semantic-view *:after {
+    position: absolute;
+    font-size: 8pt;
+    padding: 3px 0 0 0;
+    margin:0;
+    top: 0.5rem;
+    right: 1.0rem;
+    text-align: right;
+    font-family: sans-serif;
+    color: #aaa;
+    font-variant: normal;
+}
+
+#editor.semantic-view div.header {
+    font-size: 150%;
+    background-color: #fff0f0;
+}
+#editor.semantic-view div.body {
+    color: #444;
+    border: 1px solid #eee;
+    border-width: 0px 0px 1px 0px;
+}
+
+#editor.semantic-view .block-code {
+    color: #888800;
+    background-color: #fffff0;
+    font-family: monospace;
+    border: 1px solid #dda;
+    padding: 0.5em;
+    white-space: pre;
+}
+
+#editor.semantic-view .block-quote {
+    background-color: #eef;
+    color: black;
+    font-family: serif;
+    font-style: italic;
+    padding: 1em;
+}
+#editor.semantic-view .header:after { content: "header"; }
+#editor.semantic-view .body:after { content: "body"; }
+#editor.semantic-view .block-code:after { content: "code block"; }
+#editor.semantic-view .block-quote:after { content: "block quote"; }
+
+/* inline styles */
+#editor.semantic-view .bold {
     color: red;
     font-weight: bold;
 }
-.italic {
+#editor.semantic-view .italic {
     color: green;
     font-weight: normal;
     font-style: italic;
 }
-.inline-code {
+#editor.semantic-view .inline-code {
     font-weight: normal;
     color: #cccc00;
     font-family: monospace;
 }
-.block-code {
-    color: #cccc00;
+
+
+
+#editor.visual-view div.header {
+    background-color: transparent;
+    font-size: 130%;
+    font-weight: bold;
+}
+#editor.visual-view div.body {
+    background-color: transparent;
+    font-family: serif;
+}
+#editor.visual-view div.block-quote {
+    background-color: red;
+}
+#editor.visual-view div.block-code {
+    background-color: #ffe;
     font-family: monospace;
-    border: 1px solid yellow;
-    padding: 0.5em;
+    font-weight: bold;
     white-space: pre;
-
+    border: 1px solid #cc8;
+    border-radius: 1em;
 }
-.body {
-    color: darkgray;
-    border: 1px solid #ccc;
+#editor.visual-view .bold {
+    font-weight: bold;
 }
-
-#editor {
-    border: 1px solid grey;
-    padding: 0.5em;
-}
-.header {
-    font-size: 150%;
-    background-color: #ffcccc;
+#editor.visual-view .italic {
+    font-style: italic;
 }
 
-div {
-    padding: 0.5em;
-    margin: 0.5em;
-}
-    body {
-        display: flex;
-        display: -webkit-flex;
-        flex-direction: row;
-        -webkit-flex-direction: row;
-    }
-    #left-col, #right-col {
-        flex: 1;
-        -webkit-flex: 1;
-        margin:0;
-        padding:0;
-    }
 
-    #model-tree ul {
-        margin:0;
-        padding:0;
-        padding-left: 0.5em;
-    }
-</style>
+
+#editor.markdown-view div.header {
+    font-weight: bold;
+}
+#editor.markdown-view div.header:before {
+    content: "#";
+}
+#editor.markdown-view div.block-code {
+    white-space: pre;
+    font-family: monospace;
+}
+#editor.markdown-view div.block-code:before {
+    content: "```";
+    white-space: pre;
+    display: block;
+}
+#editor.markdown-view div.block-code:after {
+    content: "```";
+    white-space: pre;
+    display: block;
+}
+
+#editor.markdown-view .bold:before {  content: "*"; }
+#editor.markdown-view .bold:after  {  content: "*"; }
+#editor.markdown-view .italic:before {  content: "_"; }
+#editor.markdown-view .italic:after  {  content: "_"; }
+
+    </style>
 
 </head>
 <body>
-    <div id="left-col">
-        <div id="editor" contenteditable="true" spellcheck="false"></div>
-        <div>
-            <button id="header">header</button>
-            <button id="body">body</button>
-            <button id="block-code">code block</button>
+
+    <div class="container">
+        <div class="row">
+            <h3>Semantic Editor</h3>
+        </div>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="btn-group">
+                            <button id="foo" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Block <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a href="#" id="set-header">Section Header</a></li>
+                                <li><a href="#" id="set-body">Plain Body</a></li>
+                                <li><a href="#" id="set-block-code">Code Block</a></li>
+                                <li><a href="#" id="set-block-quote">Quote</a></li>
+                                <li><a href="#" id="set-list-item">List Item</a></li>
+                                <li role="separator" class="divider"></li>
+                                <li><a href="#" id="set-custom">Custom</a></li>
+                            </ul>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Span <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a href="#" id="set-plain">Plain</a></li>
+                                <li><a href="#" id="set-bold">Bold</a></li>
+                                <li><a href="#" id="set-italic">Italic</a></li>
+                                <li><a href="#" id="set-inline-code">Code</a></li>
+                                <li><a href="#" id="set-deleted">Deleted</a></li>
+                                <li role="separator" class="divider"></li>
+                                <li><a href="#" id="set-custom-inline">Custom</a></li>
+                            </ul>
+                        </div>
+                        <div class="btn-group">
+                            <button id='switch-semantic' type="button" class="btn btn-default">Semantic</button>
+                            <button id='switch-visual' type="button" class="btn btn-default">Visual</button>
+                            <button id='switch-markdown' type="button" class="btn btn-default">Markdown</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="editor" class="semantic-view" contenteditable="true" spellcheck="false"></div>
+            </div>
+            <div class="col-md-4">
+                <div id="model-tree"></div>
+            </div>
         </div>
     </div>
-    <div id="right-col">
-        <div id="model-tree"></div>
-    </div>
+
+
 </body>
+<script src="node_modules/jquery/dist/jquery.js"></script>
+<script src="node_modules/bootstrap/dist/js/bootstrap.js"></script>
 <script src="bundle.js"></script>
 <script type='text/javascript'>
 
@@ -141,7 +270,8 @@ model.setStyles({
         //name of style : css classname
         header:'header',
         body:'body',
-        'block-code':'block-code'
+        'block-code':'block-code',
+        'block-quote':'block-quote'
     },
     inline: {
         bold:'bold',
@@ -153,24 +283,42 @@ model.setStyles({
 
 var block1 = model.makeBlock();
 model.setBlockStyle(block1,'header');
-var text1 = model.makeText("part1");
+var text1 = model.makeText("This is a header");
 block1.append(text1);
-var text2 = model.makeText("part2");
+var text2 = model.makeText(" with some");
 block1.append(text2);
-var text3 = model.makeText("part3");
+var text3 = model.makeText(" text");
 block1.append(text3);
 model.getRoot().append(block1);
 
 var block2 = model.makeBlock();
 model.getRoot().append(block2);
 model.setBlockStyle(block2,'body');
-block2.append(model.makeText("body"));
+block2.append(model.makeText("This is a paragraph of body text "));
+
+
+var span1 = model.makeSpan();
+span1.style = 'bold';
+span1.append(model.makeText("with some bold"));
+block2.append(span1);
+
+var span2 = model.makeSpan();
+span2.style = 'italic';
+span2.append(model.makeText(" and italic"));
+block2.append(span2);
+
+block2.append(model.makeText(" text to read."));
+
+var block3 = model.makeBlock();
+model.getRoot().append(block3);
+model.setBlockStyle(block3,'body');
+block3.append(model.makeText("This is another paragraph of body text"));
 
 
 var block3 = model.makeBlock();
 model.getRoot().append(block3);
 model.setBlockStyle(block3,'block-code');
-block3.append(model.makeText("block\ncode"));
+block3.append(model.makeText("//codeblock\nfor(var i=0; i<8; i++) {\n  console.log(i);\n}"));
 
 var editor = document.getElementById('editor');
 
@@ -485,17 +633,50 @@ document.getElementById('editor').addEventListener('keydown',function(e){
     }
 });
 
-document.getElementById("header").addEventListener('click',function(e) {
-    stopEvent(e);
+
+document.getElementById("set-header").addEventListener('click',function(e) {
+   // stopEvent(e);
     changeBlockStyle(model.getStyles().block.header);
 });
-document.getElementById("body").addEventListener('click',function(e) {
-    stopEvent(e);
+document.getElementById("set-body").addEventListener('click',function(e) {
+    //stopEvent(e);
     changeBlockStyle(model.getStyles().block.body);
 });
-document.getElementById("block-code").addEventListener('click',function(e) {
-    stopEvent(e);
+document.getElementById("set-block-code").addEventListener('click',function(e) {
+    // stopEvent(e);
     changeBlockStyle(model.getStyles().block['block-code']);
 });
+document.getElementById("set-block-quote").addEventListener('click',function(e) {
+    changeBlockStyle(model.getStyles().block['block-quote']);
+});
+
+document.getElementById("set-bold").addEventListener('click',function(e) {
+    styleSelectionInline(model.getStyles().inline.bold);
+});
+document.getElementById("set-italic").addEventListener('click',function(e) {
+    styleSelectionInline(model.getStyles().inline.italic);
+});
+document.getElementById("set-inline-code").addEventListener('click',function(e) {
+    styleSelectionInline(model.getStyles().inline['inline-code']);
+});
+$("#switch-visual").click(function() {
+    $('#editor')
+            .removeClass('semantic-view')
+            .removeClass('markdown-view')
+            .addClass('visual-view');
+});
+$("#switch-semantic").click(function() {
+    $('#editor')
+            .removeClass('visual-view')
+            .removeClass('markdown-view')
+            .addClass('semantic-view');
+});
+$("#switch-markdown").click(function() {
+    $('#editor')
+            .removeClass('visual-view')
+            .removeClass('semantic-view')
+            .addClass('markdown-view');
+});
+
 </script>
 </html>
