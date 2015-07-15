@@ -241,3 +241,17 @@ test('split in middle text', function(t) {
 
     t.end();
 });
+
+test('delete an empty text element', function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    model.getRoot().append(block1);
+    block1.append(model.makeText("abc"));
+
+    var block2 = model.makeBlock();
+    model.getRoot().append(block2);
+    block2.append(model.makeText("def"));
+
+    dumpTree(model.getRoot());
+    t.end();
+});

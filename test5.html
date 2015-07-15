@@ -312,7 +312,8 @@ block2.append(model.makeText(" text to read."));
 var block3 = model.makeBlock();
 model.getRoot().append(block3);
 model.setBlockStyle(block3,'body');
-block3.append(model.makeText("This is another paragraph of body text"));
+//block3.append(model.makeText("This is another paragraph of body text"));
+block3.append(model.makeText("T"));
 
 
 var block3 = model.makeBlock();
@@ -487,13 +488,45 @@ function applyChanges(editor,model,changes) {
             var mod = genModelFromDom(ch.dom_node);
             ch.model.splice(ch.mod_i,0,mod);
         }
+        if(ch.type == 'transform') {
+            console.log("got a transform");
+            if(ch.model_node.type == 'block') {
+                console.log("node name = ", ch.dom_node.nodeName);
+                if(ch.dom_node.nodeName == 'BR') {
+                    console.log("switched to a BR. this is really a deletion");
+                    var parent = ch.model_node.getParent();
+                    var n = parent.content.indexOf(ch.model_node);
+                    parent.content.splice(n,1);
+                }
+            }
+        }
     });
 }
 
+var u = {
+    incount: 0,
+    genTab: function() {
+        var str = "";
+        for(var i=0; i<this.incount; i++) str += "  ";
+        return str;
+    },
+    p: function(s) {
+        console.log(this.genTab()+""+s);
+    },
+    indent: function() {
+        this.incount++;
+    },
+    outdent: function() {
+        this.incount--;
+    }
+};
+
 function scanForChanges(dom_root,mod_root) {
+    u.indent();
+    u.p("mod = " + mod_root.id);
     var changes = [];
     if(dom_root.childNodes.length != mod_root.childCount()) {
-        console.log("WARNING: length has changed");
+        u.p("WARNING: length has changed");
     }
 
     //do children first
@@ -505,7 +538,43 @@ function scanForChanges(dom_root,mod_root) {
         while(true) {
             var dom_node = dom_root.childNodes[dom_i];
             var mod_node = mod_root.child(mod_i);
+            //if next dom matches current node, then a new node was inserted
+            //if cur dom matches next model, then a node was deleted
+            if(dom_node.nodeType == Node.ELEMENT_NODE) {
+                if(dom_node.id != mod_node.id) {
+                    console.log("element mismatch",dom_node,mod_node,mod_node.id);
+                    if(mod_i+1 < mod_len) {
+                        var next_mod = mod_root.child(mod_i+1);
+                    }
+                    if(dom_i+1 < dom_len) {
+                        var next_dom = dom_root.childNodes[dom_i+1];
+                        if(next_dom.id == mod_node.id) {
+                            u.p("a new item was inserted");
+                        }
+                    }
+                    if(next_mod && next_dom) {
+                        if(next_mod.id == next_dom.id) {
+                            console.log("next is the same. just this is different");
+                            changes.push({
+                                type:'transform',
+                                model_node:mod_node,
+                                model_index:mod_i,
+                                dom_node:dom_node,
+                                dom_index:dom_i
+                            })
+                        }
+                    }
+                }
+            }
+            if(mod_i+1 < mod_len) {
+                var next_mod = mod_root.child(mod_i+1);
+                if(next_mod.id == dom_node.id) {
+                    u.p("next matchup");
+                }
+            }
             changes = changes.concat(scanForChanges(dom_node,mod_node));
+
+
             mod_i++;
             dom_i++;
             if(mod_i >= mod_len || dom_i >= dom_len ) break;
@@ -518,11 +587,19 @@ function scanForChanges(dom_root,mod_root) {
             });
         }
         if(dom_i < dom_len) {
-            console.log("there was an extra dom   node. insertion");
+            u.p("there was an extra dom node. Insertion");
         }
     }
+    if(dom_len == 0 && mod_len > 0) {
+        u.p("too many model nodes. must delete them");
+        changes.push({
+            type:'delete',
+            model:mod_root,
+            mod_i:0
+        })
+    }
 
-    //note itself
+    //node itself
     if(dom_root.nodeType == Node.TEXT_NODE) {
         if(mod_root.text != dom_root.nodeValue) {
             changes.push({
@@ -534,6 +611,7 @@ function scanForChanges(dom_root,mod_root) {
             });
         }
     }
+    u.outdent();
     return changes;
 }
 
