@@ -38,6 +38,11 @@ function DNode(type,text) {
         return 0;
     }
     this.getParent = function() { return this.parent; }
+    this.deleteFromParent = function() {
+        var n = this.parent.content.indexOf(this);
+        this.parent.content.splice(n,1);
+        return this.parent;
+    }
 }
 
 
@@ -167,13 +172,85 @@ function DModel() {
         }
     };
 
+    this.getPreviousTextNode = function(tnode) {
+        if(typeof tnode.parent == 'undefined' || tnode.parent == null) throw new Error("invalid node with no parent");
+
+
+        function getIndex(n) {
+            return n.parent.content.indexOf(n);
+        }
+        var n = getIndex(tnode);
+        if(n == 0) {
+            console.log("first child. must go up");
+            return this.getPreviousTextNode(tnode.getParent());
+        }
+
+        n--;
+        //get previous sibling
+        tnode = tnode.getParent().child(n);
+        //get last child
+        tnode = tnode.child(tnode.childCount()-1);
+        if(tnode.type == 'text') return tnode;
+    };
+
+    this.getNextTextNode = function(tnode) {
+        if(typeof tnode.parent == 'undefined' || tnode.parent == null) throw new Error("invalid node with no parent");
+        var it = this.getIterator(tnode);
+        while(it.hasNext()) {
+            var node = it.next();
+            if(node.type == exports.TEXT) return node;
+        }
+        return null;
+    };
+
+    this.deleteTextForwards = function(startNode, startOffset) {
+        if(startNode.type != exports.TEXT) throw new Error("can't delete text from non text element");
+        if(startNode.text.length > startOffset+1) {
+            this.deleteText(startNode,startOffset,startNode,startOffset+1);
+            return {
+                node: startNode,
+                offset: startOffset
+            }
+        } else {
+            var nextText = this.getNextTextNode(startNode);
+            var nextOffset = startOffset-startNode.text.length;
+            console.log("next offset is ", nextOffset, startOffset, startNode.text.length);
+            var pos =  this.deleteTextForwards(nextText,nextOffset);
+            //if both text and both have same parent (so it's not inside a span), then we can merge
+            if(startNode.type == exports.TEXT && pos.node.type == exports.TEXT && startNode.getParent() == pos.node.getParent()) {
+                startNode.text += pos.node.text;
+                //delete the text node
+                var parent = pos.node.deleteFromParent();
+                //delete the parent if it's empty too
+                if(parent.childCount() == 0) {
+                    parent.deleteFromParent();
+                }
+                return {
+                    node: startNode,
+                    offset: startOffset
+                }
+            } else {
+                return {
+                    node: startNode,
+                    offset: startOffset
+                }
+            }
+        }
+    }
+
     this.deleteText = function(startNode, startOffset, endNode, endOffset) {
+        //console.log("deleting from ",startNode.id,startOffset,"to",endNode.id,endOffset);
         if(startNode === endNode && startNode.type === exports.TEXT) {
             if(startOffset > endOffset) throw new Error("start offset can't be greater than end offset");
             if(startNode.type !== exports.TEXT) throw new Error("can't delete from non text yet");
             startNode.text = startNode.text.substring(0,startOffset)
                 + startNode.text.substring(endOffset);
             return;
+        }
+
+        if(endNode.type !== exports.TEXT) {
+            console.log("can't delete an element directly. go to it's text child");
+            return this.deleteText(startNode,startOffset,endNode.child(0),endOffset);
         }
 
 
@@ -186,7 +263,25 @@ function DModel() {
             //console.log("next node is",node.id);
             if(node == endNode) {
                 //console.log("at the end. fix it", node.id);
-                node.text = node.text.substring(endOffset);
+                if(node.type == exports.BLOCK) {
+                    console.log("it's a block. ");
+                    if(node.content.length == 0) {
+                        console.log("it's an empty block");
+                    }
+                }
+                if(node.type == exports.TEXT) {
+                    node.text = node.text.substring(endOffset);
+                    console.log("new text length = ", node.text.length);
+                    if(node.text.length <= 0) {
+                        var parent = node.getParent();
+                        it.deleteNow();
+                        if(parent.content.length <= 0 && parent.getParent() != null) {
+                            console.log("parent is empty too");
+                            var nn= parent.getParent().content.indexOf(parent);
+                            parent.parent.content.splice(nn,1);
+                        }
+                    }
+                }
                 break;
             } else {
                 //console.log("in the middle. delete it", node.id);
@@ -229,6 +324,17 @@ function DModel() {
     this.getStyles = function() {
         return this.styles;
     }
+
+
+    this.findNodeById = function(id) {
+        var it = this.getIterator(this.getRoot());
+        while(it.hasNext()) {
+            var node = it.next();
+            if(node.id == id) return node;
+        }
+        return null;
+    }
+
 }
 
 exports.makeModel = function() {

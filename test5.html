@@ -294,7 +294,7 @@ model.getRoot().append(block1);
 var block2 = model.makeBlock();
 model.getRoot().append(block2);
 model.setBlockStyle(block2,'body');
-block2.append(model.makeText("This is a paragraph of body text "));
+block2.append(model.makeText("This is a paragraph of body text"));
 
 
 var span1 = model.makeSpan();
@@ -409,6 +409,7 @@ function restoreSelection(ran) {
         return;
     }
     var range = document.createRange();
+    console.log("going to node",ran.id,ran.path,ran.startOffset);
     var node = document.getElementById(ran.id);
     ran.path.forEach(function(index){
         node = node.childNodes[index];
@@ -616,17 +617,11 @@ function scanForChanges(dom_root,mod_root) {
 }
 
 function selectionToModelNode(info,model) {
-    var root = model.getRoot();
-    for(var i=0; i<root.childCount(); i++) {
-        var node = root.child(i);
-        if(node.id == info.id) {
-            info.path.forEach(function(index) {
-                node = node.child(index);
-            });
-            return node;
-        }
-    }
-    return null;
+    var node = model.findNodeById(info.id);
+    info.path.forEach(function(index) {
+        node = node.child(index);
+    });
+    return node;
 }
 
 function styleSelectionInline(style) {
@@ -695,6 +690,45 @@ document.getElementById("editor").addEventListener("input", function(e) {
     restoreSelection(sel);
 }, false);
 document.getElementById('editor').addEventListener('keydown',function(e){
+
+    if(e.keyCode == 8) { //backspace
+        stopEvent(e);
+        var info = saveSelection(editor);
+        var mod = selectionToModelNode(info,model);
+        console.log(info,mod);
+        console.log("delete backwards starting at",mod.id,info.startOffset);
+
+        if(info.startOffset == 0) {
+            console.log("going into a previous node");
+            var start = model.getPreviousTextNode(mod);
+            var startOffset = start.text.length-1;
+            console.log("deleting at",start.id,startOffset);
+            model.deleteText(start,startOffset,mod, info.startOffset);
+            console.log("text = ", startOffset);
+            info.startOffset = startOffset;
+            info.id = start.getParent().id;
+            info.path = [start.getParent().content.indexOf(start)];
+            console.log("new info = ",info);
+        } else {
+            model.deleteText(mod, info.startOffset - 1, mod, info.startOffset);
+            info.startOffset--;
+        }
+        syncDom(editor,model);
+        restoreSelection(info);
+        return;
+    }
+    if(e.ctrlKey === true && e.keyCode == 68 ) {//ctrl-D
+        console.log("forward delete");
+        stopEvent(e);
+        var info = saveSelection(editor);
+        var mod = selectionToModelNode(info,model);
+        console.log(info,mod);
+        console.log("delete forwards starting at",mod.id,info.startOffset);
+        model.deleteTextForwards(mod,info.startOffset);
+        syncDom(editor,model);
+        restoreSelection(info);
+    }
+
     if(e.metaKey===true && e.keyCode == 66) { //cmd-B
         stopEvent(e);
         styleSelectionInline(model.getStyles().inline.bold);

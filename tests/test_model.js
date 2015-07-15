@@ -253,5 +253,88 @@ test('delete an empty text element', function(t) {
     block2.append(model.makeText("def"));
 
     dumpTree(model.getRoot());
+    var end_node = block2.child(0);
+    var end_offset = 0;
+    var start_node = model.getPreviousTextNode(end_node);
+    var start_offset = start_node.text.length-1;
+    t.equal(start_node.text,"abc");
+    t.equal(start_offset,2);
+    model.deleteText(start_node,start_offset,end_node,end_offset);
+    t.equal(model.toPlainText(),"abdef");
+    t.end();
+});
+
+test('delete an empty text element 2', function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    model.getRoot().append(block1);
+    block1.append(model.makeText("abc"));
+
+    var block2 = model.makeBlock();
+    model.getRoot().append(block2);
+    block2.append(model.makeText(""));
+
+    dumpTree(model.getRoot());
+    var end_node = block2.child(0);
+    var end_offset = 0;
+    var start_node = model.getPreviousTextNode(end_node);
+    var start_offset = start_node.text.length-1;
+    t.equal(start_node.text,"abc");
+    t.equal(start_offset,2);
+    model.deleteText(start_node,start_offset,block2,0);
+    dumpTree(model.getRoot());
+    t.equal(model.toPlainText(),"ab");
+    t.equal(model.getRoot().childCount(),1);
+    t.end();
+});
+
+test('delete forwards',function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    model.getRoot().append(block1);
+    block1.append(model.makeText("abc"));
+    var start_node = block1.child(0);
+    var start_offset = 1;
+    var pos = model.deleteTextForwards(start_node,start_offset);
+    t.equal(model.toPlainText(),'ac');
+    t.equal(pos.node, start_node);
+    t.equal(pos.offset,start_offset);
+    t.end();
+});
+
+
+test('delete forwards text start',function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    model.getRoot().append(block1);
+    block1.append(model.makeText("abc"));
+    block1.append(model.makeText("def"));
+
+    var start_node = block1.child(0);
+    var start_offset = 3;
+    var pos = model.deleteTextForwards(start_node,start_offset);
+    t.equal(model.toPlainText(),'abcef');
+    t.equal(pos.node, start_node);
+    t.equal(pos.offset,start_offset);
+    t.end();
+});
+
+test('delete forwards span start',function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    model.getRoot().append(block1);
+    block1.append(model.makeText("abc"));
+    var span = model.makeSpan();
+    span.append(model.makeText("def"));
+    block1.append(span);
+
+    var start_node = block1.child(0);
+    var start_offset = 3;
+    var pos = model.deleteTextForwards(start_node,start_offset);
+    dumpTree(model.getRoot());
+    t.equal(model.toPlainText(),'abcef');
+    t.equal(pos.node, start_node);
+    t.equal(pos.offset,start_offset);
+    t.equal(block1.childCount(),2);
     t.end();
 });
