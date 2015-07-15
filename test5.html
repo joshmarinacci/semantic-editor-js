@@ -402,25 +402,8 @@ function findParentNonTextNode(node) {
 function saveSelection(ed,model) {
     var sel = window.getSelection();
     var range = sel.getRangeAt(0);
-    //var node = range.startContainer;
     var start = findParentNonTextNode(range.startContainer);
     var end = findParentNonTextNode(range.endContainer);
-    /*
-    var path = [];
-    while(node.nodeType == Node.TEXT_NODE || node.id == "") {
-        var nn = -1;
-        for(var i=0; i<node.parentNode.childNodes.length; i++) {
-            if(node.parentNode.childNodes[i] == node) {
-                nn = i;
-            }
-        }
-        path.unshift(nn);
-        node = node.parentNode;
-    }*/
-    if(range.collapsed === false) {
-        console.log("need an ending part");
-
-    }
     return {
         id:start.node.id,
         path:start.path,
@@ -450,7 +433,6 @@ function restoreSelection(ran) {
         return;
     }
     var range = document.createRange();
-    console.log("going to node",ran.id,ran.path,ran.startOffset);
     var node = document.getElementById(ran.id);
     ran.path.forEach(function(index){
         node = node.childNodes[index];
@@ -564,8 +546,6 @@ var u = {
 };
 
 function scanForChanges(dom_root,mod_root) {
-    u.indent();
-    u.p("mod = " + mod_root.id);
     var changes = [];
     if(dom_root.childNodes.length != mod_root.childCount()) {
         u.p("WARNING: length has changed");
@@ -584,19 +564,19 @@ function scanForChanges(dom_root,mod_root) {
             //if cur dom matches next model, then a node was deleted
             if(dom_node.nodeType == Node.ELEMENT_NODE) {
                 if(dom_node.id != mod_node.id) {
-                    console.log("element mismatch",dom_node,mod_node,mod_node.id);
+                    //console.log("element mismatch",dom_node,mod_node,mod_node.id);
                     if(mod_i+1 < mod_len) {
                         var next_mod = mod_root.child(mod_i+1);
                     }
                     if(dom_i+1 < dom_len) {
                         var next_dom = dom_root.childNodes[dom_i+1];
                         if(next_dom.id == mod_node.id) {
-                            u.p("a new item was inserted");
+                            //u.p("a new item was inserted");
                         }
                     }
                     if(next_mod && next_dom) {
                         if(next_mod.id == next_dom.id) {
-                            console.log("next is the same. just this is different");
+                            //console.log("next is the same. just this is different");
                             changes.push({
                                 type:'transform',
                                 model_node:mod_node,
@@ -611,7 +591,7 @@ function scanForChanges(dom_root,mod_root) {
             if(mod_i+1 < mod_len) {
                 var next_mod = mod_root.child(mod_i+1);
                 if(next_mod.id == dom_node.id) {
-                    u.p("next matchup");
+                    //u.p("next matchup");
                 }
             }
             changes = changes.concat(scanForChanges(dom_node,mod_node));
@@ -629,11 +609,11 @@ function scanForChanges(dom_root,mod_root) {
             });
         }
         if(dom_i < dom_len) {
-            u.p("there was an extra dom node. Insertion");
+            //u.p("there was an extra dom node. Insertion");
         }
     }
     if(dom_len == 0 && mod_len > 0) {
-        u.p("too many model nodes. must delete them");
+        //u.p("too many model nodes. must delete them");
         changes.push({
             type:'delete',
             model:mod_root,
@@ -772,20 +752,14 @@ document.getElementById('editor').addEventListener('keydown',function(e){
             return;
         }
         var mod = selectionToModelNode(info,model);
-        console.log(info,mod);
-        console.log("delete backwards starting at",mod.id,info.startOffset);
 
         if(info.startOffset == 0) {
-            console.log("going into a previous node");
             var start = model.getPreviousTextNode(mod);
             var startOffset = start.text.length-1;
-            console.log("deleting at",start.id,startOffset);
             model.deleteText(start,startOffset,mod, info.startOffset);
-            console.log("text = ", startOffset);
             info.startOffset = startOffset;
             info.id = start.getParent().id;
             info.path = [start.getParent().content.indexOf(start)];
-            console.log("new info = ",info);
         } else {
             model.deleteText(mod, info.startOffset - 1, mod, info.startOffset);
             info.startOffset--;
@@ -795,12 +769,9 @@ document.getElementById('editor').addEventListener('keydown',function(e){
         return;
     }
     if(e.ctrlKey === true && e.keyCode == 68 ) {//ctrl-D
-        console.log("forward delete");
         stopEvent(e);
         var info = saveSelection(editor);
         var mod = selectionToModelNode(info,model);
-        console.log(info,mod);
-        console.log("delete forwards starting at",mod.id,info.startOffset);
         model.deleteTextForwards(mod,info.startOffset);
         syncDom(editor,model);
         restoreSelection(info);
@@ -833,31 +804,14 @@ document.getElementById('editor').addEventListener('keydown',function(e){
 });
 
 
-document.getElementById("set-header").addEventListener('click',function(e) {
-   // stopEvent(e);
-    changeBlockStyle(model.getStyles().block.header);
-});
-document.getElementById("set-body").addEventListener('click',function(e) {
-    //stopEvent(e);
-    changeBlockStyle(model.getStyles().block.body);
-});
-document.getElementById("set-block-code").addEventListener('click',function(e) {
-    // stopEvent(e);
-    changeBlockStyle(model.getStyles().block['block-code']);
-});
-document.getElementById("set-block-quote").addEventListener('click',function(e) {
-    changeBlockStyle(model.getStyles().block['block-quote']);
-});
+$("#set-header").click(function(e) {      changeBlockStyle(model.getStyles().block.header);         });
+$("#set-body").click(function(e) {        changeBlockStyle(model.getStyles().block.body);           });
+$("#set-block-code").click(function(e)  { changeBlockStyle(model.getStyles().block['block-code']);  });
+$("#set-block-quote").click(function(e) { changeBlockStyle(model.getStyles().block['block-quote']); });
+$("#set-bold").click(function(e) {        styleSelectionInline(model.getStyles().inline.bold);      });
+$("#set-italic").click(function(e) {      styleSelectionInline(model.getStyles().inline.italic);    });
+$("#set-inline-code").click(function(e) { styleSelectionInline(model.getStyles().inline['inline-code']);  });
 
-document.getElementById("set-bold").addEventListener('click',function(e) {
-    styleSelectionInline(model.getStyles().inline.bold);
-});
-document.getElementById("set-italic").addEventListener('click',function(e) {
-    styleSelectionInline(model.getStyles().inline.italic);
-});
-document.getElementById("set-inline-code").addEventListener('click',function(e) {
-    styleSelectionInline(model.getStyles().inline['inline-code']);
-});
 $("#switch-visual").click(function() {
     $('#editor')
             .removeClass('semantic-view')

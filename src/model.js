@@ -214,7 +214,7 @@ function DModel() {
         } else {
             var nextText = this.getNextTextNode(startNode);
             var nextOffset = startOffset-startNode.text.length;
-            console.log("next offset is ", nextOffset, startOffset, startNode.text.length);
+            //console.log("next offset is ", nextOffset, startOffset, startNode.text.length);
             var pos =  this.deleteTextForwards(nextText,nextOffset);
             //if both text and both have same parent (so it's not inside a span), then we can merge
             if(startNode.type == exports.TEXT && pos.node.type == exports.TEXT && startNode.getParent() == pos.node.getParent()) {
