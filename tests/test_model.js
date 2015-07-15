@@ -340,10 +340,9 @@ test('delete forwards span start',function(t) {
 });
 
 
-//figure out why deleting forward into a span doesn't work in the real dom
-//is the position wrong?
+//figure out why deleting forward into a span doesn't work in the real dom is the position wrong?
 //build reverse dom iterator
 //when backward deleting, if span is now empty, delete it
 //deleting selection across block boundaries has problems.
 //forward and backward deleting across block boundaries
-//restore cursor properly when pressing enter inside of a code block
+

@@ -688,8 +688,10 @@ function splitBlock() {
     var info = saveSelection(editor);
     var mod = selectionToModelNode(info,model);
     var parts = doc.splitBlockAt(mod,info.startOffset,model);
-    syncDom(editor,model);
-    setSelection(parts[1],0,model);
+    return parts;
+//    return [parts[1],0];
+//    syncDom(editor,model);
+//    setSelection(parts[1],0,model);
 }
 
 function findBlockParent(node) {
@@ -792,14 +794,24 @@ document.getElementById('editor').addEventListener('keydown',function(e){
     if(e.keyCode == 13) { //enter key
         stopEvent(e);
         var info = saveSelection(editor);
-        var mod = selectionToModelNode(info,model);
+        var mod = findModelFromPosition(info.startpos);
         var block = findBlockParent(mod);
         if(block.style == 'block-code') {
             insertStringAt(mod,info.startOffset,"\n");
             syncDom(editor,model);
+            info.startpos.offset++;
+            setSelectionFromPosition(info.startpos);
         } else {
-            splitBlock();
+            var parts = splitBlock();
+            syncDom(editor,model);
+            var block2 = findBlockParent(parts[1]);
+            setSelectionFromPosition({
+                id:block2.id,
+                path:[0],
+                offset:0,
+            });
         }
+        return;
     }
 });
 
