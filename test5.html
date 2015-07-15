@@ -380,10 +380,32 @@ function renderTreeChild(mnode) {
     return ul;
 }
 
-function saveSelection(ed) {
+function findParentNonTextNode(node) {
+    var path = [];
+    while(node.nodeType == Node.TEXT_NODE || node.id == "") {
+        var parent = node.parentNode;
+        var nn = -1;
+        for(var i=0; i<parent.childNodes.length; i++) {
+            if(parent.childNodes[i] == node) {
+                nn = i;
+            }
+        }
+        path.unshift(nn);
+        node = parent;
+    }
+    return {
+        node:node,
+        path:path
+    }
+}
+
+function saveSelection(ed,model) {
     var sel = window.getSelection();
     var range = sel.getRangeAt(0);
-    var node = range.startContainer;
+    //var node = range.startContainer;
+    var start = findParentNonTextNode(range.startContainer);
+    var end = findParentNonTextNode(range.endContainer);
+    /*
     var path = [];
     while(node.nodeType == Node.TEXT_NODE || node.id == "") {
         var nn = -1;
@@ -394,12 +416,31 @@ function saveSelection(ed) {
         }
         path.unshift(nn);
         node = node.parentNode;
+    }*/
+    if(range.collapsed === false) {
+        console.log("need an ending part");
+
     }
     return {
-        id:node.id,
-        path:path,
+        id:start.node.id,
+        path:start.path,
         startOffset:range.startOffset,
-        endOffset:range.endOffset
+        endid: end.node.id,
+        endpath: end.path,
+        endOffset:range.endOffset,
+        collapsed:range.collapsed,
+        startpos: {
+            id:start.node.id,
+            path:start.path,
+            offset:range.startOffset,
+            model:model
+        },
+        endpos: {
+            id: end.node.id,
+            path:end.path,
+            offset:range.endOffset,
+            model:model
+        }
     };
 }
 
@@ -689,11 +730,47 @@ document.getElementById("editor").addEventListener("input", function(e) {
     syncDom(editor,model);
     restoreSelection(sel);
 }, false);
+
+function findModelFromPosition(pos) {
+    var node = model.findNodeById(pos.id);
+    if(pos.path) pos.path.forEach(function(index) {
+        node = node.child(index);
+    });
+    return node;
+}
+
+function setSelectionFromPosition(pos) {
+    if(!pos.id || pos.id == "") {
+        console.log("WARNING. bad id");
+        return;
+    }
+    var range = document.createRange();
+    console.log("going to node",pos.id,pos.path,pos.offset);
+    var node = document.getElementById(pos.id);
+    pos.path.forEach(function(index){
+        node = node.childNodes[index];
+    });
+    range.setStart(node, pos.offset);
+    range.collapse(true);
+    var wsel = window.getSelection();
+    wsel.removeAllRanges();
+    wsel.addRange(range);
+}
+
 document.getElementById('editor').addEventListener('keydown',function(e){
 
     if(e.keyCode == 8) { //backspace
         stopEvent(e);
-        var info = saveSelection(editor);
+        var info = saveSelection(editor,model);
+        if(info.collapsed === false) {
+            var modA = findModelFromPosition(info.startpos);
+            var modB = findModelFromPosition(info.endpos);
+            model.deleteText(modA,info.startpos.offset,
+                modB,info.endpos.offset);
+            syncDom(editor,model);
+            setSelectionFromPosition(info.startpos);
+            return;
+        }
         var mod = selectionToModelNode(info,model);
         console.log(info,mod);
         console.log("delete backwards starting at",mod.id,info.startOffset);

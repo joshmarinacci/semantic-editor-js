@@ -338,3 +338,8 @@ test('delete forwards span start',function(t) {
     t.equal(block1.childCount(),2);
     t.end();
 });
+
+
+//figure out why deleting forward into a span doesn't work in the real dom
+//is the position wrong?
+//build reverse dom iterator
