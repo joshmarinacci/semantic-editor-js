@@ -348,6 +348,30 @@ test('delete forwards across blocks', function(t) {
 
     t.end();
 });
+test('delete forwards across three blocks', function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    block1.append(model.makeText("abc"));
+    model.getRoot().append(block1);
+    var block2 = model.makeBlock();
+    block2.append(model.makeText("T"));
+    model.getRoot().append(block2);
+    var block3 = model.makeBlock();
+    block3.append(model.makeText("def"));
+    model.getRoot().append(block3);
+
+    dumpTree(model.getRoot());
+    var start_node = block1.child(0);
+    var start_offset = 3;
+    var pos = model.deleteTextForwards(start_node,start_offset);
+    dumpTree(model.getRoot());
+    t.equal(model.toPlainText(),"abcdef");
+    var pos = model.deleteTextForwards(start_node,start_offset);
+    dumpTree(model.getRoot());
+    t.equal(model.toPlainText(),"abcef");
+    t.equal(model.getRoot().childCount(),1);
+    t.end();
+});
 
 
 //build reverse dom iterator

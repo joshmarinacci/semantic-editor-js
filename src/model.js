@@ -233,13 +233,13 @@ function DModel() {
             var nextOffset = startOffset-startNode.text.length;
             var pos =  this.deleteTextForwards(nextText,nextOffset);
 
-            //strip out empty nodes
-            while(pos.node.isEmpty()) pos.node = pos.node.deleteFromParent();
-
-            //merge blocks if deleteing across blocks
+            //merge blocks if deleting across blocks
             var startBlock = findBlockParent(startNode);
             var endBlock  = findBlockParent(pos.node);
             if(startBlock.id != endBlock.id)  mergeBlocksBackwards(startBlock,endBlock);
+
+            //strip out empty nodes
+            while(pos.node.isEmpty()) pos.node = pos.node.deleteFromParent();
 
             //merge adjacent text nodes
             if(startNode.type == exports.TEXT && pos.node.type == exports.TEXT && startNode.getParent() == pos.node.getParent()) {
