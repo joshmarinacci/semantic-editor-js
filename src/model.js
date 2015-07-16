@@ -238,7 +238,7 @@ function DModel() {
             node:pos.node,
             offset: pos.offset
         }
-    }
+    };
 
     this.deleteTextForwards = function(startNode, startOffset) {
         if(startNode.type != exports.TEXT) throw new Error("can't delete text from non text element");
@@ -310,11 +310,17 @@ function DModel() {
                 if(node.type == exports.TEXT) {
                     node.text = node.text.substring(endOffset);
                     console.log("new text length = ", node.text.length);
-                    if(node.text.length <= 0) {
+                    //delete empty nodes
+                    if(node.isEmpty()) {
                         var parent = node.getParent();
                         it.deleteNow();
                         if(parent.isEmpty()) parent.deleteFromParent();
                     }
+                }
+                var startBlock = findBlockParent(startNode);
+                var endBlock  = findBlockParent(node);
+                if(startBlock.id != endBlock.id) {
+                    mergeBlocksBackwards(startBlock,endBlock);
                 }
                 break;
             } else {

@@ -443,7 +443,4 @@ test('delete backwards with empty text node in the middle',function(t) {
 })
 
 
-//build reverse dom iterator
-//when backward deleting, if span is now empty, delete it
-//deleting selection across block boundaries has problems.
 
