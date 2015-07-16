@@ -193,10 +193,7 @@ function DModel() {
         if(typeof tnode.parent == 'undefined' || tnode.parent == null) throw new Error("invalid node with no parent");
 
 
-        function getIndex(n) {
-            return n.parent.content.indexOf(n);
-        }
-        var n = getIndex(tnode);
+        var n = tnode.parent.content.indexOf(tnode);
         if(n == 0) {
             console.log("first child. must go up");
             return this.getPreviousTextNode(tnode.getParent());
@@ -205,6 +202,7 @@ function DModel() {
         n--;
         //get previous sibling
         tnode = tnode.getParent().child(n);
+        if(tnode.type == 'text') return tnode;
         //get last child
         tnode = tnode.child(tnode.childCount()-1);
         if(tnode.type == 'text') return tnode;
@@ -219,6 +217,28 @@ function DModel() {
         }
         return null;
     };
+
+    this.deleteTextBackwards = function(node,offset) {
+        if(node.type != exports.TEXT) throw new Error("can't delete text from a non-text element");
+        if(offset-1 >= 0) {
+            this.deleteText(node,offset-1,node,offset);
+            return {
+                node:node,
+                offset:offset-1
+            }
+        }
+        var prevText = this.getPreviousTextNode(node);
+        var prevOffset = prevText.text.length;
+        var pos = this.deleteTextBackwards(prevText,prevOffset);
+        //merge blocks if deleting across blocks
+        var startBlock = findBlockParent(pos.node);
+        var endBlock   = findBlockParent(node);
+        if(startBlock.id != endBlock.id)  mergeBlocksBackwards(startBlock,endBlock);
+        return {
+            node:pos.node,
+            offset: pos.offset
+        }
+    }
 
     this.deleteTextForwards = function(startNode, startOffset) {
         if(startNode.type != exports.TEXT) throw new Error("can't delete text from non text element");
@@ -338,7 +358,6 @@ function DModel() {
         return this.styles;
     }
 
-
     this.findNodeById = function(id) {
         var it = this.getIterator(this.getRoot());
         while(it.hasNext()) {
@@ -347,14 +366,11 @@ function DModel() {
         }
         return null;
     }
-
 }
 
 exports.makeModel = function() {
     return new DModel();
 };
-
-
 
 
 

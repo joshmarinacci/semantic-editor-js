@@ -373,9 +373,77 @@ test('delete forwards across three blocks', function(t) {
     t.end();
 });
 
+test('delete backwards across blocks', function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    block1.append(model.makeText("abc"));
+    model.getRoot().append(block1);
+    var block2 = model.makeBlock();
+    block2.append(model.makeText("def"));
+    model.getRoot().append(block2);
+
+    var start_node = block2.child(0);
+    var start_offset = 1;
+    dumpTree(model.getRoot());
+    var pos = model.deleteTextBackwards(start_node,start_offset);
+    dumpTree(model.getRoot());
+    var pos = model.deleteTextBackwards(pos.node,pos.offset);
+    dumpTree(model.getRoot());
+    t.equals(model.toPlainText(),"abef");
+    t.equals(model.getRoot().childCount(),1);
+    t.equals(pos.node,block1.child(0));
+    t.equals(pos.offset,2);
+    t.end();
+});
+
+test('delete backwards across short block', function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    block1.append(model.makeText("abc"));
+    model.getRoot().append(block1);
+    var block2 = model.makeBlock();
+    block2.append(model.makeText("T"));
+    model.getRoot().append(block2);
+    var block3 = model.makeBlock();
+    block3.append(model.makeText("def"));
+    model.getRoot().append(block3);
+
+    var start_node = block2.child(0);
+    var start_offset = 1;
+    dumpTree(model.getRoot());
+    var pos = model.deleteTextBackwards(start_node,start_offset);
+    dumpTree(model.getRoot());
+    var pos = model.deleteTextBackwards(pos.node,pos.offset);
+    dumpTree(model.getRoot());
+    t.equals(model.toPlainText(),"abdef");
+    t.equals(model.getRoot().childCount(),2);
+    t.equals(pos.node,block1.child(0));
+    t.equals(pos.offset,2);
+    t.end();
+});
+
+test('delete backwards with empty text node in the middle',function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    block1.append(model.makeText("abc"));
+    model.getRoot().append(block1);
+
+    var block2 = model.makeBlock();
+    block2.append(model.makeText("T"));
+    block2.append(model.makeText("def"));
+    model.getRoot().append(block2);
+    dumpTree(model.getRoot());
+    var pos = model.deleteTextBackwards(block2.child(1),0);
+    dumpTree(model.getRoot());
+    var pos = model.deleteTextBackwards(pos.node,pos.offset);
+    dumpTree(model.getRoot());
+    t.equals(model.toPlainText(),"abdef");
+
+    t.end();
+})
+
 
 //build reverse dom iterator
 //when backward deleting, if span is now empty, delete it
 //deleting selection across block boundaries has problems.
-//forward and backward deleting across block boundaries
 

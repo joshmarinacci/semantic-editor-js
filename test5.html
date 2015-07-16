@@ -721,13 +721,26 @@ function findModelFromPosition(pos) {
     return node;
 }
 
+function textNodeToSelectionPosition(node,offset) {
+    var parent = node.getParent();
+    var n = parent.content.indexOf(node);
+    return {
+        id:parent.id,
+        path:[n],
+        offset:offset
+    }
+}
+
 function setSelectionFromPosition(pos) {
+    if(!pos.id && pos.node != null) {
+        pos.id = pos.node;
+    }
     if(!pos.id || pos.id == "") {
         console.log("WARNING. bad id");
         return;
     }
     var range = document.createRange();
-    console.log("going to node",pos.id,pos.path,pos.offset);
+    console.log("cursor at",pos.id,pos.path,pos.offset);
     var node = document.getElementById(pos.id);
     pos.path.forEach(function(index){
         node = node.childNodes[index];
@@ -744,6 +757,7 @@ document.getElementById('editor').addEventListener('keydown',function(e){
     if(e.keyCode == 8) { //backspace
         stopEvent(e);
         var info = saveSelection(editor,model);
+        //delete a selection
         if(info.collapsed === false) {
             var modA = findModelFromPosition(info.startpos);
             var modB = findModelFromPosition(info.endpos);
@@ -753,26 +767,23 @@ document.getElementById('editor').addEventListener('keydown',function(e){
             setSelectionFromPosition(info.startpos);
             return;
         }
-        var mod = selectionToModelNode(info,model);
 
-        if(info.startOffset == 0) {
-            var start = model.getPreviousTextNode(mod);
-            var startOffset = start.text.length-1;
-            model.deleteText(start,startOffset,mod, info.startOffset);
-            info.startOffset = startOffset;
-            info.id = start.getParent().id;
-            info.path = [start.getParent().content.indexOf(start)];
-        } else {
-            model.deleteText(mod, info.startOffset - 1, mod, info.startOffset);
-            info.startOffset--;
+        //delete a single char
+        var mod = selectionToModelNode(info,model);
+        //handle browser bug when block is directly selected
+        if(mod.type == doc.BLOCK) {
+            if(!mod.isEmpty() && mod.child(0).type == doc.TEXT) {
+                mod = mod.child(0);
+            }
         }
+        var pos = model.deleteTextBackwards(mod,info.startOffset);
         syncDom(editor,model);
-        restoreSelection(info);
+        setSelectionFromPosition(textNodeToSelectionPosition(pos.node,pos.offset));
         return;
     }
     if(e.ctrlKey === true && e.keyCode == 68 ) {//ctrl-D
         stopEvent(e);
-        var info = saveSelection(editor);
+        var info = saveSelection(editor,model);
         var mod = selectionToModelNode(info,model);
         model.deleteTextForwards(mod,info.startOffset);
         syncDom(editor,model);
