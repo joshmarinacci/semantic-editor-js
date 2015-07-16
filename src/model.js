@@ -143,6 +143,17 @@ function DNodeIterator(thecurrent) {
 
 }
 
+function findBlockParent(node) {
+    if(node.type ==  exports.BLOCK) return node;
+    return findBlockParent(node.parent);
+}
+function mergeBlocksBackwards(start,end) {
+    end.content.forEach(function(node) {
+        start.append(node);
+    });
+    end.deleteFromParent();
+}
+
 function DModel() {
     var root = new DNode('root');
     this._root = root;
@@ -221,24 +232,22 @@ function DModel() {
             var nextText = this.getNextTextNode(startNode);
             var nextOffset = startOffset-startNode.text.length;
             var pos =  this.deleteTextForwards(nextText,nextOffset);
+
             //strip out empty nodes
-            while(true) {
-                if(pos.node.isEmpty()) {
-                    var parent = pos.node.deleteFromParent();
-                    pos.node = parent;
-                } else {
-                    break;
-                }
-            }
-            //if both text and both have same parent (so it's not inside a span), then we can merge
+            while(pos.node.isEmpty()) pos.node = pos.node.deleteFromParent();
+
+            //merge blocks if deleteing across blocks
+            var startBlock = findBlockParent(startNode);
+            var endBlock  = findBlockParent(pos.node);
+            if(startBlock.id != endBlock.id)  mergeBlocksBackwards(startBlock,endBlock);
+
+            //merge adjacent text nodes
             if(startNode.type == exports.TEXT && pos.node.type == exports.TEXT && startNode.getParent() == pos.node.getParent()) {
                 startNode.text += pos.node.text;
                 //delete the text node
                 var parent = pos.node.deleteFromParent();
                 //delete the parent if it's empty too
-                if(parent.childCount() == 0) {
-                    parent.deleteFromParent();
-                }
+                if(parent.isEmpty()) parent.deleteFromParent();
             }
             return {
                 node: startNode,
@@ -284,18 +293,13 @@ function DModel() {
                     if(node.text.length <= 0) {
                         var parent = node.getParent();
                         it.deleteNow();
-                        if(parent.content.length <= 0 && parent.getParent() != null) {
-                            console.log("parent is empty too");
-                            var nn= parent.getParent().content.indexOf(parent);
-                            parent.parent.content.splice(nn,1);
-                        }
+                        if(parent.isEmpty()) parent.deleteFromParent();
                     }
                 }
                 break;
             } else {
                 //console.log("in the middle. delete it", node.id);
                 if(node.type == exports.TEXT) {
-                    //console.log("text to delete", node.id);
                     it.deleteNow();
                     continue;
                 }

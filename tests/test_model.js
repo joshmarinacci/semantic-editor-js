@@ -114,7 +114,6 @@ test('iterator',function(t) {
     var text3 = model.makeText('baz');
     block2.append(text3);
 
-    dumpTree(model.getRoot());
     var it = model.getIterator(model.getRoot().child(0));
     var total = 0;
     while(it.hasNext()) {
@@ -153,10 +152,7 @@ test("delete text across two blocks w/ text inbetween", function(t) {
     block2.append(text2);
     model.append(block2);
 
-    dumpTree(model.getRoot());
-
     model.deleteText(text1,1,text2,9);
-    dumpTree(model.getRoot());
     t.equal(model.toPlainText(),'az');
     t.end();
 });
@@ -178,10 +174,7 @@ test("delete text across three blocks w/ text inbetween", function(t) {
     block3.append(text3);
     model.append(block3);
 
-    dumpTree(model.getRoot());
-
     model.deleteText(text1,1,text3,2);
-    dumpTree(model.getRoot());
     t.equal(model.toPlainText(),'al');
     t.end();
 });
@@ -213,10 +206,8 @@ test("delete text across spans", function(t) {
     block3.append(text3);
     model.append(block3);
 
-    dumpTree(model.getRoot());
 
     model.deleteText(text1,1,text1ca,3);
-    dumpTree(model.getRoot());
     t.equal(model.toPlainText(),'apqrstuvwx');
     t.end();
 });
@@ -230,7 +221,6 @@ test('split in middle text', function(t) {
     block1.append(model.makeText("ghi"));
 
     doc.splitBlockAt(block1.child(1),1,model);
-    dumpTree(model.getRoot());
     t.equal(model.toPlainText(),"abcdefghi");
     t.equal(model.getRoot().childCount(),2);
     t.equal(model.getRoot().child(0).childCount(),2);
@@ -252,7 +242,6 @@ test('delete an empty text element', function(t) {
     model.getRoot().append(block2);
     block2.append(model.makeText("def"));
 
-    dumpTree(model.getRoot());
     var end_node = block2.child(0);
     var end_offset = 0;
     var start_node = model.getPreviousTextNode(end_node);
@@ -274,7 +263,6 @@ test('delete an empty text element 2', function(t) {
     model.getRoot().append(block2);
     block2.append(model.makeText(""));
 
-    dumpTree(model.getRoot());
     var end_node = block2.child(0);
     var end_offset = 0;
     var start_node = model.getPreviousTextNode(end_node);
@@ -282,7 +270,6 @@ test('delete an empty text element 2', function(t) {
     t.equal(start_node.text,"abc");
     t.equal(start_offset,2);
     model.deleteText(start_node,start_offset,block2,0);
-    dumpTree(model.getRoot());
     t.equal(model.toPlainText(),"ab");
     t.equal(model.getRoot().childCount(),1);
     t.end();
@@ -344,8 +331,25 @@ test('delete forwards span start',function(t) {
     t.end();
 });
 
+test('delete forwards across blocks', function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    block1.append(model.makeText("abc"));
+    model.getRoot().append(block1);
+    var block2 = model.makeBlock();
+    block2.append(model.makeText("def"));
+    model.getRoot().append(block2);
+    var start_node = block1.child(0);
+    var start_offset = 2;
+    var pos = model.deleteTextForwards(start_node,start_offset);
+    var pos = model.deleteTextForwards(start_node,start_offset);
+    t.equal(model.toPlainText(),"abef");
+    t.equal(model.getRoot().childCount(),1);
 
-//figure out why deleting forward into a span doesn't work in the real dom is the position wrong?
+    t.end();
+});
+
+
 //build reverse dom iterator
 //when backward deleting, if span is now empty, delete it
 //deleting selection across block boundaries has problems.
