@@ -36,12 +36,18 @@ function DNode(type,text) {
     this.childCount = function() {
         if(this.content) return this.content.length;
         return 0;
-    }
-    this.getParent = function() { return this.parent; }
+    };
+    this.getParent = function() { return this.parent; };
     this.deleteFromParent = function() {
         var n = this.parent.content.indexOf(this);
         this.parent.content.splice(n,1);
         return this.parent;
+    };
+    this.isEmpty = function() {
+        if(this.type == exports.TEXT && this.text.length == 0) return true;
+        if(this.type == exports.SPAN && this.content.length == 0) return true;
+        if(this.type == exports.BLOCK && this.content.length == 0) return true;
+        return false;
     }
 }
 
@@ -205,7 +211,7 @@ function DModel() {
 
     this.deleteTextForwards = function(startNode, startOffset) {
         if(startNode.type != exports.TEXT) throw new Error("can't delete text from non text element");
-        if(startNode.text.length > startOffset+1) {
+        if(startOffset < startNode.text.length) {
             this.deleteText(startNode,startOffset,startNode,startOffset+1);
             return {
                 node: startNode,
@@ -214,8 +220,16 @@ function DModel() {
         } else {
             var nextText = this.getNextTextNode(startNode);
             var nextOffset = startOffset-startNode.text.length;
-            //console.log("next offset is ", nextOffset, startOffset, startNode.text.length);
             var pos =  this.deleteTextForwards(nextText,nextOffset);
+            //strip out empty nodes
+            while(true) {
+                if(pos.node.isEmpty()) {
+                    var parent = pos.node.deleteFromParent();
+                    pos.node = parent;
+                } else {
+                    break;
+                }
+            }
             //if both text and both have same parent (so it's not inside a span), then we can merge
             if(startNode.type == exports.TEXT && pos.node.type == exports.TEXT && startNode.getParent() == pos.node.getParent()) {
                 startNode.text += pos.node.text;
@@ -225,18 +239,13 @@ function DModel() {
                 if(parent.childCount() == 0) {
                     parent.deleteFromParent();
                 }
-                return {
-                    node: startNode,
-                    offset: startOffset
-                }
-            } else {
-                return {
-                    node: startNode,
-                    offset: startOffset
-                }
+            }
+            return {
+                node: startNode,
+                offset: startOffset
             }
         }
-    }
+    };
 
     this.deleteText = function(startNode, startOffset, endNode, endOffset) {
         //console.log("deleting from ",startNode.id,startOffset,"to",endNode.id,endOffset);

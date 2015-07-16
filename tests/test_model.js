@@ -327,12 +327,17 @@ test('delete forwards span start',function(t) {
     var span = model.makeSpan();
     span.append(model.makeText("def"));
     block1.append(span);
+    block1.append(model.makeText("ghi"));
 
     var start_node = block1.child(0);
-    var start_offset = 3;
+    var start_offset = 2;
     var pos = model.deleteTextForwards(start_node,start_offset);
-    dumpTree(model.getRoot());
-    t.equal(model.toPlainText(),'abcef');
+    t.equal(model.toPlainText(),'abdefghi');
+    var pos = model.deleteTextForwards(start_node,start_offset);
+    t.equal(model.toPlainText(),'abefghi');
+    var pos = model.deleteTextForwards(start_node,start_offset);
+    var pos = model.deleteTextForwards(start_node,start_offset);
+    t.equal(model.toPlainText(),'abghi');
     t.equal(pos.node, start_node);
     t.equal(pos.offset,start_offset);
     t.equal(block1.childCount(),2);
