@@ -77,7 +77,17 @@ several header levels: title, subtitle, section
     outline: none;
     border: 1px solid #ddd;
 }
-    </style>
+
+#key-docs {
+    border: 1px solid #888;
+    border-collapse: collapse;
+}
+#key-docs td {
+    padding: 0.25em 0.25em;
+    border: 1px solid #ccc;
+}
+
+</style>
 
 </head>
 <body>
@@ -87,7 +97,11 @@ several header levels: title, subtitle, section
             <h3>Semantic Editor</h3>
         </div>
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-md-3">
+                <h3>Shortcuts</h3>
+                <table id="key-docs"></table>
+            </div>
+            <div class="col-md-6">
                 <div class="row">
                     <div class="col-md-12">
                         <div class="btn-group">
@@ -129,7 +143,8 @@ several header levels: title, subtitle, section
                 <div id="current-style">current style</div>
                 <div id="editor" class="semantic-view" contenteditable="true" spellcheck="false"></div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <h3>Tree Structure</h3>
                 <div id="model-tree"></div>
             </div>
         </div>
@@ -903,6 +918,16 @@ var saved_info;
 $("#set-inline-link").click(function(e) {
     console.log("saved info = ", saved_info);
 });
+
+
+function populateKeyDocs(elem) {
+    for(var stroke in key_to_actions) {
+        var li = document.createElement("tr");
+        li.innerHTML = "<tr><td>"+stroke+"</td><td>" + key_to_actions[stroke]+"</td>";
+        elem.appendChild(li);
+    }
+}
+populateKeyDocs(document.getElementById("key-docs"));
 
 </script>
 </html>
