@@ -1,0 +1,36 @@
+#editor.visual-view div {
+    margin: 0.5em;
+    padding: 0.5em;
+    line-height:  130%;
+}
+
+
+
+#editor.visual-view div.header {
+    background-color: transparent;
+    font-size: 130%;
+    font-weight: bold;
+}
+#editor.visual-view div.body {
+    background-color: transparent;
+    font-family: serif;
+}
+#editor.visual-view div.block-quote {
+    background-color: red;
+}
+#editor.visual-view div.block-code {
+    background-color: #ffe;
+    font-family: monospace;
+    font-weight: bold;
+    white-space: pre;
+    border: 1px solid #cc8;
+    border-radius: 1em;
+}
+#editor.visual-view .bold {
+    font-weight: bold;
+}
+#editor.visual-view .italic {
+    font-style: italic;
+}
+
+

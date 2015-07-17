@@ -1,0 +1,26 @@
+#editor.markdown-view div.header {
+    font-weight: bold;
+}
+#editor.markdown-view div.header:before {
+    content: "#";
+}
+#editor.markdown-view div.block-code {
+    white-space: pre;
+    font-family: monospace;
+}
+#editor.markdown-view div.block-code:before {
+    content: "```";
+    white-space: pre;
+    display: block;
+}
+#editor.markdown-view div.block-code:after {
+    content: "```";
+    white-space: pre;
+    display: block;
+}
+
+#editor.markdown-view .bold:before   {  content: "*"; }
+#editor.markdown-view .bold:after    {  content: "*"; }
+#editor.markdown-view .italic:before {  content: "_"; }
+#editor.markdown-view .italic:after  {  content: "_"; }
+

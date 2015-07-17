@@ -63,7 +63,9 @@ several header levels: title, subtitle, section
 
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css"/>
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap-theme.css"/>
-
+    <link rel="stylesheet" href="semantic.css"/>
+    <link rel="stylesheet" href="visual.css"/>
+    <link rel="stylesheet" href="markdown.css"/>
     <style type='text/css'>
 
 #editor {
@@ -75,131 +77,6 @@ several header levels: title, subtitle, section
     outline: none;
     border: 1px solid #ddd;
 }
-
-#editor div {
-    margin: 0.5em;
-    padding: 0.5em;
-    position: relative;
-    line-height: 140%;
-}
-
-#editor.semantic-view *:after {
-    position: absolute;
-    font-size: 8pt;
-    padding: 3px 0 0 0;
-    margin:0;
-    top: 0.5rem;
-    right: 1.0rem;
-    text-align: right;
-    font-family: sans-serif;
-    color: #aaa;
-    font-variant: normal;
-}
-
-#editor.semantic-view div.header {
-    font-size: 150%;
-    background-color: #fff0f0;
-}
-#editor.semantic-view div.body {
-    color: #444;
-    border: 1px solid #eee;
-    border-width: 0px 0px 1px 0px;
-}
-
-#editor.semantic-view .block-code {
-    color: #888800;
-    background-color: #fffff0;
-    font-family: monospace;
-    border: 1px solid #dda;
-    padding: 0.5em;
-    white-space: pre;
-}
-
-#editor.semantic-view .block-quote {
-    background-color: #eef;
-    color: black;
-    font-family: serif;
-    font-style: italic;
-    padding: 1em;
-}
-#editor.semantic-view .header:after { content: "header"; }
-#editor.semantic-view .body:after { content: "body"; }
-#editor.semantic-view .block-code:after { content: "code block"; }
-#editor.semantic-view .block-quote:after { content: "block quote"; }
-
-/* inline styles */
-#editor.semantic-view .bold {
-    color: red;
-    font-weight: bold;
-}
-#editor.semantic-view .italic {
-    color: green;
-    font-weight: normal;
-    font-style: italic;
-}
-#editor.semantic-view .inline-code {
-    font-weight: normal;
-    color: #cccc00;
-    font-family: monospace;
-}
-
-
-
-#editor.visual-view div.header {
-    background-color: transparent;
-    font-size: 130%;
-    font-weight: bold;
-}
-#editor.visual-view div.body {
-    background-color: transparent;
-    font-family: serif;
-}
-#editor.visual-view div.block-quote {
-    background-color: red;
-}
-#editor.visual-view div.block-code {
-    background-color: #ffe;
-    font-family: monospace;
-    font-weight: bold;
-    white-space: pre;
-    border: 1px solid #cc8;
-    border-radius: 1em;
-}
-#editor.visual-view .bold {
-    font-weight: bold;
-}
-#editor.visual-view .italic {
-    font-style: italic;
-}
-
-
-
-#editor.markdown-view div.header {
-    font-weight: bold;
-}
-#editor.markdown-view div.header:before {
-    content: "#";
-}
-#editor.markdown-view div.block-code {
-    white-space: pre;
-    font-family: monospace;
-}
-#editor.markdown-view div.block-code:before {
-    content: "```";
-    white-space: pre;
-    display: block;
-}
-#editor.markdown-view div.block-code:after {
-    content: "```";
-    white-space: pre;
-    display: block;
-}
-
-#editor.markdown-view .bold:before   {  content: "*"; }
-#editor.markdown-view .bold:after    {  content: "*"; }
-#editor.markdown-view .italic:before {  content: "_"; }
-#editor.markdown-view .italic:after  {  content: "_"; }
-
     </style>
 
 </head>
@@ -300,7 +177,7 @@ block2.append(model.makeText("This is a paragraph of body text"));
 
 var span1 = model.makeSpan();
 span1.style = 'bold';
-span1.append(model.makeText("with some bold"));
+span1.append(model.makeText(" with some bold"));
 block2.append(span1);
 
 var span2 = model.makeSpan();
@@ -309,6 +186,7 @@ span2.append(model.makeText(" and italic"));
 block2.append(span2);
 
 block2.append(model.makeText(" text to read."));
+block2.append(model.makeText(" And now some more text that we will read and read and it just goes on and on."));
 
 var block3 = model.makeBlock();
 model.getRoot().append(block3);
