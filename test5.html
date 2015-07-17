@@ -248,6 +248,7 @@ several header levels: title, subtitle, section
                         </div>
                     </div>
                 </div>
+                <div id="current-style">current style</div>
                 <div id="editor" class="semantic-view" contenteditable="true" spellcheck="false"></div>
             </div>
             <div class="col-md-4">
@@ -752,8 +753,48 @@ function setSelectionFromPosition(pos) {
     wsel.addRange(range);
 }
 
-document.getElementById('editor').addEventListener('keydown',function(e){
+function updateCurrentStyle() {
+    setTimeout(function() {
+        var info = saveSelection(editor,model);
+        var modA = findModelFromPosition(info.startpos);
+        var node = modA;
+        var styleInfo = {
+            type:modA.type,
+            id:modA.id,
+            node:modA,
+            offset:info.startOffset,
+            spanStyles:[],
+            blockStyles:[]
+        };
+        while(true) {
+            node = node.getParent();
+            if(node.getParent() == null) break;
+            if(node.type == 'span') {
+                styleInfo.spanStyles.push(node.style);
+            }
+            if(node.type == 'block') {
+                styleInfo.blockStyles.push(node.style);
+            }
+        }
+        $("#current-style").html("id: <b>"+styleInfo.id + "</b> offset: <b>" + styleInfo.offset + "</b>"
+                +"  span:<b>" +styleInfo.spanStyles.join("") + "</b>  block: <b>" + styleInfo.blockStyles.join("")+"</b>");
+    },10);
+}
 
+document.getElementById('editor').addEventListener('keydown',function(e){
+    console.log(e.keyCode);
+    if(e.keyCode == 37) { //left
+        updateCurrentStyle();
+    }
+    if(e.keyCode == 39) { // right
+        updateCurrentStyle();
+    }
+    if(e.keyCode == 40) { //down
+        updateCurrentStyle();
+    }
+    if(e.keyCode == 38) { //up
+        updateCurrentStyle();
+    }
     if(e.keyCode == 8) { //backspace
         stopEvent(e);
         var info = saveSelection(editor,model);
