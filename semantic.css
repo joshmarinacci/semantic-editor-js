@@ -23,6 +23,11 @@
     font-size: 150%;
     background-color: #fff0f0;
 }
+
+#editor.semantic-view div.subheader {
+    font-size: 125%;
+    background-color: #fff6f6;
+}
 #editor.semantic-view div.body {
     color: #444;
     border: 1px solid #eee;
@@ -46,6 +51,7 @@
     padding: 1em;
 }
 #editor.semantic-view .header:after { content: "header"; }
+#editor.semantic-view .subheader:after { content: "subheader"; }
 #editor.semantic-view .body:after { content: "body"; }
 #editor.semantic-view .block-code:after { content: "code block"; }
 #editor.semantic-view .block-quote:after { content: "block quote"; }
@@ -60,6 +66,8 @@
     font-weight: normal;
     font-style: italic;
 }
+
+
 #editor.semantic-view .inline-code {
     font-weight: normal;
     color: #cccc00;
@@ -68,4 +76,13 @@
 #editor.semantic-view .link {
     color: purple;
     text-decoration: underline;
+}
+
+#editor.semantic-view .subscript {
+    vertical-align: sub;
+    font-size: 0.83em;
+}
+#editor.semantic-view .superscript {
+    vertical-align: super;
+    font-size: 0.83em;
 }

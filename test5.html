@@ -87,6 +87,13 @@ several header levels: title, subtitle, section
     border: 1px solid #ccc;
 }
 
+#model-tree ul {
+    padding-left: 2em;
+}
+#model-tree > ul {
+    padding-left: 0;
+}
+
 </style>
 
 </head>
@@ -109,7 +116,8 @@ several header levels: title, subtitle, section
                                 Block <span class="caret"></span>
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a href="#" id="set-header">Section Header</a></li>
+                                <li><a href="#" id="set-header">Header</a></li>
+                                <li><a href="#" id="set-subheader">Subheader</a></li>
                                 <li><a href="#" id="set-body">Plain Body</a></li>
                                 <li><a href="#" id="set-block-code">Code Block</a></li>
                                 <li><a href="#" id="set-block-quote">Quote</a></li>
@@ -128,6 +136,8 @@ several header levels: title, subtitle, section
                                 <li><a href="#" id="set-italic">Italic</a></li>
                                 <li><a href="#" id="set-inline-code">Code</a></li>
                                 <li><a href="#" id="set-inline-link">Link</a></li>
+                                <li><a href="#" id="set-inline-subscript">Subscript</a></li>
+                                <li><a href="#" id="set-inline-superscript">Superscript</a></li>
                                 <li><a href="#" id="set-deleted">Deleted</a></li>
                                 <li role="separator" class="divider"></li>
                                 <li><a href="#" id="set-custom-inline">Custom</a></li>
@@ -186,6 +196,7 @@ model.setStyles({
     block:{
         //name of style : css classname
         header:'header',
+        subheader:'subheader',
         body:'body',
         'block-code':'block-code',
         'block-quote':'block-quote'
@@ -195,8 +206,38 @@ model.setStyles({
         italic:'italic',
         'inline-code':'inline-code',
         link:'link',
+        subscript:'subscript',
+        superscript:'superscript'
     }
 });
+
+
+var browser_keymap = {
+    8:"backspace",
+    13:"enter",
+    37:"arrow-left",
+    39:"arrow-right",
+    38:"arrow-up",
+    40:"arrow-down",
+    65:"a",
+    66:"b",
+    67:"c",
+    68:"d",
+    73:"i"
+};
+
+var key_to_actions = {
+    "arrow-left": "update-current-style",
+    "arrow-right": "update-current-style",
+    "arrow-up": "update-current-style",
+    "arrow-down": "update-current-style",
+    "ctrl-d":"delete-forward",
+    "cmd-b":"style-bold",
+    "backspace":"delete-backward",
+    "cmd-i":"style-italic",
+    "cmd-shift-c":"style-inline-code",
+    "cmd-shift-a":"style-inline-link",
+};
 
 
 var block1 = model.makeBlock();
@@ -711,32 +752,6 @@ function updateCurrentStyle() {
     },10);
 }
 
-var browser_keymap = {
-    8:"backspace",
-    13:"enter",
-    37:"arrow-left",
-    39:"arrow-right",
-    38:"arrow-up",
-    40:"arrow-down",
-    65:"a",
-    66:"b",
-    67:"c",
-    68:"d",
-    73:"i"
-};
-
-var key_to_actions = {
-    "arrow-left": "update-current-style",
-    "arrow-right": "update-current-style",
-    "arrow-up": "update-current-style",
-    "arrow-down": "update-current-style",
-    "ctrl-d":"delete-forward",
-    "cmd-b":"style-bold",
-    "backspace":"delete-backward",
-    "cmd-i":"style-italic",
-    "cmd-shift-c":"style-inline-code",
-    "cmd-shift-a":"style-inline-link",
-};
 
 
 var actions_map = {
@@ -887,12 +902,15 @@ document.getElementById('editor').addEventListener('keydown',function(e){
 
 
 $("#set-header").click(function(e) {      changeBlockStyle(model.getStyles().block.header);         });
+$("#set-subheader").click(function(e) {      changeBlockStyle(model.getStyles().block.subheader);         });
 $("#set-body").click(function(e) {        changeBlockStyle(model.getStyles().block.body);           });
 $("#set-block-code").click(function(e)  { changeBlockStyle(model.getStyles().block['block-code']);  });
 $("#set-block-quote").click(function(e) { changeBlockStyle(model.getStyles().block['block-quote']); });
 $("#set-bold").click(function(e) {        styleSelectionInline(model.getStyles().inline.bold);      });
 $("#set-italic").click(function(e) {      styleSelectionInline(model.getStyles().inline.italic);    });
 $("#set-inline-code").click(function(e) { styleSelectionInline(model.getStyles().inline['inline-code']);  });
+$("#set-inline-subscript").click(function(e) { styleSelectionInline(model.getStyles().inline.subscript);  });
+$("#set-inline-superscript").click(function(e) { styleSelectionInline(model.getStyles().inline.superscript);  });
 
 $("#switch-visual").click(function() {
     $('#editor')
