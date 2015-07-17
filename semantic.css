@@ -65,4 +65,7 @@
     color: #cccc00;
     font-family: monospace;
 }
-
+#editor.semantic-view .link {
+    color: purple;
+    text-decoration: underline;
+}

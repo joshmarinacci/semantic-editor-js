@@ -437,7 +437,8 @@ exports.wrapTextInInlineStyle = function(node,style,model) {
     inline.style = style;
     swapNode(node,inline);
     inline.append(node);
-}
+    return inline;
+};
 
 exports.splitThree = function(node,index1,index2,model) {
     var parts1 = splitModelNode(index1,node,model);

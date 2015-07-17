@@ -113,6 +113,7 @@ several header levels: title, subtitle, section
                                 <li><a href="#" id="set-bold">Bold</a></li>
                                 <li><a href="#" id="set-italic">Italic</a></li>
                                 <li><a href="#" id="set-inline-code">Code</a></li>
+                                <li><a href="#" id="set-inline-link">Link</a></li>
                                 <li><a href="#" id="set-deleted">Deleted</a></li>
                                 <li role="separator" class="divider"></li>
                                 <li><a href="#" id="set-custom-inline">Custom</a></li>
@@ -135,6 +136,29 @@ several header levels: title, subtitle, section
     </div>
 
 
+    <div class="modal fade" id="link-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Edit Link</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label>Text</label> <input type="text" class="form-control" id="link-modal-text"/>
+                            <label>Link</label> <input type="text" class="form-control" id="link-modal-url"/>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="link-modal-submit">Insert</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
 </body>
 <script src="node_modules/jquery/dist/jquery.js"></script>
 <script src="node_modules/bootstrap/dist/js/bootstrap.js"></script>
@@ -154,7 +178,8 @@ model.setStyles({
     inline: {
         bold:'bold',
         italic:'italic',
-        'inline-code':'inline-code'
+        'inline-code':'inline-code',
+        link:'link',
     }
 });
 
@@ -217,6 +242,18 @@ function syncDom(editor,model) {
             }
             if (inline.type == doc.SPAN) {
                 var elem = document.createElement('span');
+                if(inline.meta && inline.meta.elementName == 'A') {
+                    elem = document.createElement('a');
+                    if(inline.meta.href) {
+                        elem.setAttribute("href",inline.meta.href);
+                        elem.setAttribute("title",inline.meta.href);
+                        setTimeout(function() {
+                            $('#'+inline.id).tooltip({
+                                container:'body'
+                            });
+                        },100);
+                    }
+                }
                 elem.id = inline.id;
                 elem.classList.add(inline.style);
                 elem.appendChild(document.createTextNode(inline.child(0).text));
@@ -666,6 +703,7 @@ var browser_keymap = {
     39:"arrow-right",
     38:"arrow-up",
     40:"arrow-down",
+    65:"a",
     66:"b",
     67:"c",
     68:"d",
@@ -681,7 +719,8 @@ var key_to_actions = {
     "cmd-b":"style-bold",
     "backspace":"delete-backward",
     "cmd-i":"style-italic",
-    "cmd-shift-c":"style-inline-code"
+    "cmd-shift-c":"style-inline-code",
+    "cmd-shift-a":"style-inline-link",
 };
 
 
@@ -732,6 +771,35 @@ var actions_map = {
     "style-inline-code":function(e){
         stopEvent(e);
         styleSelectionInline(model.getStyles().inline['inline-code']);
+    },
+    "style-inline-link":function(e) {
+        stopEvent(e);
+
+        var info = saveSelection(editor,model);
+        var modA = findModelFromPosition(info.startpos);
+        var modB = findModelFromPosition(info.endpos);
+        var style = model.getStyles().inline.link;
+
+        console.log('styling selection from ',modA.id,info.startpos.offset,"to",modB.id,info.endpos.offset);
+        if(modA != modB) {
+            console.log("can't link across blocks");
+            return;
+        }
+        var parts = doc.splitThree(modA,info.startpos.offset,info.endpos.offset,model);
+        var span = doc.wrapTextInInlineStyle(parts[1],style,model);
+        span.meta = {};
+        span.meta.elementName = "A";
+
+        $('#link-modal-text').val(parts[1].text);
+        $('#link-modal').modal('show');
+        $("#link-modal-submit").click(function(e) {
+            $(this).unbind(e);
+            $('#link-modal').modal('hide');
+            var text = $('#link-modal-text').val();
+            var url  = $('#link-modal-url').val();
+            span.meta.href = url;
+            syncDom(editor,model);
+        });
     }
 };
 
@@ -828,6 +896,12 @@ $("#switch-markdown").click(function() {
             .removeClass('visual-view')
             .removeClass('semantic-view')
             .addClass('markdown-view');
+});
+
+
+var saved_info;
+$("#set-inline-link").click(function(e) {
+    console.log("saved info = ", saved_info);
 });
 
 </script>
