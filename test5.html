@@ -781,21 +781,43 @@ function updateCurrentStyle() {
     },10);
 }
 
-document.getElementById('editor').addEventListener('keydown',function(e){
-    console.log(e.keyCode);
-    if(e.keyCode == 37) { //left
-        updateCurrentStyle();
-    }
-    if(e.keyCode == 39) { // right
-        updateCurrentStyle();
-    }
-    if(e.keyCode == 40) { //down
-        updateCurrentStyle();
-    }
-    if(e.keyCode == 38) { //up
-        updateCurrentStyle();
-    }
-    if(e.keyCode == 8) { //backspace
+var browser_keymap = {
+    8:"backspace",
+    13:"enter",
+    37:"arrow-left",
+    39:"arrow-right",
+    38:"arrow-up",
+    40:"arrow-down",
+    66:"b",
+    67:"c",
+    68:"d",
+    73:"i"
+};
+
+var key_to_actions = {
+    "arrow-left": "update-current-style",
+    "arrow-right": "update-current-style",
+    "arrow-up": "update-current-style",
+    "arrow-down": "update-current-style",
+    "ctrl-d":"delete-forward",
+    "cmd-b":"style-bold",
+    "backspace":"delete-backward",
+    "cmd-i":"style-italic",
+    "cmd-shift-c":"style-inline-code"
+};
+
+
+var actions_map = {
+    "update-current-style":updateCurrentStyle,
+    "style-bold": function(e) {
+        stopEvent(e);
+        styleSelectionInline(model.getStyles().inline.bold);
+    },
+    "style-italic": function(e) {
+        stopEvent(e);
+        styleSelectionInline(model.getStyles().inline.italic);
+    },
+    "delete-backward":function(e) {
         stopEvent(e);
         var info = saveSelection(editor,model);
         //delete a selection
@@ -803,7 +825,7 @@ document.getElementById('editor').addEventListener('keydown',function(e){
             var modA = findModelFromPosition(info.startpos);
             var modB = findModelFromPosition(info.endpos);
             model.deleteText(modA,info.startpos.offset,
-                modB,info.endpos.offset);
+                    modB,info.endpos.offset);
             syncDom(editor,model);
             setSelectionFromPosition(info.startpos);
             return;
@@ -820,28 +842,63 @@ document.getElementById('editor').addEventListener('keydown',function(e){
         var pos = model.deleteTextBackwards(mod,info.startOffset);
         syncDom(editor,model);
         setSelectionFromPosition(textNodeToSelectionPosition(pos.node,pos.offset));
-        return;
-    }
-    if(e.ctrlKey === true && e.keyCode == 68 ) {//ctrl-D
+    },
+    "delete-forward":function(e) {
         stopEvent(e);
         var info = saveSelection(editor,model);
         var mod = selectionToModelNode(info,model);
         model.deleteTextForwards(mod,info.startOffset);
         syncDom(editor,model);
         restoreSelection(info);
-    }
-
-    if(e.metaKey===true && e.keyCode == 66) { //cmd-B
-        stopEvent(e);
-        styleSelectionInline(model.getStyles().inline.bold);
-    }
-    if(e.metaKey===true && e.keyCode == 73) { //cmd-I
-        stopEvent(e);
-        styleSelectionInline(model.getStyles().inline.italic);
-    }
-    if(e.metaKey===true && e.keyCode == 67 && e.shiftKey) { //cmd-shift-C
+    },
+    "style-inline-code":function(e){
         stopEvent(e);
         styleSelectionInline(model.getStyles().inline['inline-code']);
+    }
+};
+
+document.getElementById('editor').addEventListener('keydown',function(e){
+    if(browser_keymap[e.keyCode]) {
+        var keyname = browser_keymap[e.keyCode];
+        if(e.metaKey && e.shiftKey) {
+            var name = "cmd-shift-"+keyname;
+            if(key_to_actions[name]) {
+                var action = key_to_actions[name];
+                if(actions_map[action]) {
+                    actions_map[action](e);
+                }
+                return;
+            }
+        }
+        if(e.metaKey) {
+            var name = "cmd-"+keyname;
+            if(key_to_actions[name]) {
+                var action = key_to_actions[name];
+                if(actions_map[action]) {
+                    actions_map[action](e);
+                }
+                return;
+            }
+        }
+        if(e.ctrlKey) {
+            var name = "ctrl-"+keyname;
+            if(key_to_actions[name]) {
+                var action = key_to_actions[name];
+                if(actions_map[action]) {
+                    actions_map[action](e);
+                }
+                return;
+            }
+        }
+        var name = ""+keyname;
+        if(key_to_actions[name]) {
+            var action = key_to_actions[name];
+            if(actions_map[action]) {
+                actions_map[action](e);
+            }
+            return;
+        }
+        return;
     }
     if(e.keyCode == 13) { //enter key
         stopEvent(e);
