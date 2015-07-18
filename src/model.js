@@ -75,7 +75,6 @@ function flattenChars(par) {
 function DNodeIterator(thecurrent) {
     var current = thecurrent;
     current.didKids = false;
-    //console.log("making a dnode iterator. starting at",current.id);
     var nextNode = calculateNextNode();
 
     function getIndex(node) {
@@ -107,27 +106,21 @@ function DNodeIterator(thecurrent) {
 
     var didKids = false;
     function calculateNextNode() {
-        //console.log("current is", current.id,'did kids = ',current.didKids, 'has kids = ',hasChildren(current));
-        //console.log(current);
         //look at kids first
         if(hasChildren(current) && current.didKids === false) {
-            //console.log("we have kids");
             current.didKids = true;
             var ch = current.child(0);
             ch.didKids = false;
             return ch;
         }
-        //console.log("no kids for",current.id);
 
         //no kids. look at sibling next
         var sib = getNextSibling(current);
         if(sib != null) {
-            //console.log("can go to the sibling",sib.id);
             sib.didKids = false;
             return sib;
         }
 
-        //console.log("no sibling. have to go up");
         if(current.parent == null) return null;
         var par = current.parent;
         par.didKids = true;
@@ -135,7 +128,6 @@ function DNodeIterator(thecurrent) {
     }
 
     this.deleteNow = function() {
-        //console.log("deleting current node", current.id);
         if(current.parent == null) throw new Error("can't delete a node without a parent");
         var n = getIndex(current);
         current.parent.content.splice(n,1);
@@ -195,7 +187,6 @@ function DModel() {
 
         var n = tnode.parent.content.indexOf(tnode);
         if(n == 0) {
-            console.log("first child. must go up");
             return this.getPreviousTextNode(tnode.getParent());
         }
 
@@ -296,7 +287,6 @@ function DModel() {
     };
 
     this.deleteText = function(startNode, startOffset, endNode, endOffset) {
-        //console.log("deleting from ",startNode.id,startOffset,"to",endNode.id,endOffset);
         if(startNode === endNode && startNode.type === exports.TEXT) {
             if(startOffset > endOffset) throw new Error("start offset can't be greater than end offset");
             if(startNode.type !== exports.TEXT) throw new Error("can't delete from non text yet");
@@ -306,7 +296,6 @@ function DModel() {
         }
 
         if(endNode.type !== exports.TEXT) {
-            console.log("can't delete an element directly. go to it's text child");
             return this.deleteText(startNode,startOffset,endNode.child(0),endOffset);
         }
 
@@ -317,18 +306,9 @@ function DModel() {
         var it = this.getIterator(startNode);
         while(it.hasNext()){
             var node = it.next();
-            //console.log("next node is",node.id);
             if(node == endNode) {
-                //console.log("at the end. fix it", node.id);
-                if(node.type == exports.BLOCK) {
-                    console.log("it's a block. ");
-                    if(node.content.length == 0) {
-                        console.log("it's an empty block");
-                    }
-                }
                 if(node.type == exports.TEXT) {
                     node.text = node.text.substring(endOffset);
-                    console.log("new text length = ", node.text.length);
                     //delete empty nodes
                     if(node.isEmpty()) {
                         var parent = node.getParent();
@@ -343,17 +323,12 @@ function DModel() {
                 }
                 break;
             } else {
-                //console.log("in the middle. delete it", node.id);
                 if(node.type == exports.TEXT) {
                     it.deleteNow();
                     continue;
                 }
                 if(node.type == exports.BLOCK || node.type == exports.SPAN) {
-                    //console.log("it's a block or span. check the kids");
-                    if(node.content.length > 0) {
-                        //console.log("still has kids. don't delete");
-                    } else {
-                        //console.log("it doesn't have kids. we can nuke it");
+                    if(node.isEmpty()) {
                         it.deleteNow();
                     }
                 }

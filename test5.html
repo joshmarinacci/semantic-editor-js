@@ -347,13 +347,12 @@ document.getElementById("editor").addEventListener("input", function(e) {
 function updateCurrentStyle() {
     setTimeout(function() {
         var info = dom.saveSelection(model);
-        var modA = dom.findModelFromPosition(info.startpos);
-        var node = modA;
+        var node = info.startpos.node;
         var styleInfo = {
-            type:modA.type,
-            id:modA.id,
-            node:modA,
-            offset:info.startOffset,
+            type:node.type,
+            id:node.id,
+            node:node,
+            offset:info.startpos.offset,
             spanStyles:[],
             blockStyles:[]
         };

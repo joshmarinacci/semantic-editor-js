@@ -35,9 +35,7 @@ function renderTreeChild(mnode) {
 
 exports.syncDom = function(editor,model) {
     renderTree(model);
-    while (editor.firstChild) {
-        editor.removeChild(editor.firstChild);
-    }
+    clearChildren(editor);
     model.getRoot().content.forEach(function (block) {
         var blockElement = document.createElement('div');
         blockElement.id = block.id;
@@ -190,11 +188,8 @@ exports.applyChanges = function(editor,model,changes) {
             ch.model.splice(ch.mod_i,0,mod);
         }
         if(ch.type == 'transform') {
-            console.log("got a transform");
             if(ch.model_node.type == 'block') {
-                console.log("node name = ", ch.dom_node.nodeName);
                 if(ch.dom_node.nodeName == 'BR') {
-                    console.log("switched to a BR. this is really a deletion");
                     var parent = ch.model_node.getParent();
                     var n = parent.content.indexOf(ch.model_node);
                     parent.content.splice(n,1);
@@ -241,7 +236,6 @@ exports.scanForChanges = function(dom_root,mod_root) {
             //if cur dom matches next model, then a node was deleted
             if(dom_node.nodeType == Node.ELEMENT_NODE) {
                 if(dom_node.id != mod_node.id) {
-                    //console.log("element mismatch",dom_node,mod_node,mod_node.id);
                     if(mod_i+1 < mod_len) {
                         var next_mod = mod_root.child(mod_i+1);
                     }
@@ -253,7 +247,6 @@ exports.scanForChanges = function(dom_root,mod_root) {
                     }
                     if(next_mod && next_dom) {
                         if(next_mod.id == next_dom.id) {
-                            //console.log("next is the same. just this is different");
                             changes.push({
                                 type:'transform',
                                 model_node:mod_node,
@@ -385,7 +378,6 @@ exports.setSelectionFromPosition = function(pos) {
         return;
     }
     var range = document.createRange();
-    console.log("cursor at",pos.id,pos.path,pos.offset);
     var node = document.getElementById(pos.id);
     pos.path.forEach(function(index){
         node = node.childNodes[index];
