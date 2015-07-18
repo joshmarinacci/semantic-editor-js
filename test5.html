@@ -15,27 +15,9 @@ add a debug tree to show the model
 model has function to load a new model
 model has function to fetch model as JSON
 
-//util function for deleting children from a DOM node
-
 make a wrapper function which saves selection, executes action, syncs the dom, then updates selection again
 
-handle the case where you delete a selection across block boundaries
-special case enter key inside of a code block
-special case tab key inside of code block: indent/outdent
-
-make prettier styles
-add semantic type style using after:content: css
-
-redo demo layout with proper scrolling, flexbox, etc.
-
 remove duplicate change events. should just be add, delete, and text
-
-
-abstract keyboard handling into a separate class.
-attach commands to keystrokes with a map
-
-implement making a link with command-shift-A
-invokes a callback to open a dialog and set the result.
 
 implement list support
     switch block type to list item
@@ -45,11 +27,7 @@ implement list support
 
 implement a model extension for images and other embedded media. forms, etc.
 
-
 more content types:
-blockquote
-several header levels: title, subtitle, section
-
 
 -->
 
@@ -93,6 +71,20 @@ several header levels: title, subtitle, section
 #model-tree > ul {
     padding-left: 0;
 }
+
+#popup {
+    position: absolute;
+    top:0;
+    left:0;
+    border: 1px solid black;
+    border-radius: 0.5em;
+    background-color: #31b0d5;
+    padding: 1em;
+}
+        #popup h3 {
+            padding-top: 0;
+            margin-top: 0;
+        }
 
 </style>
 
@@ -161,6 +153,13 @@ several header levels: title, subtitle, section
     </div>
 
 
+    <div id="popup" class="hidden">
+        <h3>Emoji</h3>
+        <table>
+            <tr><td><a id="emoji1">&#x1F4A9</a></td></tr>
+            <tr><td><a id="emoji2">&#x1F4A3</a></td></tr>
+        </table>
+    </div>
     <div class="modal fade" id="link-modal">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -187,6 +186,7 @@ several header levels: title, subtitle, section
 </body>
 <script src="node_modules/jquery/dist/jquery.js"></script>
 <script src="node_modules/bootstrap/dist/js/bootstrap.js"></script>
+<script src="node_modules/punycode/punycode.js"></script>
 <script src="bundle.js"></script>
 <script type='text/javascript'>
 
@@ -223,6 +223,7 @@ var browser_keymap = {
     66:"b",
     67:"c",
     68:"d",
+    69:"e",
     73:"i"
 };
 
@@ -237,6 +238,7 @@ var key_to_actions = {
     "cmd-i":"style-italic",
     "cmd-shift-c":"style-inline-code",
     "cmd-shift-a":"style-inline-link",
+    "cmd-shift-e":"insert-emoji"
 };
 
 
@@ -352,7 +354,8 @@ function renderTreeChild(mnode) {
     return ul;
 }
 
-function findParentNonTextNode(node) {
+function findParentNonTextNode(dom) {
+    var node = dom;
     var path = [];
     while(node.nodeType == Node.TEXT_NODE || node.id == "") {
         var parent = node.parentNode;
@@ -367,7 +370,8 @@ function findParentNonTextNode(node) {
     }
     return {
         node:node,
-        path:path
+        path:path,
+        dom_node:dom,
     }
 }
 
@@ -388,7 +392,8 @@ function saveSelection(ed,model) {
             id:start.node.id,
             path:start.path,
             offset:range.startOffset,
-            model:model
+            model:model,
+            dom_node:start.dom_node
         },
         endpos: {
             id: end.node.id,
@@ -751,6 +756,7 @@ function updateCurrentStyle() {
                 +"  span:<b>" +styleInfo.spanStyles.join("") + "</b>  block: <b>" + styleInfo.blockStyles.join("")+"</b>");
     },10);
 }
+var saved_info;
 
 
 
@@ -830,8 +836,57 @@ var actions_map = {
             span.meta.href = url;
             syncDom(editor,model);
         });
+    },
+    "insert-emoji": function(e) {
+        stopEvent(e);
+
+        function getCaretClientPosition() {
+            var x = 0, y = 0;
+            var sel = window.getSelection();
+            if (sel.rangeCount) {
+                var range = sel.getRangeAt(0);
+                if (range.getClientRects) {
+                    var rects = range.getClientRects();
+                    if (rects.length > 0) {
+                        x = rects[0].left;
+                        y = rects[0].top;
+                    }
+                }
+            }
+            return { x: x, y: y };
+        }
+
+        saved_info = saveSelection(editor,model);
+        //console.log(info.startpos.dom_node);
+
+
+        var xy = getCaretClientPosition();
+        $("#popup").removeClass("hidden");
+        $("#popup").offset({left:xy.x,top:xy.y});
     }
 };
+
+
+$("#emoji1").click(function(e) {
+    $("#popup").addClass('hidden');
+    var modA = findModelFromPosition(saved_info.startpos);
+    var str = punycode.ucs2.encode([ 0x1F4A9 ]);
+    modA.text = modA.text.substring(0,saved_info.startpos.offset)
+            + str
+            + modA.text.substring(saved_info.startpos.offset);
+    syncDom(editor,model);
+    restoreSelection(saved_info);
+});
+$("#emoji2").click(function(e) {
+    $("#popup").addClass('hidden');
+    var str = punycode.ucs2.encode([ 0x1F4A3 ]);
+    var modA = findModelFromPosition(saved_info.startpos);
+    modA.text = modA.text.substring(0,saved_info.startpos.offset)
+            + str
+            + modA.text.substring(saved_info.startpos.offset);
+    syncDom(editor,model);
+    restoreSelection(saved_info);
+});
 
 document.getElementById('editor').addEventListener('keydown',function(e){
     if(browser_keymap[e.keyCode]) {
@@ -932,7 +987,6 @@ $("#switch-markdown").click(function() {
 });
 
 
-var saved_info;
 $("#set-inline-link").click(function(e) {
     console.log("saved info = ", saved_info);
 });
