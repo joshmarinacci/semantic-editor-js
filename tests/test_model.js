@@ -444,3 +444,45 @@ test('delete backwards with empty text node in the middle',function(t) {
 
 
 
+test('delete backwards, remove empty span', function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    block1.append(model.makeText("abc"));
+    var span = model.makeSpan();
+    span.append(model.makeText(""));
+    block1.append(span);
+    block1.append(model.makeText("def"));
+    model.getRoot().append(block1);
+
+    dumpTree(model.getRoot());
+    t.equals(model.toPlainText(),"abcdef");
+    t.equals(block1.childCount(),3);
+    model.deleteTextBackwards(block1.child(2),0);
+    dumpTree(model.getRoot());
+    t.equals(model.toPlainText(),"abdef");
+    t.equals(block1.childCount(),2);
+
+    t.end();
+
+})
+test('delete backwards, remove empty span alt', function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    block1.append(model.makeText("abc"));
+    var span = model.makeSpan();
+    span.append(model.makeText(""));
+    block1.append(span);
+    block1.append(model.makeText("def"));
+    model.getRoot().append(block1);
+
+    dumpTree(model.getRoot());
+    t.equals(model.toPlainText(),"abcdef");
+    t.equals(block1.childCount(),3);
+    model.deleteTextBackwards(block1.child(0),3);
+    dumpTree(model.getRoot());
+    t.equals(model.toPlainText(),"abdef");
+    t.equals(block1.childCount(),2);
+
+    t.end();
+
+})

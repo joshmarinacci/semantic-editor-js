@@ -218,10 +218,29 @@ function DModel() {
         return null;
     };
 
+    this.cleanForward = function(tnode) {
+        var nextNode = this.getNextTextNode(tnode);
+        if(nextNode == null) return;
+        //delete empty nodes
+        var node = nextNode;
+        while(node.isEmpty()) {
+            node = node.deleteFromParent();
+        }
+    };
+
     this.deleteTextBackwards = function(node,offset) {
+        if(node.isEmpty()) {
+            var prevText = this.getPreviousTextNode(node);
+            while(node.isEmpty()) {
+                node = node.deleteFromParent();
+            }
+            return this.deleteTextBackwards(prevText,prevText.text.length);
+        }
         if(node.type != exports.TEXT) throw new Error("can't delete text from a non-text element");
+        //deleting just within the current node
         if(offset-1 >= 0) {
             this.deleteText(node,offset-1,node,offset);
+            this.cleanForward(node);
             return {
                 node:node,
                 offset:offset-1
