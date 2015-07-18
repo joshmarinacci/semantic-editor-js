@@ -102,34 +102,6 @@ exports.saveSelection = function (model) {
     return ret;
 };
 
-exports.restoreSelection = function(ran) {
-    if(!ran.id || ran.id == "") {
-        console.log("WARNING. bad id");
-        return;
-    }
-    var range = document.createRange();
-    var node = document.getElementById(ran.id);
-    ran.path.forEach(function(index){
-        node = node.childNodes[index];
-    });
-    range.setStart(node, ran.startOffset);
-    range.collapse(true);
-    var wsel = window.getSelection();
-    wsel.removeAllRanges();
-    wsel.addRange(range);
-}
-
-function setSelection(node, index, model) {
-    var range = document.createRange();
-    //text dom nodes don't have an id, so move up a level
-    if(node.type == doc.TEXT) { node = node.getParent(); }
-    var dom_node = document.getElementById(node.id);
-    range.setStart(dom_node,index);
-    range.collapse(true);
-    var wsel = window.getSelection();
-    wsel.removeAllRanges();
-    wsel.addRange(range);
-}
 
 function genModelFromDom(node) {
     if(node.nodeType == Element.TEXT_NODE) {

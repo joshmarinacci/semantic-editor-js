@@ -305,7 +305,7 @@ function styleSelectionInline(style) {
             info.endpos.offset,model)
     doc.wrapTextInInlineStyle(parts[1],style,model);
     dom.syncDom(editor,model);
-    dom.restoreSelection(info);
+    dom.setSelectionFromPosition(info.startpos);
 }
 
 function stopEvent(e) {
@@ -319,9 +319,9 @@ function changeBlockStyle(style) {
     var block = dom.findParentBlockDom(range.commonAncestorContainer);
     var mod_b = doc.findModelForDom(model.getRoot(),block);
     mod_b.style = style;
-    var ran = dom.saveSelection(model);
+    var info = dom.saveSelection(model);
     dom.syncDom(editor,model);
-    dom.restoreSelection(ran);
+    dom.setSelectionFromPosition(info.startpos);
 }
 
 function splitBlock() {
@@ -340,7 +340,7 @@ document.getElementById("editor").addEventListener("input", function(e) {
     var changes = dom.scanForChanges(editor,model.getRoot());
     dom.applyChanges(editor,model,changes);
     dom.syncDom(editor,model);
-    dom.restoreSelection(sel);
+    dom.setSelectionFromPosition(sel.startpos);
 }, false);
 
 
@@ -413,7 +413,7 @@ var actions_map = {
         var info = dom.saveSelection(model);
         model.deleteTextForwards(info.startpos.node,info.startpos.offset);
         dom.syncDom(editor,model);
-        dom.restoreSelection(info);
+        dom.setSelectionFromPosition(info.startpos);
     },
     "style-inline-code":function(e){
         stopEvent(e);
@@ -464,14 +464,14 @@ $("#emoji1").click(function(e) {
     var str = punycode.ucs2.encode([ 0x1F4A9 ]);
     insertStringAt(saved_info.startpos.node, saved_info.startpos.offset,str);
     dom.syncDom(editor,model);
-    dom.restoreSelection(saved_info);
+    dom.setSelectionFromPosition(saved_info.startpos);
 });
 $("#emoji2").click(function(e) {
     $("#popup").addClass('hidden');
     var str = punycode.ucs2.encode([ 0x1F4A3 ]);
     insertStringAt(saved_info.startpos.node, saved_info.startpos.offset,str);
     dom.syncDom(editor,model);
-    dom.restoreSelection(saved_info);
+    dom.setSelectionFromPosition(saved_info.startpos);
 });
 
 document.getElementById('editor').addEventListener('keydown',function(e){
