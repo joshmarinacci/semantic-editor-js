@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node tests/test_model.js",
-    "build": "browserify -r ./src/model.js:model -o bundle.js --debug --verbose"
+    "build": "browserify -r ./src/model.js:model -r ./src/dom.js:dom -o bundle.js --debug --verbose"
   },
   "author": "",
   "license": "ISC",
