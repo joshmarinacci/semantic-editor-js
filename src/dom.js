@@ -76,7 +76,7 @@ exports.saveSelection = function (model) {
     var range = sel.getRangeAt(0);
     var start = findParentNonTextNode(range.startContainer);
     var end = findParentNonTextNode(range.endContainer);
-    return {
+    var ret = {
         id:start.node.id,
         path:start.path,
         startOffset:range.startOffset,
@@ -98,6 +98,10 @@ exports.saveSelection = function (model) {
             model:model
         }
     };
+    ret.startpos.node = exports.findModelFromPosition(ret.startpos);
+    ret.endpos.node = exports.findModelFromPosition(ret.endpos);
+
+    return ret;
 };
 
 exports.restoreSelection = function(ran) {
