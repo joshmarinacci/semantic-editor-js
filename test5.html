@@ -1,36 +1,12 @@
 <!--
-
-next up:
-
-add a debug tree to show the model
-
-//move all model manipulation code to separate module. start using browserify
-//build unit tests
-//description of the data structure and operations
-
-
-//model nodes have ref to parent. should simplify model manipulation code
-//model has function to change style on a node
-
-model has function to load a new model
-model has function to fetch model as JSON
-
-make a wrapper function which saves selection, executes action, syncs the dom, then updates selection again
-
 remove duplicate change events. should just be add, delete, and text
-
 implement list support
     switch block type to list item
     enter to make next list item
     switch from numbered to bulleted items
     indent/outdent
-
 implement a model extension for images and other embedded media. forms, etc.
-
-more content types:
-
 -->
-
 
 <html lang="en">
 <head>
@@ -46,48 +22,47 @@ more content types:
     <link rel="stylesheet" href="markdown.css"/>
     <style type='text/css'>
 
-#editor {
-    border: 1px dotted #ddd;
-    padding: 0.5em;
-    margin: 1em 0em;
-}
-#editor:focus {
-    outline: none;
-    border: 1px solid #ddd;
-}
+        #editor {
+            border: 1px dotted #ddd;
+            padding: 0.5em;
+            margin: 1em 0em;
+        }
+        #editor:focus {
+            outline: none;
+            border: 1px solid #ddd;
+        }
 
-#key-docs {
-    border: 1px solid #888;
-    border-collapse: collapse;
-}
-#key-docs td {
-    padding: 0.25em 0.25em;
-    border: 1px solid #ccc;
-}
+        #key-docs {
+            border: 1px solid #888;
+            border-collapse: collapse;
+        }
+        #key-docs td {
+            padding: 0.25em 0.25em;
+            border: 1px solid #ccc;
+        }
 
-#model-tree ul {
-    padding-left: 2em;
-}
-#model-tree > ul {
-    padding-left: 0;
-}
+        #model-tree ul {
+            padding-left: 2em;
+        }
+        #model-tree > ul {
+            padding-left: 0;
+        }
 
-#popup {
-    position: absolute;
-    top:0;
-    left:0;
-    border: 1px solid black;
-    border-radius: 0.5em;
-    background-color: #31b0d5;
-    padding: 1em;
-}
+        #popup {
+            position: absolute;
+            top:0;
+            left:0;
+            border: 1px solid black;
+            border-radius: 0.5em;
+            background-color: #31b0d5;
+            padding: 1em;
+        }
         #popup h3 {
             padding-top: 0;
             margin-top: 0;
         }
 
-</style>
-
+    </style>
 </head>
 <body>
 
