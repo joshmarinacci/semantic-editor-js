@@ -254,14 +254,14 @@ var saved_info;
 $("#emoji1").click(function(e) {
     $("#popup").addClass('hidden');
     var str = punycode.ucs2.encode([ 0x1F4A9 ]);
-    keystrokes.insertStringAt(saved_info.startpos.node, saved_info.startpos.offset,str);
+    model.insertText(saved_info.startpos.node, saved_info.startpos.offset,str);
     dom.syncDom(editor,model);
     dom.setSelectionFromPosition(saved_info.startpos);
 });
 $("#emoji2").click(function(e) {
     $("#popup").addClass('hidden');
     var str = punycode.ucs2.encode([ 0x1F4A3 ]);
-    keystrokes.insertStringAt(saved_info.startpos.node, saved_info.startpos.offset,str);
+    model.insertText(saved_info.startpos.node, saved_info.startpos.offset,str);
     dom.syncDom(editor,model);
     dom.setSelectionFromPosition(saved_info.startpos);
 });

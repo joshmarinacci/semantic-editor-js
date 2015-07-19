@@ -220,7 +220,7 @@ test('split in middle text', function(t) {
     block1.append(model.makeText("def"));
     block1.append(model.makeText("ghi"));
 
-    doc.splitBlockAt(block1.child(1),1,model);
+    model.splitBlockAt(block1.child(1),1);
     t.equal(model.toPlainText(),"abcdefghi");
     t.equal(model.getRoot().childCount(),2);
     t.equal(model.getRoot().child(0).childCount(),2);

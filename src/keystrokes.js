@@ -47,15 +47,8 @@ exports.changeBlockStyle = changeBlockStyle;
 
 function splitBlock() {
     var pos = dom.saveSelection(model).startpos;
-    return doc.splitBlockAt(pos.node,pos.offset,model);
+    return model.splitBlockAt(pos.node,pos.offset);
 }
-
-function insertStringAt(node, index, str) {
-    if(node.type != doc.TEXT) throw new Error("this isn't a text node");
-    node.text = node.text.substring(0,index) + str + node.text.substring(index);
-}
-
-exports.insertStringAt = insertStringAt;
 
 var browser_keymap = {
     8:"backspace",
@@ -213,7 +206,7 @@ exports.handleEvent = function(e) {
         var info = dom.saveSelection(model);
         var block = info.startpos.node.findBlockParent();
         if(block.style == 'block-code') {
-            insertStringAt(info.startpos.node,info.startpos.offset,"\n");
+            model.insertText(info.startpos.node,info.startpos.offset,"\n");
             dom.syncDom(editor,model);
             info.startpos.offset++;
             dom.setSelectionFromPosition(info.startpos);

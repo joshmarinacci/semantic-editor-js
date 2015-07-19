@@ -176,9 +176,8 @@ function DModel() {
     };
 
     this.insertText = function(node, offset, text) {
-        if(node.type == exports.TEXT) {
-            node.text = node.text.substring(0,offset) + text + node.text.substring(offset);
-        }
+        if(node.type != exports.TEXT) throw new Error("this isn't a text node");
+        node.text = node.text.substring(0,offset) + text + node.text.substring(offset);
     };
 
     this.getPreviousTextNode = function(tnode) {
@@ -353,10 +352,11 @@ function DModel() {
 
     this.setStyles = function(styles) {
         this.styles = styles;
-    }
+    };
+
     this.getStyles = function() {
         return this.styles;
-    }
+    };
 
     this.findNodeById = function(id) {
         var it = this.getIterator(this.getRoot());
@@ -366,6 +366,34 @@ function DModel() {
         }
         return null;
     }
+    this.splitBlockAt = function(node,offset) {
+        if(node.type == exports.TEXT) {
+            var a = this.makeText(node.text.substring(0,offset));
+            var b = this.makeText(node.text.substring(offset));
+            var parent = node.getParent();
+            var index = parent.content.indexOf(node);
+            var before = parent.content.slice(0,index);
+            var after  = parent.content.slice(index+1);
+            var parents = this.splitBlockAt(parent,-1);
+            before.forEach(function(n){
+                parents[0].append(n);
+            });
+            parents[0].append(a);
+            parents[1].append(b);
+            after.forEach(function(n){
+                parents[1].append(n);
+            });
+            return [a,b];
+        }
+        if(node.type == exports.BLOCK) {
+            var a = this.makeBlock();
+            var b = this.makeBlock();
+            a.style = node.style;
+            b.style = node.style;
+            swapNode(node,a,b);
+            return [a,b];
+        }
+    }
 }
 
 exports.makeModel = function() {
@@ -373,15 +401,6 @@ exports.makeModel = function() {
 };
 
 
-
-var _model = null;
-exports.load = function(json) {
-    _model = json;
-}
-
-exports.model = function() {
-    return _model;
-}
 
 //replaces the first node in it's parent with the rest of the nodes
 function swapNode() {
@@ -396,8 +415,6 @@ function swapNode() {
         node.parent = parent;
     })
 }
-
-exports.swapNode = swapNode;
 
 //splits a text node in half at the requested offset
 function splitModelNode(n,mod,model) {
@@ -439,42 +456,7 @@ exports.splitThree = function(node,index1,index2,model) {
     var parts2 = splitModelNode(index2-index1,parts1[1],model);
     return [parts1[0],parts2[0],parts2[1]];
 }
-exports.splitTwo = function(node, index, model) {
-    var parts = splitModelNode(index, node, model);
-    return parts;
-}
 
-function dupeAndSplit(node,offset,model) {
-    if(node.type == exports.TEXT) {
-        var a = model.makeText(node.text.substring(0,offset));
-        var b = model.makeText(node.text.substring(offset));
-        var parent = node.getParent();
-        var index = parent.content.indexOf(node);
-        var before = parent.content.slice(0,index);
-        var after  = parent.content.slice(index+1);
-        var parents = dupeAndSplit(parent,-1,model);
-        before.forEach(function(n){
-            parents[0].append(n);
-        });
-        parents[0].append(a);
-        parents[1].append(b);
-        after.forEach(function(n){
-            parents[1].append(n);
-        });
-        return [a,b];
-    }
-    if(node.type == exports.BLOCK) {
-        var a = model.makeBlock();
-        var b = model.makeBlock();
-        a.style = node.style;
-        b.style = node.style;
-        swapNode(node,a,b);
-        return [a,b];
-    }
-}
 
-exports.splitBlockAt = function(node, offset, model) {
-    return dupeAndSplit(node,offset,model);
-}
 
 
