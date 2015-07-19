@@ -135,6 +135,13 @@ function mergeBlocksBackwards(start,end) {
     end.deleteFromParent();
 }
 
+//merge blocks if deleting across blocks
+function mergeParentBlocksIfNeeded(nodeA, nodeB) {
+    var startBlock = nodeA.findBlockParent();
+    var endBlock   = nodeB.findBlockParent();
+    if(startBlock.id != endBlock.id)  mergeBlocksBackwards(startBlock,endBlock);
+}
+
 function DModel() {
     var root = new DNode('root');
     this._root = root;
@@ -228,10 +235,7 @@ function DModel() {
         var prevText = this.getPreviousTextNode(node);
         var prevOffset = prevText.text.length;
         var pos = this.deleteTextBackwards(prevText,prevOffset);
-        //merge blocks if deleting across blocks
-        var startBlock = pos.node.findBlockParent();
-        var endBlock   = node.findBlockParent();
-        if(startBlock.id != endBlock.id)  mergeBlocksBackwards(startBlock,endBlock);
+        mergeParentBlocksIfNeeded(pos.node,node);
         return {
             node:pos.node,
             offset: pos.offset
@@ -251,10 +255,7 @@ function DModel() {
             var nextOffset = startOffset-startNode.text.length;
             var pos =  this.deleteTextForwards(nextText,nextOffset);
 
-            //merge blocks if deleting across blocks
-            var startBlock = startNode.findBlockParent();
-            var endBlock  = pos.node.findBlockParent();
-            if(startBlock.id != endBlock.id)  mergeBlocksBackwards(startBlock,endBlock);
+            mergeParentBlocksIfNeeded(startNode, pos.node);
 
             //strip out empty nodes
             while(pos.node.isEmpty()) pos.node = pos.node.deleteFromParent();
@@ -287,7 +288,6 @@ function DModel() {
             return this.deleteText(startNode,startOffset,endNode.child(0),endOffset);
         }
 
-
         //two different nodes
         //adjust the start node
         startNode.text = startNode.text.substring(0, startOffset);
@@ -300,11 +300,7 @@ function DModel() {
                     //delete empty nodes
                     if(node.isEmpty()) node.deleteFromParent();
                 }
-                var startBlock = startNode.findBlockParent();
-                var endBlock  = node.findBlockParent();
-                if(startBlock.id != endBlock.id) {
-                    mergeBlocksBackwards(startBlock,endBlock);
-                }
+                mergeParentBlocksIfNeeded(startNode,node);
                 break;
             } else {
                 if(node.type == exports.TEXT) {
@@ -395,10 +391,7 @@ function DModel() {
 
     //splits a text node in half at the requested index
     this.splitNode = function(node,index) {
-        if(node.type != exports.TEXT) {
-            console.log("ERROR: don't know how to split non text node yet");
-            return;
-        }
+        if(node.type != exports.TEXT) throw new Error("ERROR: don't know how to split non text node yet");
         var a = this.makeText(node.text.substring(0,index));
         var b = this.makeText(node.text.substring(index));
         this.swapNode(node,a,b);
@@ -409,7 +402,3 @@ function DModel() {
 exports.makeModel = function() {
     return new DModel();
 };
-
-
-
-
