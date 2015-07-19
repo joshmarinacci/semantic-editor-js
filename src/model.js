@@ -5,7 +5,6 @@
 exports.TEXT = 'text';
 exports.SPAN = 'span';
 exports.BLOCK = 'block';
-var DEFAULT_BLOCK_STYLE = 'body';
 
 var _id_count = 0;
 exports.genId = function() {
@@ -17,7 +16,7 @@ exports.genId = function() {
 function DNode(type,text) {
     this.type = type;
     this.id = exports.genId();
-    this.style = DEFAULT_BLOCK_STYLE;
+    this.style = 'body';
     this.parent = null;
 
     if(type == 'block' || type == 'span' || type == 'root') {
@@ -63,9 +62,7 @@ function countChars(par) {
             total += countChars(n);
         })
     }
-    if(par.type == exports.TEXT) {
-        return par.text.length;
-    }
+    if(par.type == exports.TEXT) return par.text.length;
     return total;
 }
 
@@ -94,24 +91,16 @@ function DNodeIterator(thecurrent) {
         }
         return null;
     }
-    function getChildren(node) {
-        if(node.content) return node.content;
-        return [];
-    };
-    function hasChildren(node) {
-        return (typeof node.content !== 'undefined') && node.content.length > 0;
-    }
     this.hasNext = function() { return nextNode !== null };
     this.next = function()    {
         current = nextNode;
         nextNode = calculateNextNode();
         return current;
-    }
+    };
 
-    var didKids = false;
     function calculateNextNode() {
         //look at kids first
-        if(hasChildren(current) && current.didKids === false) {
+        if(current.childCount() > 0 && current.didKids === false) {
             current.didKids = true;
             var ch = current.child(0);
             ch.didKids = false;
@@ -309,11 +298,7 @@ function DModel() {
                 if(node.type == exports.TEXT) {
                     node.text = node.text.substring(endOffset);
                     //delete empty nodes
-                    if(node.isEmpty()) {
-                        var parent = node.getParent();
-                        it.deleteNow();
-                        if(parent.isEmpty()) parent.deleteFromParent();
-                    }
+                    if(node.isEmpty()) node.deleteFromParent();
                 }
                 var startBlock = startNode.findBlockParent();
                 var endBlock  = node.findBlockParent();
@@ -323,13 +308,11 @@ function DModel() {
                 break;
             } else {
                 if(node.type == exports.TEXT) {
-                    it.deleteNow();
+                    node.deleteFromParent();
                     continue;
                 }
                 if(node.type == exports.BLOCK || node.type == exports.SPAN) {
-                    if(node.isEmpty()) {
-                        it.deleteNow();
-                    }
+                    if(node.isEmpty()) node.deleteFromParent();
                 }
             }
         }
