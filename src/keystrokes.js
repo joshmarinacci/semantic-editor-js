@@ -33,12 +33,9 @@ function styleSelectionInline(style) {
 exports.styleSelectionInline = styleSelectionInline;
 
 function changeBlockStyle(style) {
-    var sel = window.getSelection();
-    var range = sel.getRangeAt(0);
-    var block = dom.findParentBlockDom(range.commonAncestorContainer);
-    var mod_b = doc.findModelForDom(model.getRoot(),block);
-    mod_b.style = style;
     var info = dom.saveSelection(model);
+    var mod_b = info.startpos.node.findBlockParent();
+    mod_b.style = style;
     dom.syncDom(editor,model);
     dom.setSelectionFromPosition(info.startpos);
 }

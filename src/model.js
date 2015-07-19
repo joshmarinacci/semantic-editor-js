@@ -428,21 +428,6 @@ function splitModelNode(n,mod,model) {
     return [a,b];
 }
 
-exports.findModelForDom = function(root,target) {
-    for(var i=0; i<root.content.length; i++) {
-        var node = root.content[i];
-        if(node.id == target.id) {
-            return node;
-        }
-        if(node.type == exports.BLOCK || node.type == exports.SPAN) {
-            var ans = exports.findModelForDom(node,target);
-            if(ans != null) return ans;
-        }
-    }
-    return null;
-}
-
-
 exports.wrapTextInInlineStyle = function(node,style,model) {
     var inline = model.makeSpan();
     inline.style = style;
@@ -455,7 +440,7 @@ exports.splitThree = function(node,index1,index2,model) {
     var parts1 = splitModelNode(index1,node,model);
     var parts2 = splitModelNode(index2-index1,parts1[1],model);
     return [parts1[0],parts2[0],parts2[1]];
-}
+};
 
 
 
