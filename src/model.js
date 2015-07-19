@@ -43,6 +43,10 @@ function DNode(type,text) {
         this.parent.content.splice(n,1);
         return this.parent;
     };
+    this.findBlockParent = function() {
+        if(this.type == exports.BLOCK) return this;
+        return this.parent.findBlockParent();
+    };
     this.isEmpty = function() {
         if(this.type == exports.TEXT && this.text.length == 0) return true;
         if(this.type == exports.SPAN && this.content.length == 0) return true;
@@ -135,10 +139,6 @@ function DNodeIterator(thecurrent) {
 
 }
 
-function findBlockParent(node) {
-    if(node.type ==  exports.BLOCK) return node;
-    return findBlockParent(node.parent);
-}
 function mergeBlocksBackwards(start,end) {
     end.content.forEach(function(node) {
         start.append(node);
@@ -241,8 +241,8 @@ function DModel() {
         var prevOffset = prevText.text.length;
         var pos = this.deleteTextBackwards(prevText,prevOffset);
         //merge blocks if deleting across blocks
-        var startBlock = findBlockParent(pos.node);
-        var endBlock   = findBlockParent(node);
+        var startBlock = pos.node.findBlockParent();
+        var endBlock   = node.findBlockParent();
         if(startBlock.id != endBlock.id)  mergeBlocksBackwards(startBlock,endBlock);
         return {
             node:pos.node,
@@ -264,8 +264,8 @@ function DModel() {
             var pos =  this.deleteTextForwards(nextText,nextOffset);
 
             //merge blocks if deleting across blocks
-            var startBlock = findBlockParent(startNode);
-            var endBlock  = findBlockParent(pos.node);
+            var startBlock = startNode.findBlockParent();
+            var endBlock  = pos.node.findBlockParent();
             if(startBlock.id != endBlock.id)  mergeBlocksBackwards(startBlock,endBlock);
 
             //strip out empty nodes
@@ -316,8 +316,8 @@ function DModel() {
                         if(parent.isEmpty()) parent.deleteFromParent();
                     }
                 }
-                var startBlock = findBlockParent(startNode);
-                var endBlock  = findBlockParent(node);
+                var startBlock = startNode.findBlockParent();
+                var endBlock  = node.findBlockParent();
                 if(startBlock.id != endBlock.id) {
                     mergeBlocksBackwards(startBlock,endBlock);
                 }

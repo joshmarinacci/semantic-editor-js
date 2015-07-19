@@ -75,12 +75,6 @@ exports.saveSelection = function (model) {
     var start = findParentNonTextNode(range.startContainer);
     var end = findParentNonTextNode(range.endContainer);
     var ret = {
-        id:start.node.id,
-        path:start.path,
-        startOffset:range.startOffset,
-        endid: end.node.id,
-        endpath: end.path,
-        endOffset:range.endOffset,
         collapsed:range.collapsed,
         startpos: {
             id:start.node.id,
@@ -279,15 +273,6 @@ exports.scanForChanges = function(dom_root,mod_root) {
     return changes;
 };
 
-
-exports.selectionToModelNode = function(info,model) {
-    var node = model.findNodeById(info.id);
-    info.path.forEach(function(index) {
-        node = node.child(index);
-    });
-    return node;
-};
-
 exports.findParentBlockDom = function(elem) {
     var parent = elem.parentElement;
     if(parent.tagName == 'DIV') {
@@ -318,10 +303,6 @@ function findParentNonTextNode(dom) {
     }
 }
 
-exports.findBlockParent = function(node) {
-    if(node.type ==  doc.BLOCK) return node;
-    return exports.findBlockParent(node.parent);
-};
 
 exports.findModelFromPosition = function(pos) {
     var node = model.findNodeById(pos.id);

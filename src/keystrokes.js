@@ -150,7 +150,7 @@ var actions_map = {
                 mod = mod.child(0);
             }
         }
-        var pos = model.deleteTextBackwards(mod,info.startOffset);
+        var pos = model.deleteTextBackwards(mod,info.startpos.offset);
         dom.syncDom(editor,model);
         dom.setSelectionFromPosition(dom.textNodeToSelectionPosition(pos.node,pos.offset));
     },
@@ -205,13 +205,13 @@ var actions_map = {
 
 actions_map[exports.UPDATE_CURRENT_STYLE] = updateCurrentStyle;
 
-    exports.actions_map = actions_map;
+exports.actions_map = actions_map;
 
 exports.handleEvent = function(e) {
     if(e.keyCode == 13) { //enter key
         stopKeyboardEvent(e);
         var info = dom.saveSelection(model);
-        var block = dom.findBlockParent(info.startpos.node);
+        var block = info.startpos.node.findBlockParent();
         if(block.style == 'block-code') {
             insertStringAt(info.startpos.node,info.startpos.offset,"\n");
             dom.syncDom(editor,model);
@@ -220,7 +220,7 @@ exports.handleEvent = function(e) {
         } else {
             var parts = splitBlock();
             dom.syncDom(editor,model);
-            var block2 = dom.findBlockParent(parts[1]);
+            var block2 = parts[1].findBlockParent();
             dom.setSelectionFromPosition({
                 id:block2.id,
                 path:[0],
