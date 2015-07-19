@@ -13,6 +13,13 @@ exports.populateKeyDocs = function(elem) {
     }
 };
 
+
+function splitThree(node,index1,index2,model) {
+    var parts1 = model.splitNode(node,index1);
+    var parts2 = model.splitNode(parts1[1],index2-index1);
+    return [parts1[0],parts2[0],parts2[1]];
+}
+
 function styleSelectionInline(style) {
     var sel = window.getSelection();
     var range = sel.getRangeAt(0);
@@ -21,11 +28,11 @@ function styleSelectionInline(style) {
         return;
     }
     var info = dom.saveSelection(model);
-    var parts = doc.splitThree(
+    var parts = splitThree(
         info.startpos.node,
         info.startpos.offset,
         info.endpos.offset,model)
-    doc.wrapTextInInlineStyle(parts[1],style,model);
+    wrapTextInInlineStyle(parts[1],style,model);
     dom.syncDom(editor,model);
     dom.setSelectionFromPosition(info.startpos);
 }
@@ -111,6 +118,14 @@ function updateCurrentStyle() {
     },10);
 }
 
+function wrapTextInInlineStyle(node,style,model) {
+    var inline = model.makeSpan();
+    inline.style = style;
+    model.swapNode(node,inline);
+    inline.append(node);
+    return inline;
+};
+
 var actions_map = {
     "style-bold": function(e) {
         stopKeyboardEvent(e);
@@ -164,12 +179,12 @@ var actions_map = {
             console.log("can't link across blocks");
             return;
         }
-        var parts = doc.splitThree(
+        var parts = splitThree(
             info.startpos.node,
             info.startpos.offset,
             info.endpos.offset,
             model);
-        var span = doc.wrapTextInInlineStyle(parts[1],style,model);
+        var span = wrapTextInInlineStyle(parts[1],style,model);
         span.meta = {};
         span.meta.elementName = "A";
 

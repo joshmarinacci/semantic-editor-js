@@ -365,7 +365,8 @@ function DModel() {
             if(node.id == id) return node;
         }
         return null;
-    }
+    };
+
     this.splitBlockAt = function(node,offset) {
         if(node.type == exports.TEXT) {
             var a = this.makeText(node.text.substring(0,offset));
@@ -390,56 +391,40 @@ function DModel() {
             var b = this.makeBlock();
             a.style = node.style;
             b.style = node.style;
-            swapNode(node,a,b);
+            this.swapNode(node,a,b);
             return [a,b];
         }
+    };
+
+    //replaces the first node in it's parent with the rest of the nodes
+    this.swapNode = function() {
+        var args = Array.prototype.slice.call(arguments);
+        var oldnode = args.shift();
+        var rest = args;
+        var parent = oldnode.parent;
+        var index = parent.content.indexOf(oldnode);
+        var cargs = [index,1].concat(rest);
+        parent.content.splice.apply(parent.content,cargs);
+        rest.forEach(function(node) {
+            node.parent = parent;
+        })
+    };
+
+    //splits a text node in half at the requested index
+    this.splitNode = function(node,index) {
+        if(node.type != exports.TEXT) {
+            console.log("ERROR: don't know how to split non text node yet");
+            return;
+        }
+        var a = this.makeText(node.text.substring(0,index));
+        var b = this.makeText(node.text.substring(index));
+        this.swapNode(node,a,b);
+        return [a,b];
     }
 }
 
 exports.makeModel = function() {
     return new DModel();
-};
-
-
-
-//replaces the first node in it's parent with the rest of the nodes
-function swapNode() {
-    var args = Array.prototype.slice.call(arguments);
-    var oldnode = args.shift();
-    var rest = args;
-    var parent = oldnode.parent;
-    var index = parent.content.indexOf(oldnode);
-    var cargs = [index,1].concat(rest);
-    parent.content.splice.apply(parent.content,cargs);
-    rest.forEach(function(node) {
-        node.parent = parent;
-    })
-}
-
-//splits a text node in half at the requested offset
-function splitModelNode(n,mod,model) {
-    if(mod.type != exports.TEXT) {
-        console.log("ERROR: don't know how to split non text node yet");
-        return;
-    }
-    var a = model.makeText(mod.text.substring(0,n));
-    var b = model.makeText(mod.text.substring(n));
-    swapNode(mod,a,b);
-    return [a,b];
-}
-
-exports.wrapTextInInlineStyle = function(node,style,model) {
-    var inline = model.makeSpan();
-    inline.style = style;
-    swapNode(node,inline);
-    inline.append(node);
-    return inline;
-};
-
-exports.splitThree = function(node,index1,index2,model) {
-    var parts1 = splitModelNode(index1,node,model);
-    var parts2 = splitModelNode(index2-index1,parts1[1],model);
-    return [parts1[0],parts2[0],parts2[1]];
 };
 
 
