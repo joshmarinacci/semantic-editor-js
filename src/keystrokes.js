@@ -85,7 +85,7 @@ var key_to_actions = {
 };
 
 function stopKeyboardEvent(e) {
-    if(e instanceof KeyboardEvent) {
+    if(e.preventDefault) {
         e.preventDefault();
         e.stopPropagation();
     }

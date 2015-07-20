@@ -223,6 +223,7 @@ var PostEditor = React.createClass({
         keystrokes.setEditor(editor);
         keystrokes.setModel(model);
         dom.syncDom(editor,model);
+        document.getElementById("post-editor").addEventListener("input", keystrokes.handleBrowserInputEvent, false);
     },
     keydown: function(e) {
         keystrokes.handleEvent(e);
