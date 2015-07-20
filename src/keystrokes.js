@@ -1,7 +1,8 @@
 /**
  * Created by josh on 7/18/15.
  */
-var model;
+var dom = require('./dom');
+var doc = require('./model');
 var editor;
 
 
@@ -305,7 +306,5 @@ exports.on = function(type, listener) {
 };
 
 function fireEvent(type, data) {
-    listeners[type].forEach(function(l){
-        l(data);
-    });
+    if(listeners[type]) listeners[type].forEach(function(l){  l(data);  });
 }

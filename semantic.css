@@ -1,4 +1,4 @@
-#editor.semantic-view div {
+.semantic-view div {
     margin: 0.5em;
     padding: 0.5em;
     position: relative;
@@ -6,7 +6,7 @@
     padding-right: 5em;
 }
 
-#editor.semantic-view *:after {
+.semantic-view *:after {
     position: absolute;
     font-size: 8pt;
     padding: 3px 0 0 0;
@@ -19,22 +19,22 @@
     font-variant: normal;
 }
 
-#editor.semantic-view div.header {
+.semantic-view div.header {
     font-size: 150%;
     background-color: #fff0f0;
 }
 
-#editor.semantic-view div.subheader {
+.semantic-view div.subheader {
     font-size: 125%;
     background-color: #fff6f6;
 }
-#editor.semantic-view div.body {
+.semantic-view div.body {
     color: #444;
     border: 1px solid #eee;
     border-width: 0px 0px 1px 0px;
 }
 
-#editor.semantic-view .block-code {
+.semantic-view .block-code {
     color: #888800;
     background-color: #fffff0;
     font-family: monospace;
@@ -43,46 +43,46 @@
     white-space: pre;
 }
 
-#editor.semantic-view .block-quote {
+.semantic-view .block-quote {
     background-color: #eef;
     color: black;
     font-family: serif;
     font-style: italic;
     padding: 1em;
 }
-#editor.semantic-view .header:after { content: "header"; }
-#editor.semantic-view .subheader:after { content: "subheader"; }
-#editor.semantic-view .body:after { content: "body"; }
-#editor.semantic-view .block-code:after { content: "code block"; }
-#editor.semantic-view .block-quote:after { content: "block quote"; }
+.semantic-view .header:after { content: "header"; }
+.semantic-view .subheader:after { content: "subheader"; }
+.semantic-view .body:after { content: "body"; }
+.semantic-view .block-code:after { content: "code block"; }
+.semantic-view .block-quote:after { content: "block quote"; }
 
 /* inline styles */
-#editor.semantic-view .bold {
+.semantic-view .bold {
     color: red;
     font-weight: bold;
 }
-#editor.semantic-view .italic {
+.semantic-view .italic {
     color: green;
     font-weight: normal;
     font-style: italic;
 }
 
 
-#editor.semantic-view .inline-code {
+.semantic-view .inline-code {
     font-weight: normal;
     color: #cccc00;
     font-family: monospace;
 }
-#editor.semantic-view .link {
+.semantic-view .link {
     color: purple;
     text-decoration: underline;
 }
 
-#editor.semantic-view .subscript {
+.semantic-view .subscript {
     vertical-align: sub;
     font-size: 0.83em;
 }
-#editor.semantic-view .superscript {
+.semantic-view .superscript {
     vertical-align: super;
     font-size: 0.83em;
 }

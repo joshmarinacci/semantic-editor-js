@@ -1,3 +1,5 @@
+var doc = require('./model');
+
 /**
  * Created by josh on 7/18/15.
  */
@@ -34,7 +36,7 @@ function renderTreeChild(mnode) {
 
 
 exports.syncDom = function(editor,model) {
-    renderTree(model);
+    //renderTree(model);
     clearChildren(editor);
     model.getRoot().content.forEach(function (block) {
         var blockElement = document.createElement('div');
@@ -90,8 +92,8 @@ exports.saveSelection = function (model) {
             model:model
         }
     };
-    ret.startpos.node = exports.findModelFromPosition(ret.startpos);
-    ret.endpos.node = exports.findModelFromPosition(ret.endpos);
+    ret.startpos.node = exports.findModelFromPosition(ret.startpos,model);
+    ret.endpos.node = exports.findModelFromPosition(ret.endpos,model);
 
     return ret;
 };
@@ -304,7 +306,7 @@ function findParentNonTextNode(dom) {
 }
 
 
-exports.findModelFromPosition = function(pos) {
+exports.findModelFromPosition = function(pos,model) {
     var node = model.findNodeById(pos.id);
     if(pos.path) pos.path.forEach(function(index) {
         node = node.child(index);

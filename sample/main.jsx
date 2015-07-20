@@ -1,5 +1,73 @@
 var React = require('react');
 
+var doc = require('../src/model');
+var dom = require('../src/dom');
+var keystrokes = require('../src/keystrokes');
+
+function setupModel() {
+    var model = doc.makeModel();
+    model.setStyles({
+        block:{
+            //name of style : css classname
+            header:'header',
+            subheader:'subheader',
+            body:'body',
+            'block-code':'block-code',
+            'block-quote':'block-quote'
+        },
+        inline: {
+            bold:'bold',
+            italic:'italic',
+            'inline-code':'inline-code',
+            link:'link',
+            subscript:'subscript',
+            superscript:'superscript'
+        }
+    });
+
+
+    var block1 = model.makeBlock();
+    model.setBlockStyle(block1,'header');
+    var text1 = model.makeText("This is a header");
+    block1.append(text1);
+    var text2 = model.makeText(" with some");
+    block1.append(text2);
+    var text3 = model.makeText(" text");
+    block1.append(text3);
+    model.getRoot().append(block1);
+
+    var block2 = model.makeBlock();
+    model.getRoot().append(block2);
+    model.setBlockStyle(block2,'body');
+    block2.append(model.makeText("This is a paragraph of body text"));
+
+
+    var span1 = model.makeSpan();
+    span1.style = 'bold';
+    span1.append(model.makeText(" with some bold"));
+    block2.append(span1);
+
+    var span2 = model.makeSpan();
+    span2.style = 'italic';
+    span2.append(model.makeText(" and italic"));
+    block2.append(span2);
+
+    block2.append(model.makeText(" text to read."));
+    block2.append(model.makeText(" And now some more text that we will read and read and it just goes on and on."));
+
+    var block3 = model.makeBlock();
+    model.getRoot().append(block3);
+    model.setBlockStyle(block3,'body');
+    block3.append(model.makeText("This is another paragraph of body text"));
+
+    var block3 = model.makeBlock();
+    model.getRoot().append(block3);
+    model.setBlockStyle(block3,'block-code');
+    block3.append(model.makeText("//codeblock\nfor(var i=0; i<8; i++) {\n  console.log(i);\n}"));
+    return model;
+}
+var model = setupModel();
+
 var posts = [
     {
         id:'id_foo1',
@@ -147,35 +215,22 @@ var PostMeta = React.createClass({
 });
 
 var PostEditor = React.createClass({
-    renderContent: function(nodes) {
-        function rc(node) {
-            var desc = node.type;
-            if (node.type == 'text') {
-                var kids = node.text;
-            } else {
-                var kids = node.content.map(function (c) {
-                    return rc(c);
-                }).join(" ");
-            }
-            return kids;
-        }
-        return nodes.map(rc).join(" ");
+    componentWillUpdate: function() {
+        return false;
     },
-    save: function() {
-        console.log("saving");
+    componentDidMount:function() {
+        var editor = document.getElementById('post-editor');
+        keystrokes.setEditor(editor);
+        keystrokes.setModel(model);
+        dom.syncDom(editor,model);
     },
-    changed: function(event) {
-        var val = event.target.value;
-        console.log('val = ', val);
+    keydown: function(e) {
+        keystrokes.handleEvent(e);
     },
     render: function() {
-        console.log("rendering",this.props.post.id);
-        return <div id="post-editor">
-                <textarea ref="editor" rows="5" cols="40"
-                          value={this.renderContent(this.props.post.content)}
-                          onChange={this.changed}
-                          onBlur={this.save}
-            /></div>
+        return <div id="post-editor" className="semantic-view" contentEditable={true} spellCheck={false}
+                    onKeyDown={this.keydown}
+            ></div>
     }
 });
 
