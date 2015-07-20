@@ -4,26 +4,26 @@ var doc = require('../src/model');
 var dom = require('../src/dom');
 var keystrokes = require('../src/keystrokes');
 
-function setupModel() {
-    var model = doc.makeModel();
-    model.setStyles({
-        block:{
-            //name of style : css classname
-            header:'header',
-            subheader:'subheader',
-            body:'body',
-            'block-code':'block-code',
-            'block-quote':'block-quote'
-        },
-        inline: {
-            bold:'bold',
-            italic:'italic',
-            'inline-code':'inline-code',
-            link:'link',
-            subscript:'subscript',
-            superscript:'superscript'
-        }
-    });
+var model = doc.makeModel();
+model.setStyles({
+    block:{
+        //name of style : css classname
+        header:'header',
+        subheader:'subheader',
+        body:'body',
+        'block-code':'block-code',
+        'block-quote':'block-quote'
+    },
+    inline: {
+        bold:'bold',
+        italic:'italic',
+        'inline-code':'inline-code',
+        link:'link',
+        subscript:'subscript',
+        superscript:'superscript'
+    }
+});
+function setupModel(model) {
 
 
     var block1 = model.makeBlock();
@@ -66,7 +66,7 @@ function setupModel() {
     block3.append(model.makeText("//codeblock\nfor(var i=0; i<8; i++) {\n  console.log(i);\n}"));
     return model;
 }
-var model = setupModel();
+var model = setupModel(model);
 
 var posts = [
     {
@@ -128,6 +128,9 @@ var PostDataStore = {
     selected:null,
     posts: posts,
     listeners:{},
+    getModel: function() {
+        return model;
+    },
     selectById:function(id) {
         this.selected = this.posts.find(function(post) { return post.id == id; });
         this.fire('selected');
@@ -235,6 +238,48 @@ var PostEditor = React.createClass({
     }
 });
 
+var style_lut = {
+    block:'p',
+    header:'h1',
+    'block-code':'pre',
+    bold:'b',
+    italic:'i'
+};
+var type_lut = {
+    root:'div',
+    block:'div',
+    span:'span'
+};
+function tag(name, node) {
+    return '<'+name+'>'+childrenToHtml(node)+'</'+name+'>';
+}
+function childrenToHtml(node) {
+    var str = "";
+    for(var i=0; i<node.childCount(); i++) {
+        str += nodeToHtml(node.child(i));
+    }
+    return str;
+}
+function nodeToHtml(node) {
+    if(node.type == 'text') return node.text;
+    if(node.style && style_lut[node.style]) return tag(style_lut[node.style], node);
+    if(node.type && type_lut[node.type]) return tag(type_lut[node.type], node);
+    throw Error("shouldn't be here");
+}
+
+var Toolbar = React.createClass({
+    exportToConsole: function() {
+        var model = PostDataStore.getModel();
+        console.log("html = ", nodeToHtml(model.getRoot()));
+    },
+    render: function() {
+        return <div>
+            <button onClick={this.exportToConsole}>Save</button>
+            <button value="fullscreen">Fullscreen</button>
+            </div>
+    }
+})
+
 var MainView = React.createClass({
     getInitialState: function() {
         return {
@@ -254,6 +299,7 @@ var MainView = React.createClass({
     render: function() {
         return (<div id="main-content">
             <PostList posts={posts}/>
+            <Toolbar/>
             <PostEditor post={this.state.selected}/>
             <PostMeta   post={this.state.selected}/>
         </div>);
