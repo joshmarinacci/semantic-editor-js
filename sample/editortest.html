@@ -10,22 +10,26 @@
     <link rel="stylesheet" href="../markdown.css"/>
 
     <style type="text/css">
-        #main-content {
+        .vbox, .hbox {
             display: -webkit-flex;
             display: flex;
+        }
+        .vbox {
+            flex-direction: column;
+            -webkit-flex-direction: column;
+        }
+        .hbox {
             flex-direction: row;
             -webkit-flex-direction: row;
         }
-        #post-list, #post-editor, #post-meta {
-            flex:0;
-            -webkit-flex: 0;
+        .grow {
+            flex:1;
+            -webkit-flex: 1;
+        }
+        #post-list, #post-editor, #post-meta, #toolbar {
             border: 1px solid red;
             min-width: 20em;
             padding: 1em;
-        }
-        #post-editor {
-            flex:1;
-            -webkit-flex: 1;
             margin: 0;
         }
         #post-editor textarea {

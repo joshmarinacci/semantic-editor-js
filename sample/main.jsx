@@ -5,7 +5,7 @@ var dom = require('../src/dom');
 var keystrokes = require('../src/keystrokes');
 
 var model = doc.makeModel();
-model.setStyles({
+var std_styles = {
     block:{
         //name of style : css classname
         header:'header',
@@ -22,48 +22,15 @@ model.setStyles({
         subscript:'subscript',
         superscript:'superscript'
     }
-});
+}
+model.setStyles(std_styles);
 function setupModel(model) {
 
 
     var block1 = model.makeBlock();
-    model.setBlockStyle(block1,'header');
-    var text1 = model.makeText("This is a header");
+    var text1 = model.makeText("This is an empty post. please create a new one.");
     block1.append(text1);
-    var text2 = model.makeText(" with some");
-    block1.append(text2);
-    var text3 = model.makeText(" text");
-    block1.append(text3);
-    model.getRoot().append(block1);
-
-    var block2 = model.makeBlock();
-    model.getRoot().append(block2);
-    model.setBlockStyle(block2,'body');
-    block2.append(model.makeText("This is a paragraph of body text"));
-
-
-    var span1 = model.makeSpan();
-    span1.style = 'bold';
-    span1.append(model.makeText(" with some bold"));
-    block2.append(span1);
-
-    var span2 = model.makeSpan();
-    span2.style = 'italic';
-    span2.append(model.makeText(" and italic"));
-    block2.append(span2);
-
-    block2.append(model.makeText(" text to read."));
-    block2.append(model.makeText(" And now some more text that we will read and read and it just goes on and on."));
-
-    var block3 = model.makeBlock();
-    model.getRoot().append(block3);
-    model.setBlockStyle(block3,'body');
-    block3.append(model.makeText("This is another paragraph of body text"));
-
-    var block3 = model.makeBlock();
-    model.getRoot().append(block3);
-    model.setBlockStyle(block3,'block-code');
-    block3.append(model.makeText("//codeblock\nfor(var i=0; i<8; i++) {\n  console.log(i);\n}"));
+    model.append(block1);
     return model;
 }
 var model = setupModel(model);
@@ -83,6 +50,7 @@ function dataToModel_helper(data,root,model) {
 
 function dataToModel(data) {
     var model = doc.makeModel();
+    model.setStyles(std_styles);
     dataToModel_helper(data,model.getRoot(),model);
     return model;
 }
@@ -112,9 +80,7 @@ function modelToData_helper(node) {
     }
 }
 function modelToData(model) {
-    console.log("the model = ",model);
-    var data = modelToData_helper(model.getRoot());
-    return data;
+    return modelToData_helper(model.getRoot());
 }
 
 var posts = [
@@ -319,7 +285,7 @@ var PostEditor = React.createClass({
         keystrokes.handleEvent(e);
     },
     render: function() {
-        return <div ref="editor" id="post-editor" className="semantic-view" contentEditable={true} spellCheck={false}
+        return <div ref="editor" id="post-editor" className="semantic-view grow" contentEditable={true} spellCheck={false}
                     onKeyDown={this.keydown}
             ></div>
     }
@@ -410,7 +376,7 @@ var Toolbar = React.createClass({
         PostDataStore.updateContent(this.props.post,data);
     },
     render: function() {
-        return <div>
+        return <div className='grow' id="toolbar">
             <BlockDropdown styles={model.getStyles().block} type="block"/>
             <BlockDropdown styles={model.getStyles().inline} type="inline"/>
             <button onClick={this.setModelToPost}>Save</button>
@@ -440,11 +406,17 @@ var MainView = React.createClass({
         });
     },
     render: function() {
-        return (<div id="main-content" className='container'>
-            <PostList posts={this.state.posts}/>
-            <Toolbar    post={this.state.selected}/>
-            <PostEditor post={this.state.selected}/>
-            <PostMeta   post={this.state.selected}/>
+        return (
+            <div id="main-content" className='container vbox'>
+                <div className='hbox'>
+                    <PostList posts={this.state.posts}/>
+                    <PostEditor post={this.state.selected}/>
+                </div>
+
+                <div className='hbox'>
+                    <PostMeta   post={this.state.selected}/>
+                    <Toolbar    post={this.state.selected}/>
+                </div>
         </div>);
     }
 });
