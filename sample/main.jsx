@@ -68,12 +68,69 @@ function setupModel(model) {
 }
 var model = setupModel(model);
 
+function dataToModel_helper(data,root,model) {
+    data.forEach(function(dnode) {
+        if(dnode.type == 'text') return root.append(model.makeText(dnode.text));
+        if(dnode.type == 'root') return dataToModel_helper(dnode.content,root,model);
+        var mnode = null;
+        if(dnode.type == 'span') mnode = model.makeSpan();
+        if(dnode.type == 'block') mnode = model.makeBlock();
+        if(dnode.style) mnode.style = dnode.style;
+        dataToModel_helper(dnode.content,mnode,model);
+        root.append(mnode);
+    });
+}
+
+function dataToModel(data) {
+    var model = doc.makeModel();
+    dataToModel_helper(data,model.getRoot(),model);
+    return model;
+}
+function modelToData_helper(node) {
+    if(node.type == 'block') {
+        return {
+            type:'block',
+            style:node.style,
+            content: node.content.map(modelToData_helper)
+        }
+    }
+    if(node.type == 'text') {
+        return {
+            type:'text',
+            text:node.text
+        }
+    }
+    if(node.type == 'span') {
+        return {
+            type:'span',
+            style:node.style,
+            content: node.content.map(modelToData_helper)
+        }
+    }
+    if(node.type == 'root') {
+        return node.content.map(modelToData_helper)
+    }
+}
+function modelToData(model) {
+    console.log("the model = ",model);
+    var data = modelToData_helper(model.getRoot());
+    return data;
+}
+
 var posts = [
     {
         id:'id_foo1',
         slug:"testpost1",
         title:"Test Post 1",
         content: [
+            {
+                type:'block', style:'header', content:[
+                {
+                    type:'text',
+                    text:'a header'
+                }
+            ]
+            },
             {
                 type:'block',
                 style:'body',
@@ -143,9 +200,7 @@ var PostDataStore = {
         this.listeners[type].push(callback);
     },
     fire: function(type) {
-        console.log("Firing");
         this.listeners[type].forEach(function(l){
-            console.log("f");
             l();
         });
     },
@@ -154,12 +209,14 @@ var PostDataStore = {
     },
     updateTitle: function(post, title) {
         post.title = title;
+    },
+    updateContent: function(post, content) {
+        post.content = content;
     }
 };
 
 var PostItem = React.createClass({
     selectPost: function(e) {
-        console.log("selecting the post",this.props.post.id);
         PostDataStore.selectById(this.props.post.id);
     },
     render: function() {
@@ -222,17 +279,23 @@ var PostEditor = React.createClass({
         return false;
     },
     componentDidMount:function() {
-        var editor = document.getElementById('post-editor');
+        var editor = React.findDOMNode(this.refs.editor);
         keystrokes.setEditor(editor);
         keystrokes.setModel(model);
         dom.syncDom(editor,model);
-        document.getElementById("post-editor").addEventListener("input", keystrokes.handleBrowserInputEvent, false);
+        editor.addEventListener("input", keystrokes.handleBrowserInputEvent, false);
+    },
+    componentWillReceiveProps: function(props) {
+        var editor = React.findDOMNode(this.refs.editor);
+        model = dataToModel(props.post.content);
+        keystrokes.setModel(model);
+        dom.syncDom(editor,model);
     },
     keydown: function(e) {
         keystrokes.handleEvent(e);
     },
     render: function() {
-        return <div id="post-editor" className="semantic-view" contentEditable={true} spellCheck={false}
+        return <div ref="editor" id="post-editor" className="semantic-view" contentEditable={true} spellCheck={false}
                     onKeyDown={this.keydown}
             ></div>
     }
@@ -318,11 +381,15 @@ var Toolbar = React.createClass({
         var model = PostDataStore.getModel();
         console.log("html = ", nodeToHtml(model.getRoot()));
     },
+    setModelToPost: function() {
+        var data = modelToData(model);
+        PostDataStore.updateContent(this.props.post,data);
+    },
     render: function() {
         return <div>
             <BlockDropdown styles={model.getStyles().block} type="block"/>
             <BlockDropdown styles={model.getStyles().inline} type="inline"/>
-            <button onClick={this.exportToConsole}>Save</button>
+            <button onClick={this.setModelToPost}>Save</button>
             <button value="fullscreen">Fullscreen</button>
             </div>
     }
@@ -338,7 +405,6 @@ var MainView = React.createClass({
     componentDidMount: function() {
         var self = this;
         PostDataStore.on('selected',function() {
-            console.log("selected changed");
             self.setState({
                 selected:PostDataStore.getSelected(),
             })
@@ -347,7 +413,7 @@ var MainView = React.createClass({
     render: function() {
         return (<div id="main-content" className='container'>
             <PostList posts={posts}/>
-            <Toolbar/>
+            <Toolbar    post={this.state.selected}/>
             <PostEditor post={this.state.selected}/>
             <PostMeta   post={this.state.selected}/>
         </div>);
