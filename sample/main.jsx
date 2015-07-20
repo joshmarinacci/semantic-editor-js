@@ -183,8 +183,15 @@ var posts = [
 
 var PostDataStore = {
     selected:null,
-    posts: posts,
+    posts: [],
     listeners:{},
+    setPosts: function(posts) {
+        this.posts = posts;
+        this.fire('posts');
+    },
+    getPosts: function() {
+        return this.posts;
+    },
     getModel: function() {
         return model;
     },
@@ -212,6 +219,21 @@ var PostDataStore = {
     },
     updateContent: function(post, content) {
         post.content = content;
+    },
+
+    loadPosts: function() {
+        var url = "http://localhost:39865/posts";
+        console.log("loading posts from",url);
+        var xml = new XMLHttpRequest();
+        var self = this;
+        xml.onreadystatechange = function(e) {
+            if(this.readyState == 4 && this.status == 200) {
+                self.setPosts(xml.response);
+            }
+        };
+        xml.responseType = 'json';
+        xml.open("GET",url);
+        xml.send();
     }
 };
 
@@ -243,6 +265,7 @@ var PostMeta = React.createClass({
     },
     componentWillReceiveProps:function(props) {
         var post = PostDataStore.getSelected();
+        if(!post) return;
         this.setState({
             slug:post.slug,
             title: post.title
@@ -286,6 +309,7 @@ var PostEditor = React.createClass({
         editor.addEventListener("input", keystrokes.handleBrowserInputEvent, false);
     },
     componentWillReceiveProps: function(props) {
+        if(typeof props.post == 'undefined') return;
         var editor = React.findDOMNode(this.refs.editor);
         model = dataToModel(props.post.content);
         keystrokes.setModel(model);
@@ -398,8 +422,8 @@ var Toolbar = React.createClass({
 var MainView = React.createClass({
     getInitialState: function() {
         return {
-            posts: PostDataStore.posts,
-            selected: PostDataStore.posts[0],
+            posts: PostDataStore.getPosts(),
+            selected: PostDataStore.getPosts()[0],
         }
     },
     componentDidMount: function() {
@@ -409,10 +433,15 @@ var MainView = React.createClass({
                 selected:PostDataStore.getSelected(),
             })
         });
+        PostDataStore.on('posts',function() {
+            self.setState({
+                posts:PostDataStore.getPosts(),
+            })
+        });
     },
     render: function() {
         return (<div id="main-content" className='container'>
-            <PostList posts={posts}/>
+            <PostList posts={this.state.posts}/>
             <Toolbar    post={this.state.selected}/>
             <PostEditor post={this.state.selected}/>
             <PostMeta   post={this.state.selected}/>
@@ -421,3 +450,6 @@ var MainView = React.createClass({
 });
 
 React.render(<MainView/>, document.getElementById("main"));
+
+
+PostDataStore.loadPosts();
