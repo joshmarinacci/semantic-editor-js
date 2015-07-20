@@ -379,8 +379,8 @@ var Toolbar = React.createClass({
         return <div className='grow' id="toolbar">
             <BlockDropdown styles={model.getStyles().block} type="block"/>
             <BlockDropdown styles={model.getStyles().inline} type="inline"/>
-            <button onClick={this.setModelToPost}>Save</button>
-            <button value="fullscreen">Fullscreen</button>
+            <button className="btn btn-default" onClick={this.setModelToPost}>Save</button>
+            <button className="btn btn-default" value="fullscreen">Fullscreen</button>
             </div>
     }
 });
