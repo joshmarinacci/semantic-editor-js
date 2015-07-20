@@ -266,6 +266,52 @@ function nodeToHtml(node) {
     if(node.type && type_lut[node.type]) return tag(type_lut[node.type], node);
     throw Error("shouldn't be here");
 }
+function toClass(def, cond) {
+    var str = def.join(" ");
+    for(var name in cond) {
+        if(cond[name] === true) {
+            str += " " + name
+        }
+    }
+    return str;
+}
+
+var BlockDropdown = React.createClass({
+    getInitialState: function() {
+        return {
+            open:false
+        }
+    },
+    toggleDropdown: function() {
+        this.setState({
+            open:!this.state.open
+        })
+    },
+    selectedStyle: function(name,e) {
+        if(this.props.type == 'block') {
+            keystrokes.changeBlockStyle(model.getStyles().block[name]);
+        }
+        if(this.props.type == 'inline') {
+            keystrokes.styleSelectionInline(model.getStyles().inline[name]);
+        }
+        this.setState({open:false})
+    },
+    render: function() {
+        var openClass = toClass(["btn-group"],{ open:this.state.open });
+        var buttonClass = toClass(["btn","btn-default","dropdown-toggle"]);
+        var styles = this.props.styles;
+        var items = [];
+        for(var name in styles) {
+            items.push(<li key={name}><a href='#' onClick={this.selectedStyle.bind(this,name)}>{name}</a></li>);
+        }
+        return <div className={openClass}>
+                <button type="button" className={buttonClass} onClick={this.toggleDropdown}>
+                    {this.props.type} <span className="caret"></span>
+                </button>
+                <ul className="dropdown-menu">{items}</ul>
+            </div>
+    }
+});
 
 var Toolbar = React.createClass({
     exportToConsole: function() {
@@ -274,11 +320,13 @@ var Toolbar = React.createClass({
     },
     render: function() {
         return <div>
+            <BlockDropdown styles={model.getStyles().block} type="block"/>
+            <BlockDropdown styles={model.getStyles().inline} type="inline"/>
             <button onClick={this.exportToConsole}>Save</button>
             <button value="fullscreen">Fullscreen</button>
             </div>
     }
-})
+});
 
 var MainView = React.createClass({
     getInitialState: function() {
@@ -297,7 +345,7 @@ var MainView = React.createClass({
         });
     },
     render: function() {
-        return (<div id="main-content">
+        return (<div id="main-content" className='container'>
             <PostList posts={posts}/>
             <Toolbar/>
             <PostEditor post={this.state.selected}/>
