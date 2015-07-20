@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "node tests/test_model.js",
-    "build": "browserify -r ./src/model.js:model -r ./src/dom.js:dom -r ./src/keystrokes.js:keystrokes -o bundle.js --debug --verbose"
+    "build": "browserify -r ./src/model.js:model -r ./src/dom.js:dom -r ./src/keystrokes.js:keystrokes -o bundle.js --debug --verbose",
+    "build-sample": "browserify --transform reactify ./sample/main.jsx -o ./sample/bundle.js --debug --verbose"
   },
   "author": "",
   "license": "ISC",
@@ -13,6 +14,9 @@
     "bootstrap": "^3.3.5",
     "jquery": "^2.1.4",
     "punycode": "^1.3.2",
-    "tape": "^4.0.0"
+    "react": "^0.13.3",
+    "reactify": "^1.1.1",
+    "tape": "^4.0.0",
+    "watchify": "^3.3.0"
   }
 }

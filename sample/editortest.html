@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style type="text/css">
+        #main-content {
+            display: -webkit-flex;
+            display: flex;
+            flex-direction: row;
+            -webkit-flex-direction: row;
+        }
+        #post-list, #post-editor, #post-meta {
+            flex:0;
+            -webkit-flex: 0;
+            border: 1px solid red;
+            min-width: 20em;
+            padding: 1em;
+        }
+        #post-editor {
+            flex:1;
+            -webkit-flex: 1;
+            margin: 0;
+        }
+        #post-editor textarea {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+add real editor
+
+<div id="main"></div>
+</body>
+<script src="bundle.js"></script>
+</html>
