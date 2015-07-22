@@ -40,13 +40,16 @@ exports.syncDom = function(editor,model) {
     clearChildren(editor);
     model.getRoot().content.forEach(function (block) {
         var blockElement = document.createElement('div');
+        console.log("making a div");
         blockElement.id = block.id;
         blockElement.classList.add(block.style);
         block.content.forEach(function (inline) {
             if (inline.type == doc.TEXT) {
+                console.log("making a text");
                 blockElement.appendChild(document.createTextNode(inline.text));
             }
             if (inline.type == doc.SPAN) {
+                console.log("making a span");
                 var elem = document.createElement('span');
                 if(inline.meta && inline.meta.elementName == 'A') {
                     elem = document.createElement('a');

@@ -5,6 +5,12 @@
 
 //list of posts. nothing to save
 
+require('node-jsx').install();
+var React = require('react');
+var simple = require('./simple.jsx');
+var http  = require('http');
+
+
 var posts = [
     {
         id:'id_foo1',
@@ -68,7 +74,6 @@ var posts = [
 
 
 
-var http  = require('http');
 
 var PORT = 39865;
 console.log("starting on port", PORT);
@@ -96,6 +101,20 @@ function allowAccess(res) {
 
 //if ('OPTIONS' == req.method) return res.send(200);
 
+function renderPage() {
+    var props = {
+        title:'my first post',
+        id:'id_unique_id',
+        timestamp:1436133303,
+        tags:['tag1','tag2','tag3'],
+        raw: { type:'block', content: [ { type:'text', text:"a blog post"}]},
+        format:'semantic'
+    };
+    var html = React.renderToStaticMarkup(React.createElement(simple.Output,props));
+    console.log("html = ", html);
+    return html;
+}
+
 var handlers = {
     '/status': function (req, res) {
         // console.log("handling status");
@@ -109,6 +128,13 @@ var handlers = {
         allowAccess(res);
         res.setHeader('Content-Type', 'text/json');
         res.write(JSON.stringify(posts));
+        res.end();
+    },
+    '/samplepost': function(req,res) {
+        res.statusCode = 200;
+        allowAccess(res);
+        res.setHeader('Content-Type','text/html');
+        res.write(renderPage());
         res.end();
     }
 }

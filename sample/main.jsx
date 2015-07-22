@@ -37,7 +37,14 @@ var model = setupModel(model);
 
 function dataToModel_helper(data,root,model) {
     data.forEach(function(dnode) {
-        if(dnode.type == 'text') return root.append(model.makeText(dnode.text));
+        if(!dnode.type) {
+            console.log("dnode = ", dnode);
+        }
+        if(dnode.type == 'text') {
+            var str = dnode.text.trim();
+            if(str == "") return;
+            return root.append(model.makeText(str));
+        }
         if(dnode.type == 'root') return dataToModel_helper(dnode.content,root,model);
         var mnode = null;
         if(dnode.type == 'span') mnode = model.makeSpan();
@@ -45,13 +52,35 @@ function dataToModel_helper(data,root,model) {
         if(dnode.style) mnode.style = dnode.style;
         dataToModel_helper(dnode.content,mnode,model);
         root.append(mnode);
+        if(mnode.type == 'block') {
+            var tomove = [];
+            mnode.content.forEach(function(ch) {
+                if(ch.type == 'block') tomove.push(ch);
+            });
+            tomove.forEach(function(ch) {
+                ch.deleteFromParent();
+                root.append(ch);
+            })
+        }
     });
 }
 
+function dumpModel(root,tab) {
+    console.log(tab+root.type+"  "+root.id);
+    if(!root.isEmpty()) {
+        if(root.content) root.content.forEach(function(node) {
+            dumpModel(node,tab+"  ");
+        });
+        if(root.type == 'text') console.log(tab+' ---  ' + root.text);
+    }
+}
 function dataToModel(data) {
+    console.log("converting data to model",data);
     var model = doc.makeModel();
     model.setStyles(std_styles);
-    dataToModel_helper(data,model.getRoot(),model);
+    dataToModel_helper([data],model.getRoot(),model);
+    console.log("final model = ", model);
+    dumpModel(model.getRoot(),"");
     return model;
 }
 function modelToData_helper(node) {
@@ -277,7 +306,8 @@ var PostEditor = React.createClass({
     componentWillReceiveProps: function(props) {
         if(typeof props.post == 'undefined') return;
         var editor = React.findDOMNode(this.refs.editor);
-        model = dataToModel(props.post.content);
+        model = dataToModel(props.post.raw);
+        console.log("final model",model);
         keystrokes.setModel(model);
         dom.syncDom(editor,model);
     },
