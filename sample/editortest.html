@@ -35,6 +35,27 @@
         #post-editor textarea {
             width: 100%;
         }
+
+        a.with-tooltip {
+            position: relative;
+        }
+        a.with-tooltip b.link-tooltip {
+            display: none;
+        }
+        a.with-tooltip:hover b.link-tooltip {
+            display: block;
+            white-space: nowrap;
+        }
+        b.link-tooltip {
+            border: 1px solid black;
+            position: absolute;
+            bottom: 2em;
+            left: auto;
+            right: auto;
+            background-color: white;
+            padding: 0.5em;
+            border-radius: 0.5em;
+        }
     </style>
 </head>
 <body>

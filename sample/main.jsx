@@ -43,7 +43,7 @@ function dataToModel_helper(data,root,model) {
         if(dnode.type == 'text') {
             var str = dnode.text.trim();
             if(str == "") return;
-            return root.append(model.makeText(str));
+            return root.append(model.makeText(dnode.text));
         }
         if(dnode.type == 'root') return dataToModel_helper(dnode.content,root,model);
         var mnode = null;
@@ -51,6 +51,9 @@ function dataToModel_helper(data,root,model) {
         if(dnode.type == 'block') mnode = model.makeBlock();
         if(dnode.style) mnode.style = dnode.style;
         dataToModel_helper(dnode.content,mnode,model);
+        if(dnode.meta) {
+            mnode.meta = dnode.meta;
+        }
         root.append(mnode);
         if(mnode.type == 'block') {
             var tomove = [];

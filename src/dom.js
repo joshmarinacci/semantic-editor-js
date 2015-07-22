@@ -40,27 +40,23 @@ exports.syncDom = function(editor,model) {
     clearChildren(editor);
     model.getRoot().content.forEach(function (block) {
         var blockElement = document.createElement('div');
-        console.log("making a div");
         blockElement.id = block.id;
         blockElement.classList.add(block.style);
         block.content.forEach(function (inline) {
             if (inline.type == doc.TEXT) {
-                console.log("making a text");
                 blockElement.appendChild(document.createTextNode(inline.text));
             }
             if (inline.type == doc.SPAN) {
-                console.log("making a span");
                 var elem = document.createElement('span');
-                if(inline.meta && inline.meta.elementName == 'A') {
-                    elem = document.createElement('a');
-                    if(inline.meta.href) {
-                        elem.setAttribute("href",inline.meta.href);
-                        elem.setAttribute("title",inline.meta.href);
-                        setTimeout(function() {
-                            $('#'+inline.id).tooltip({
-                                container:'body'
-                            });
-                        },100);
+                if(inline.meta) {
+                    if (inline.meta.elementName == 'A' ||
+                        inline.style == 'link') {
+                        elem = document.createElement('a');
+                        if (inline.meta.href) {
+                            elem.setAttribute("href", inline.meta.href);
+                            elem.setAttribute("class","with-tooltip");
+                            elem.innerHTML = "<b class='link-tooltip'>"+inline.meta.href+"</b>";
+                        }
                     }
                 }
                 elem.id = inline.id;
