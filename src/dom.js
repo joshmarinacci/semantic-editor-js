@@ -8,8 +8,7 @@ function clearChildren(root) {
     while (root.firstChild) root.removeChild(root.firstChild);
 }
 
-function renderTree(model) {
-    var root = document.getElementById("model-tree");
+function renderTree(root,model) {
     clearChildren(root);
     root.appendChild(renderTreeChild(model.getRoot()));
 }
@@ -34,44 +33,60 @@ function renderTreeChild(mnode) {
     return ul;
 }
 
+exports.renderTree = renderTree;
 
 exports.setRawHtml = function(editor, html) {
     clearChildren(editor);
     editor.innerHTML = html;
 }
-exports.syncDom = function(editor,model) {
-    //renderTree(model);
-    clearChildren(editor);
-    model.getRoot().content.forEach(function (block) {
-        var blockElement = document.createElement('div');
-        blockElement.id = block.id;
-        blockElement.classList.add(block.style);
-        block.content.forEach(function (inline) {
-            if (inline.type == doc.TEXT) {
-                blockElement.appendChild(document.createTextNode(inline.text));
-            }
-            if (inline.type == doc.SPAN) {
-                var elem = document.createElement('span');
-                if(inline.meta) {
-                    if (inline.meta.elementName == 'A' ||
-                        inline.style == 'link') {
-                        elem = document.createElement('a');
-                        if (inline.meta.href) {
-                            elem.setAttribute("href", inline.meta.href);
-                            elem.setAttribute("class","with-tooltip");
-                            elem.innerHTML = "<b class='link-tooltip'>"+inline.meta.href+"</b>";
-                        }
-                    }
-                }
-                elem.id = inline.id;
-                elem.classList.add(inline.style);
-                elem.appendChild(document.createTextNode(inline.child(0).text));
-                blockElement.appendChild(elem);
-            }
-        });
-        editor.appendChild(blockElement);
+
+function syncDomChildren(mod,dom) {
+    mod.content.forEach(function(mod_ch){
+        var dom_ch = syncDom(mod_ch);
+        if(dom_ch != null) dom.appendChild(dom_ch);
     });
 }
+function syncDom(mod,edi) {
+    if(mod.type == doc.TEXT) {
+        return document.createTextNode(mod.text);
+    }
+    if(mod.type == doc.ROOT) {
+        mod.content.forEach(function(mod_ch){
+            var dom_ch = syncDom(mod_ch);
+            edi.appendChild(dom_ch);
+        });
+    }
+    if(mod.type == doc.SPAN) {
+        var dom = document.createElement('span');
+        if(mod.meta) {
+            if (mod.meta.elementName == 'A' || mod.style == 'link') {
+                dom = document.createElement('a');
+                if (mod.meta.href) {
+                    dom.setAttribute("href", mod.meta.href);
+                    dom.setAttribute("class","with-tooltip");
+                    dom.innerHTML = "<b class='link-tooltip'>"+mod.meta.href+"</b>";
+                }
+            }
+        }
+
+        dom.id = mod.id;
+        dom.classList.add(mod.style);
+        syncDomChildren(mod,dom);
+        return dom;
+    }
+    if(mod.type == doc.BLOCK) {
+        var dom = document.createElement('div');
+        dom.id = mod.id;
+        dom.classList.add(mod.style);
+        syncDomChildren(mod,dom);
+        return dom;
+    }
+    return null;
+}
+exports.syncDom = function(editor,model) {
+    clearChildren(editor);
+    syncDom(model.getRoot(),editor);
+};
 
 
 exports.saveSelection = function (model) {
@@ -191,30 +206,50 @@ var u = {
 
 var dom_table = {
     'p':{
-        type:'block',
+        type:doc.BLOCK,
         style:'body'
     },
     'ul':{
-        type:'block',
+        type:doc.BLOCK,
         style:'unordered-list'
     },
     'h3':{
-        type:'block',
+        type:doc.BLOCK,
         style:'subheader'
     },
     '#text': {
-        type:'text',
-        style:'none',
+        type:doc.TEXT,
+        style:'none'
+    },
+    'em': {
+        type:doc.SPAN,
+        style:'italic'
+    },
+    'strong': {
+        type:doc.SPAN,
+        style:'bold'
+    },
+    'a': {
+        type:doc.SPAN,
+        style:'link'
+    },
+    '#comment': {
+        type:'skip',
+        style:'none'
     }
 }
 function domToModel(dom,model) {
     var name = dom.nodeName.toLowerCase();
     var def = dom_table[name];
     if(!def) {
-        u.p("WARNING: We don't support " + name + "yet");
+        u.p("WARNING: We don't support '" + name + "' yet");
         return null;
     }
-    if(def.type == 'block'){
+    if(def.type == 'skip') {
+        u.p("skipping",dom);
+        return null;
+    }
+    if(def.type == doc.BLOCK){
         var out = model.makeBlock();
         for(var i=0; i<dom.childNodes.length; i++) {
             var node = dom.childNodes[i];
@@ -226,9 +261,20 @@ function domToModel(dom,model) {
         out.style = def.style;
         return out;
     }
-    if(def.type == 'text') {
-        var out = model.makeText(dom.nodeValue);
+    if(def.type == doc.SPAN) {
+        var out = model.makeSpan();
+        for(var i=0; i<dom.childNodes.length; i++) {
+            var node = dom.childNodes[i];
+            var ch = domToModel(node,model);
+            if(ch != null) {
+                out.append(ch);
+            }
+        }
+        out.style = def.style;
         return out;
+    }
+    if(def.type == doc.TEXT) {
+        return model.makeText(dom.nodeValue);
     }
 }
 exports.domToNewModel = function(dom_root) {
@@ -238,11 +284,11 @@ exports.domToNewModel = function(dom_root) {
         u.indent();
         var ch = domToModel(dom_node,model);
         if(ch == null) {
-            console.log("no child generated. ERROR?");
+            u.p("no child generated. ERROR?");
             continue;
         }
-        if(ch.type == 'text') {
-            console.log("can't have a text child of the root. moving to a block");
+        if(ch.type == doc.TEXT || ch.type == doc.SPAN) {
+            //console.log("can't have a text child of the root. moving to a block");
             var blk = model.makeBlock();
             blk.style = 'body';
             blk.append(ch);

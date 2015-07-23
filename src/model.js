@@ -2,6 +2,7 @@
  * Created by josh on 7/8/15.
  */
 
+exports.ROOT = 'root';
 exports.TEXT = 'text';
 exports.SPAN = 'span';
 exports.BLOCK = 'block';

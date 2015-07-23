@@ -374,10 +374,11 @@ var PostEditor = React.createClass({
             }
             if(typeof props.post.format == 'undefined') {
                 console.log("no format, must be old");
-                var editor = PostDataStore.getEditor();
                 dom.setRawHtml(editor,props.post.content);
                 model = dom.domToNewModel(editor);
                 console.log("the new model is",model);
+                var tree_root = document.getElementById("modeltree");
+                dom.renderTree(tree_root,model);
                 keystrokes.setModel(model);
                 dom.syncDom(editor,model);
                 return;
