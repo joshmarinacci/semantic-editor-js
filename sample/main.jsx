@@ -108,7 +108,10 @@ function modelToData_helper(node) {
         }
     }
     if(node.type == 'root') {
-        return node.content.map(modelToData_helper)
+        return {
+            type: 'root',
+            content: node.content.map(modelToData_helper)
+        }
     }
 }
 function modelToData(model) {
@@ -216,7 +219,18 @@ var PostDataStore = {
         post.title = title;
     },
     updateContent: function(post, content) {
-        post.content = content;
+        var url = "http://localhost:39865/save";
+        post.raw = content;
+        console.log("POSTING to ",url);
+        var xml = new XMLHttpRequest();
+        xml.onreadystatechange = function(e) {
+            if(this.readyState == 4 && this.status == 200) {
+                console.log("request succeeded",xml.response);
+            }
+        };
+        xml.responseType = 'json';
+        xml.open("POST",url,true);
+        xml.send(JSON.stringify(post));
     },
 
     loadPosts: function() {
