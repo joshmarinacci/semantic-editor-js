@@ -22,11 +22,10 @@ var std_styles = {
         subscript:'subscript',
         superscript:'superscript'
     }
-}
+};
+
 model.setStyles(std_styles);
 function setupModel(model) {
-
-
     var block1 = model.makeBlock();
     var text1 = model.makeText("This is an empty post. please create a new one.");
     block1.append(text1);
@@ -128,69 +127,6 @@ function modelToData(model) {
     return modelToData_helper(model.getRoot());
 }
 
-var posts = [
-    {
-        id:'id_foo1',
-        slug:"testpost1",
-        title:"Test Post 1",
-        content: [
-            {
-                type:'block', style:'header', content:[
-                {
-                    type:'text',
-                    text:'a header'
-                }
-            ]
-            },
-            {
-                type:'block',
-                style:'body',
-                content: [
-                    {
-                        type:'text',
-                        text:'my cool text'
-                    },
-                    {
-                        type:'span',
-                        style:'bold',
-                        content:[
-                            {
-                                type:'text',
-                                text:"bold text"
-                            }
-                        ]
-                    },
-                    {
-                        type:'text',
-                        text:"more plain text"
-                    }
-                ]
-            }
-        ]
-    },
-    {
-        id:"id_foo2",
-        slug:"testpost2",
-        title:"Test Post 2",
-        content: [
-            {
-                type:'root',
-                content: [
-                    {
-                        type:'block',
-                        style:'body',
-                        content: [
-                            {
-                                type:'text',
-                                text:"another post"
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }
-];
 
 var utils = {
     getJSON: function(url,cb) {
@@ -226,7 +162,15 @@ var PostDataStore = {
     selectById:function(id) {
         var self = this;
         utils.getJSON("/load?id="+id,function(post){
+            if(typeof post.slug == 'undefined') {
+                post.slug = post.name;
+                console.log("FIXED broken slug to",post.slug);
+                if(!post.slug) {
+                    console.log("SLUG still broken");
+                }
+            }
             self.selected = post;
+
             self.fire('selected');
         });
     },
@@ -338,12 +282,32 @@ var PostMeta = React.createClass({
         PostDataStore.updateTitle(post,e.target.value);
     },
     render: function() {
-        return <div id="post-meta"><form>
-            <div>
-                <label>slug</label><input type='text' value={this.state.slug} onChange={this.updateSlug} onBlur={this.updateModel}/><br/>
-                <label>title</label><input type='text' value={this.state.title} onChange={this.updateTitle} onBlur={this.updateModel}/><br/>
-            </div>
-        </form></div>
+        console.log("this props",this.props);
+        if(!this.props.post|| !this.props.post.format) {
+            var format = "unknown";
+        } else {
+            var format = this.props.post.format;
+        }
+        return <div id="post-meta">
+            <form className='form-horizontal'>
+                <div className='form-group'>
+                    <label className='col-sm-3 control-label'>slug</label>
+                    <div className="col-sm-9">
+                        <input className='form-control' type='text' value={this.state.slug} onChange={this.updateSlug} onBlur={this.updateModel}/>
+                    </div>
+                </div>
+                <div className='form-group'>
+                    <label className='col-sm-3 control-label'>title</label>
+                    <div className="col-sm-9">
+                        <input className='form-control' type='text' value={this.state.title} onChange={this.updateTitle} onBlur={this.updateModel}/><br/>
+                    </div>
+                </div>
+                <div className='form-group'>
+                    <label className='col-sm-3 control-label'>format</label>
+                    <label className='col-sm-9 control-label'>{format}</label>
+                </div>
+            </form>
+        </div>
     }
 });
 
@@ -414,34 +378,6 @@ var PostEditor = React.createClass({
     }
 });
 
-var style_lut = {
-    block:'p',
-    header:'h1',
-    'block-code':'pre',
-    bold:'b',
-    italic:'i'
-};
-var type_lut = {
-    root:'div',
-    block:'div',
-    span:'span'
-};
-function tag(name, node) {
-    return '<'+name+'>'+childrenToHtml(node)+'</'+name+'>';
-}
-function childrenToHtml(node) {
-    var str = "";
-    for(var i=0; i<node.childCount(); i++) {
-        str += nodeToHtml(node.child(i));
-    }
-    return str;
-}
-function nodeToHtml(node) {
-    if(node.type == 'text') return node.text;
-    if(node.style && style_lut[node.style]) return tag(style_lut[node.style], node);
-    if(node.type && type_lut[node.type]) return tag(type_lut[node.type], node);
-    throw Error("shouldn't be here");
-}
 function toClass(def, cond) {
     var str = def.join(" ");
     for(var name in cond) {
@@ -491,10 +427,6 @@ var BlockDropdown = React.createClass({
 
 
 var Toolbar = React.createClass({
-    exportToConsole: function() {
-        var model = PostDataStore.getModel();
-        console.log("html = ", nodeToHtml(model.getRoot()));
-    },
     setModelToPost: function() {
         var data = modelToData(model);
         PostDataStore.updateContent(this.props.post,data);
@@ -544,12 +476,12 @@ var MainView = React.createClass({
     },
     render: function() {
         return (
-            <div id="main-content" className='container-fluid vbox'>
+            <div id="main-content" className='container-fluid vbox grow'>
                 <div className='hbox'>
                     <PostMeta   post={this.state.selected}/>
                     <Toolbar    post={this.state.selected}/>
                 </div>
-                <div className='hbox'>
+                <div className='hbox grow'>
                     <PostList posts={this.state.posts}/>
                     <PostEditor post={this.state.selected}/>
                     <div id="modeltree" className="scroll">
