@@ -217,8 +217,8 @@ var PostMeta = React.createClass({
     updateModel: function(e) {
         var post = PostDataStore.getSelected();
         if(!post) return;
-        PostDataStore.updateSlug(post,e.target.value);
-        PostDataStore.updateTitle(post,e.target.value);
+        PostDataStore.updateSlug(post,this.state.slug);
+        PostDataStore.updateTitle(post,this.state.title);
     },
     render: function() {
         console.log("this props",this.props);
