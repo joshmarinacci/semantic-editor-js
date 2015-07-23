@@ -357,6 +357,10 @@ var PostEditor = React.createClass({
         keystrokes.setModel(model);
         dom.syncDom(editor,model);
         editor.addEventListener("input", keystrokes.handleBrowserInputEvent, false);
+        keystrokes.on('change',function(){
+            var tree_root = document.getElementById("modeltree");
+            dom.renderTree(tree_root,model);
+        });
         PostDataStore.setEditor(editor);
     },
     componentWillReceiveProps: function(props) {
@@ -527,7 +531,7 @@ var MainView = React.createClass({
     },
     render: function() {
         return (
-            <div id="main-content" className='container vbox'>
+            <div id="main-content" className='container-fluid vbox'>
                 <div className='hbox'>
                     <PostMeta   post={this.state.selected}/>
                     <Toolbar    post={this.state.selected}/>

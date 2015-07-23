@@ -131,10 +131,12 @@ var actions_map = {
     "style-bold": function(e) {
         stopKeyboardEvent(e);
         styleSelectionInline(model.getStyles().inline.bold);
+        fireEvent('change',{});
     },
     "style-italic": function(e) {
         stopKeyboardEvent(e);
         styleSelectionInline(model.getStyles().inline.italic);
+        fireEvent('change',{});
     },
     "delete-backward":function(e) {
         stopKeyboardEvent(e);
@@ -145,6 +147,7 @@ var actions_map = {
                 info.endpos.node,info.endpos.offset);
             dom.syncDom(editor,model);
             dom.setSelectionFromPosition(info.startpos);
+            fireEvent('change',{});
             return;
         }
 
@@ -159,6 +162,7 @@ var actions_map = {
         var pos = model.deleteTextBackwards(mod,info.startpos.offset);
         dom.syncDom(editor,model);
         dom.setSelectionFromPosition(dom.textNodeToSelectionPosition(pos.node,pos.offset));
+        fireEvent('change',{});
     },
     "delete-forward":function(e) {
         stopKeyboardEvent(e);
@@ -166,10 +170,12 @@ var actions_map = {
         model.deleteTextForwards(info.startpos.node,info.startpos.offset);
         dom.syncDom(editor,model);
         dom.setSelectionFromPosition(info.startpos);
+        fireEvent('change',{});
     },
     "style-inline-code":function(e){
         stopKeyboardEvent(e);
         styleSelectionInline(model.getStyles().inline['inline-code']);
+        fireEvent('change',{});
     },
     "style-inline-link":function(e) {
         stopKeyboardEvent(e);
@@ -198,7 +204,9 @@ var actions_map = {
             var url  = $('#link-modal-url').val();
             span.meta.href = url;
             dom.syncDom(editor,model);
+            fireEvent('change',{});
         });
+        fireEvent('change',{});
     },
     "insert-emoji": function(e) {
         stopKeyboardEvent(e);
@@ -232,6 +240,7 @@ exports.handleEvent = function(e) {
                 path:[0],
                 offset:0,
             });
+            fireEvent('change',{});
         }
         return true;
     }
@@ -287,6 +296,7 @@ exports.handleBrowserInputEvent = function(e) {
     dom.applyChanges(editor,model,changes);
     dom.syncDom(editor,model);
     dom.setSelectionFromPosition(sel.startpos);
+    fireEvent('change',{});
 };
 
 
