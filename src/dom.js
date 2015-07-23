@@ -67,8 +67,11 @@ function syncDom(mod,edi) {
                     dom.innerHTML = "<b class='link-tooltip'>"+mod.meta.href+"</b>";
                 }
             }
+            if( mod.style == 'image') {
+                dom = document.createElement('img');
+                dom.setAttribute('src',mod.meta.src);
+            }
         }
-
         dom.id = mod.id;
         dom.classList.add(mod.style);
         syncDomChildren(mod,dom);
@@ -213,6 +216,10 @@ var dom_table = {
         type:doc.BLOCK,
         style:'unordered-list'
     },
+    'li':{
+        type:doc.BLOCK,
+        style:'list-item'
+    },
     'h3':{
         type:doc.BLOCK,
         style:'subheader'
@@ -229,6 +236,10 @@ var dom_table = {
         type:doc.SPAN,
         style:'bold'
     },
+    'i': {
+        type: doc.SPAN,
+        style:'italic'
+    },
     'a': {
         type:doc.SPAN,
         style:'link'
@@ -236,6 +247,10 @@ var dom_table = {
     '#comment': {
         type:'skip',
         style:'none'
+    },
+    'img': {
+        type:doc.SPAN,
+        style:'image'
     }
 }
 function domToModel(dom,model) {
@@ -271,6 +286,11 @@ function domToModel(dom,model) {
             }
         }
         out.style = def.style;
+        if(def.style == 'image') {
+            out.meta = {
+                src: dom.src
+            }
+        }
         return out;
     }
     if(def.type == doc.TEXT) {
@@ -287,8 +307,8 @@ exports.domToNewModel = function(dom_root) {
             u.p("no child generated. ERROR?");
             continue;
         }
+        //move text and span children into a block. can't be top-level
         if(ch.type == doc.TEXT || ch.type == doc.SPAN) {
-            //console.log("can't have a text child of the root. moving to a block");
             var blk = model.makeBlock();
             blk.style = 'body';
             blk.append(ch);

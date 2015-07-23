@@ -34,6 +34,15 @@
     border-width: 0px 0px 1px 0px;
 }
 
+.semantic-view .unordered-list {
+    background: #caedca;
+    color: #444;
+    border: 1px solid darkgreen;
+}
+.semantic-view .list-item {
+    border: 1px solid darkgreen;
+}
+
 .semantic-view .block-code {
     color: #888800;
     background-color: #fffff0;
@@ -55,6 +64,8 @@
 .semantic-view .body:after { content: "body"; }
 .semantic-view .block-code:after { content: "code block"; }
 .semantic-view .block-quote:after { content: "block quote"; }
+.semantic-view .unordered-list:after { content: "unordered list"; }
+.semantic-view .list-item:after { content: "item"; }
 
 /* inline styles */
 .semantic-view .bold {
@@ -85,4 +96,9 @@
 .semantic-view .superscript {
     vertical-align: super;
     font-size: 0.83em;
+}
+
+.semantic-view .image {
+    display: inline-block;
+    border: 1px solid green;
 }
