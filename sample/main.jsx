@@ -61,6 +61,12 @@ var utils = {
         xml.send();
     }
 };
+function dumpStringAscii(str) {
+    console.log("dumping string",str);
+    for(var i=0; i<str.length; i++) {
+        console.log(str[i], str.charCodeAt(i));
+    }
+}
 
 var PostDataStore = {
     selected:null,
@@ -122,7 +128,12 @@ var PostDataStore = {
         };
         xml.responseType = 'json';
         xml.open("POST",url,true);
-        xml.send(JSON.stringify(post));
+        var outstr = JSON.stringify(post);
+        //replace non-breaking spaces with regular spaces
+        //outstr = outstr.replace(/\s/g,' ');
+        //replace smart quotes with regular ones;
+        //outstr = outstr.replace(/’/g,"'");
+        xml.send(outstr);
     },
 
     loadPosts: function() {
