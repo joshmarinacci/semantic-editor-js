@@ -19,7 +19,7 @@ function renderTreeChild(mnode) {
         var li = document.createElement('li');
 
         var child = mnode.child(i);
-        var text = child.type + " " + child.id;
+        var text = child.type + " " + child.id + " " + child.style;
         li.appendChild(document.createTextNode(text));
         if(child.type == doc.TEXT) {
             li.appendChild(document.createTextNode(': "'+child.text+'"'));

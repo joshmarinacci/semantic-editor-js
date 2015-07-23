@@ -3,6 +3,7 @@ var React = require('react');
 var doc = require('../src/model');
 var dom = require('../src/dom');
 var keystrokes = require('../src/keystrokes');
+var moment = require('moment');
 
 var model = doc.makeModel();
 var std_styles = {
@@ -195,6 +196,7 @@ var PostDataStore = {
     updateContent: function(post, content) {
         var url = "http://localhost:39865/save";
         post.raw = content;
+        post.format = 'jsem';
         console.log("POSTING to ",url);
         var xml = new XMLHttpRequest();
         xml.onreadystatechange = function(e) {
@@ -285,9 +287,14 @@ var PostMeta = React.createClass({
         console.log("this props",this.props);
         if(!this.props.post|| !this.props.post.format) {
             var format = "unknown";
+            var timestamp = "unknown";
         } else {
             var format = this.props.post.format;
+            var timestamp = moment
+                .unix(this.props.post.timestamp)
+                .format("YYYY MMM DD - hh:mm A");
         }
+
         return <div id="post-meta">
             <form className='form-horizontal'>
                 <div className='form-group'>
@@ -300,6 +307,12 @@ var PostMeta = React.createClass({
                     <label className='col-sm-3 control-label'>title</label>
                     <div className="col-sm-9">
                         <input className='form-control' type='text' value={this.state.title} onChange={this.updateTitle} onBlur={this.updateModel}/><br/>
+                    </div>
+                </div>
+                <div className='form-group'>
+                    <label className='col-sm-3 control-label'>timestamp</label>
+                    <div className="col-sm-9">
+                        <label className='col-sm-9 control-label'>{timestamp}</label>
                     </div>
                 </div>
                 <div className='form-group'>
@@ -332,6 +345,16 @@ var PostEditor = React.createClass({
         var editor = React.findDOMNode(this.refs.editor);
         try {
             console.log("converting data to model.",props.post);
+            if(props.post.format == 'jsem') {
+                console.log("yay! right format");
+                model = dataToModel(props.post.raw);
+                console.log("the new model is",model);
+                var tree_root = document.getElementById("modeltree");
+                dom.renderTree(tree_root,model);
+                keystrokes.setModel(model);
+                dom.syncDom(editor,model);
+                return;
+            }
             if(props.post.format == 'semantic') {
                 console.log("doing semantic");
                 dom.setRawHtml(editor,props.post.raw);
