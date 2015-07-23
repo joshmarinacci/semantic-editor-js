@@ -517,8 +517,25 @@ test('split span with enter key', function(t) {
     dumpTree(model.getRoot());
     t.equals(model.toPlainText(),"abcd");
     t.equals(model.getRoot().child(1).child(0).child(0).text.length,2);
-
-
     t.end();
-
 });
+
+test('back delete into a span', function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    var span1 = model.makeSpan();
+    var text = model.makeText("abc");
+    span1.append(text);
+    block1.append(span1);
+    model.getRoot().append(block1);
+
+    var block2 = model.makeBlock();
+    var text2 = model.makeText("def");
+    block2.append(text2);
+    model.getRoot().append(block2);
+
+    dumpTree(model.getRoot());
+    var pos = model.deleteTextBackwards(text2,0);
+    dumpTree(model.getRoot());
+    t.end();
+})

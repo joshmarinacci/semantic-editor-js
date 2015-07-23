@@ -180,7 +180,6 @@ function DModel() {
     this.getPreviousTextNode = function(tnode) {
         if(typeof tnode.parent == 'undefined' || tnode.parent == null) throw new Error("invalid node with no parent");
 
-
         var n = tnode.parent.content.indexOf(tnode);
         if(n == 0) {
             return this.getPreviousTextNode(tnode.getParent());
@@ -189,10 +188,11 @@ function DModel() {
         n--;
         //get previous sibling
         tnode = tnode.getParent().child(n);
-        if(tnode.type == 'text') return tnode;
         //get last child
-        tnode = tnode.child(tnode.childCount()-1);
-        if(tnode.type == 'text') return tnode;
+        while(tnode.type !== exports.TEXT) {
+            tnode = tnode.child(tnode.childCount()-1);
+        }
+        return tnode;
     };
 
     this.getNextTextNode = function(tnode) {
