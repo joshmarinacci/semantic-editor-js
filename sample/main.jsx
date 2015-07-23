@@ -256,6 +256,14 @@ var PostDataStore = {
         xml.responseType = 'json';
         xml.open("GET",url);
         xml.send();
+    },
+
+    setEditor: function(ed) {
+        this.editor = ed;
+    },
+
+    getEditor: function() {
+        return this.editor;
     }
 };
 
@@ -329,6 +337,7 @@ var PostEditor = React.createClass({
         keystrokes.setModel(model);
         dom.syncDom(editor,model);
         editor.addEventListener("input", keystrokes.handleBrowserInputEvent, false);
+        PostDataStore.setEditor(editor);
     },
     componentWillReceiveProps: function(props) {
         if (typeof props.post == 'undefined') return;
@@ -429,6 +438,23 @@ var BlockDropdown = React.createClass({
     }
 });
 
+var utils = {
+    getJSON: function(url,cb) {
+        var url = "http://localhost:39865"+url;
+        console.log("loading posts from",url);
+        var xml = new XMLHttpRequest();
+        var self = this;
+        xml.onreadystatechange = function(e) {
+            if(this.readyState == 4 && this.status == 200) {
+                cb(xml.response);
+            }
+        };
+        xml.responseType = 'json';
+        xml.open("GET",url);
+        xml.send();
+    }
+};
+
 var Toolbar = React.createClass({
     exportToConsole: function() {
         var model = PostDataStore.getModel();
@@ -438,12 +464,25 @@ var Toolbar = React.createClass({
         var data = modelToData(model);
         PostDataStore.updateContent(this.props.post,data);
     },
+    doEditTest: function() {
+        console.log("doing");
+        var editor = PostDataStore.getEditor();
+        console.log("got the editor",editor);
+        utils.getJSON("/testcase1",function(payload) {
+            console.log("payload",payload);
+            dom.setRawHtml(editor,payload.data);
+            model = dom.domToNewModel(editor);
+            console.log("the new model is",model);
+            keystrokes.setModel(model);
+            dom.syncDom(editor,model);
+        });
+    },
     render: function() {
         return <div className='grow' id="toolbar">
             <BlockDropdown styles={model.getStyles().block} type="block"/>
             <BlockDropdown styles={model.getStyles().inline} type="inline"/>
             <button className="btn btn-default" onClick={this.setModelToPost}>Save</button>
-            <button className="btn btn-default" value="fullscreen">Fullscreen</button>
+            <button className="btn btn-default" onClick={this.doEditTest}>edit test</button>
             </div>
     }
 });
@@ -472,14 +511,14 @@ var MainView = React.createClass({
         return (
             <div id="main-content" className='container vbox'>
                 <div className='hbox'>
+                    <PostMeta   post={this.state.selected}/>
+                    <Toolbar    post={this.state.selected}/>
+                </div>
+                <div className='hbox'>
                     <PostList posts={this.state.posts}/>
                     <PostEditor post={this.state.selected}/>
                 </div>
 
-                <div className='hbox'>
-                    <PostMeta   post={this.state.selected}/>
-                    <Toolbar    post={this.state.selected}/>
-                </div>
         </div>);
     }
 });

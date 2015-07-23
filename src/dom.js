@@ -35,6 +35,10 @@ function renderTreeChild(mnode) {
 }
 
 
+exports.setRawHtml = function(editor, html) {
+    clearChildren(editor);
+    editor.innerHTML = html;
+}
 exports.syncDom = function(editor,model) {
     //renderTree(model);
     clearChildren(editor);
@@ -174,7 +178,8 @@ var u = {
         return str;
     },
     p: function(s) {
-        console.log(this.genTab()+""+s);
+        var args = Array.prototype.slice.call(arguments);
+        console.log(this.genTab()+args.join(" "));
     },
     indent: function() {
         this.incount++;
@@ -182,6 +187,67 @@ var u = {
     outdent: function() {
         this.incount--;
     }
+};
+
+var dom_table = {
+    'p':{
+        type:'block',
+        style:'body'
+    },
+    'ul':{
+        type:'block',
+        style:'unordered-list'
+    },
+    'h3':{
+        type:'block',
+        style:'subheader'
+    },
+    '#text': {
+        type:'text',
+        style:'none',
+    }
+}
+function domToModel(dom,model) {
+    var name = dom.nodeName.toLowerCase();
+    var def = dom_table[name];
+    if(!def) {
+        u.p("WARNING: We don't support " + name + "yet");
+        return null;
+    }
+    if(def.type == 'block'){
+        var out = model.makeBlock();
+        for(var i=0; i<dom.childNodes.length; i++) {
+            var node = dom.childNodes[i];
+            var ch = domToModel(node,model);
+            if(ch != null) {
+                out.append(ch);
+            }
+        }
+        out.style = def.style;
+        return out;
+    }
+    if(def.type == 'text') {
+        var out = model.makeText(dom.nodeValue);
+        return out;
+    }
+}
+exports.domToNewModel = function(dom_root) {
+    var model = doc.makeModel();
+    for(var i=0; i<dom_root.childNodes.length; i++) {
+        var dom_node = dom_root.childNodes[i];
+        u.indent();
+        var ch = domToModel(dom_node,model);
+        if(ch.type == 'text') {
+            console.log("can't have a text child of the root. moving to a block");
+            var blk = model.makeBlock();
+            blk.append(ch);
+            model.getRoot().append(blk);
+        } else {
+            model.getRoot().append(ch);
+        }
+        u.outdent();
+    }
+    return model;
 };
 
 exports.scanForChanges = function(dom_root,mod_root) {
