@@ -59,6 +59,20 @@ var utils = {
         xml.responseType = 'json';
         xml.open("GET",url);
         xml.send();
+    },
+    postJSON: function(url,cb) {
+        var url = "http://localhost:39865"+url;
+        console.log("loading posts from",url);
+        var xml = new XMLHttpRequest();
+        var self = this;
+        xml.onreadystatechange = function(e) {
+            if(this.readyState == 4 && this.status == 200) {
+                cb(xml.response);
+            }
+        };
+        xml.responseType = 'json';
+        xml.open("POST",url);
+        xml.send();
     }
 };
 function dumpStringAscii(str) {
@@ -135,6 +149,22 @@ var PostDataStore = {
         //outstr = outstr.replace(/’/g,"'");
         xml.send(outstr);
     },
+    deletePost:function(post) {
+        var self = this;
+        console.log("deleting post",post.title,post.id);
+        utils.postJSON("/delete?id="+post.id,function(post) {
+            console.log("got the result of deleting",post);
+            for(var i=0; i<self.posts.length; i++) {
+                var oldpost = self.posts[i];
+                if(oldpost.id == post.id) {
+                    self.posts.splice(i,1);
+                    break;
+                }
+            }
+            self.fire('posts');
+            self.selectById(self.posts[0].id);
+        });
+    },
 
     loadPosts: function() {
         var url = "http://localhost:39865/posts";
@@ -166,8 +196,8 @@ var PostDataStore = {
         model.append(blk);
         var data = model.toJSON();
         this.updateContent(post,data);
-        this.selected = post;
-        this.fire('selected');
+        this.fire('posts');
+        this.selectById(post.id);
     },
 
     setEditor: function(ed) {
@@ -408,12 +438,16 @@ var Toolbar = React.createClass({
     doNewPost: function() {
         PostDataStore.makeNewPost();
     },
+    doDeletePost: function() {
+        PostDataStore.deletePost(PostDataStore.getSelected());
+    },
     render: function() {
         return <div className='grow' id="toolbar">
             <BlockDropdown styles={model.getStyles().block} type="block"/>
             <BlockDropdown styles={model.getStyles().inline} type="inline"/>
             <button className="btn btn-default" onClick={this.setModelToPost}>Save</button>
             <button className="btn btn-default" onClick={this.doNewPost}>New</button>
+            <button className="btn btn-default" onClick={this.doDeletePost}>Delete</button>
             </div>
     }
 });
