@@ -261,6 +261,10 @@ var dom_table = {
         type:doc.SPAN,
         style:'link'
     },
+    'strike': {
+        type: doc.SPAN,
+        style:'delete'
+    },
     'del': {
         type:doc.SPAN,
         style:'delete'
