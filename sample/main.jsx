@@ -36,9 +36,14 @@ function setupModel(model) {
 var model = setupModel(model);
 
 function dataToModel_helper(data,root,model) {
+    if(!data) {
+        console.log("WARNING. data is null!");
+        return;
+    }
     data.forEach(function(dnode) {
         if(!dnode.type) {
-            console.log("dnode = ", dnode);
+            console.log("WARNING. dnode has no type. skipping = ", dnode);
+            return;
         }
         if(dnode.type == 'text') {
             var str = dnode.text.trim();
@@ -53,6 +58,11 @@ function dataToModel_helper(data,root,model) {
         dataToModel_helper(dnode.content,mnode,model);
         if(dnode.meta) {
             mnode.meta = dnode.meta;
+        }
+        if(mnode == null) {
+            console.log("WARNING. null node. can't add it");
+            console.log("original node is",dnode);
+            return;
         }
         root.append(mnode);
         if(mnode.type == 'block') {
@@ -321,9 +331,15 @@ var PostEditor = React.createClass({
         editor.addEventListener("input", keystrokes.handleBrowserInputEvent, false);
     },
     componentWillReceiveProps: function(props) {
-        if(typeof props.post == 'undefined') return;
+        if (typeof props.post == 'undefined') return;
         var editor = React.findDOMNode(this.refs.editor);
-        model = dataToModel(props.post.raw);
+        try {
+            console.log("covnerting data to model.");
+            console.log("data = ", props.post.raw);
+            model = dataToModel(props.post.raw);
+        } catch (e) {
+            console.log("error converting dataToModel",e);
+        }
         console.log("final model",model);
         keystrokes.setModel(model);
         dom.syncDom(editor,model);
