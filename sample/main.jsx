@@ -191,7 +191,8 @@ var PostMeta = React.createClass({
     getInitialState: function() {
         return {
             slug:"slug value",
-            title:"title value"
+            title:"title value",
+            timestamp:0,
         }
     },
     componentWillReceiveProps:function(props) {
@@ -199,7 +200,8 @@ var PostMeta = React.createClass({
         if(!post) return;
         this.setState({
             slug:post.slug,
-            title: post.title
+            title: post.title,
+            timestamp:post.timestamp
         });
     },
     updateSlug: function(e) {
@@ -222,9 +224,12 @@ var PostMeta = React.createClass({
         console.log("this props",this.props);
         if(!this.props.post|| !this.props.post.format) {
             var format = "unknown";
-            var timestamp = "unknown";
         } else {
             var format = this.props.post.format;
+        }
+        if(!this.props.post || !this.props.post.timestamp) {
+            var timestamp = "unknown";
+        } else {
             var timestamp = moment
                 .unix(this.props.post.timestamp)
                 .format("YYYY MMM DD - hh:mm A");
