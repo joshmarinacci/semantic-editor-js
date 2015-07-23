@@ -245,6 +245,10 @@ var dom_table = {
         type:doc.SPAN,
         style:'italic'
     },
+    'span': {
+        type:doc.SPAN,
+        style:'plain'
+    },
     'strong': {
         type:doc.SPAN,
         style:'bold'
@@ -278,8 +282,17 @@ var dom_table = {
         style:'image'
     }
 }
-function domToModel(dom,model) {
+function domToModel(dom,model,options) {
     var name = dom.nodeName.toLowerCase();
+    if(dom.className && dom.className.length > 0) {
+        var classes = dom.className.split(" ");
+        classes.forEach(function(cls) {
+            if(typeof options.style_to_element_map[cls] !== 'undefined') {
+                console.log("need to convert", cls ,'to',options.style_to_element_map[cls]);
+                name = options.style_to_element_map[cls];
+            }
+        })
+    }
     var def = dom_table[name];
     if(!def) {
         u.p("WARNING: We don't support '" + name + "' yet");
@@ -322,12 +335,16 @@ function domToModel(dom,model) {
         return model.makeText(dom.nodeValue);
     }
 }
-exports.domToNewModel = function(dom_root) {
+exports.domToNewModel = function(dom_root, options) {
+    if(typeof options == 'undefined') options = {
+        style_to_element_map: {}
+    };
+
     var model = doc.makeModel();
     for(var i=0; i<dom_root.childNodes.length; i++) {
         var dom_node = dom_root.childNodes[i];
         u.indent();
-        var ch = domToModel(dom_node,model);
+        var ch = domToModel(dom_node,model, options);
         if(ch == null) {
             u.p("no child generated. ERROR?");
             continue;

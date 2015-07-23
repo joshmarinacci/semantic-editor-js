@@ -369,7 +369,19 @@ var PostEditor = React.createClass({
         try {
             console.log("converting data to model.",props.post);
             if(props.post.format == 'semantic') {
-                console.log("not doing semantic yet");
+                console.log("doing semantic");
+                dom.setRawHtml(editor,props.post.raw);
+                var options = {
+                    style_to_element_map:{
+                        'blocktype_header':'h3'
+                    }
+                }
+                model = dom.domToNewModel(editor,options);
+                console.log("the new model is",model);
+                var tree_root = document.getElementById("modeltree");
+                dom.renderTree(tree_root,model);
+                keystrokes.setModel(model);
+                dom.syncDom(editor,model);
                 return;
             }
             if(props.post.format == 'markdown') {
@@ -388,7 +400,8 @@ var PostEditor = React.createClass({
                 return;
             }
         } catch (e) {
-            console.log("error converting dataToModel",e);
+            console.log("error converting dataToModel");
+            console.log(e);
         }
     },
     keydown: function(e) {
