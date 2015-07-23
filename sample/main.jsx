@@ -35,49 +35,6 @@ function setupModel(model) {
 }
 var model = setupModel(model);
 
-function dataToModel_helper(data,root,model) {
-    if(!data) {
-        console.log("WARNING. data is null!");
-        return;
-    }
-    data.forEach(function(dnode) {
-        if(!dnode.type) {
-            console.log("WARNING. dnode has no type. skipping = ", dnode);
-            return;
-        }
-        if(dnode.type == 'text') {
-            var str = dnode.text.trim();
-            if(str == "") return;
-            return root.append(model.makeText(dnode.text));
-        }
-        if(dnode.type == 'root') return dataToModel_helper(dnode.content,root,model);
-        var mnode = null;
-        if(dnode.type == 'span') mnode = model.makeSpan();
-        if(dnode.type == 'block') mnode = model.makeBlock();
-        if(dnode.style) mnode.style = dnode.style;
-        dataToModel_helper(dnode.content,mnode,model);
-        if(dnode.meta) {
-            mnode.meta = dnode.meta;
-        }
-        if(mnode == null) {
-            console.log("WARNING. null node. can't add it");
-            console.log("original node is",dnode);
-            return;
-        }
-        root.append(mnode);
-        if(mnode.type == 'block') {
-            var tomove = [];
-            mnode.content.forEach(function(ch) {
-                if(ch.type == 'block') tomove.push(ch);
-            });
-            tomove.forEach(function(ch) {
-                ch.deleteFromParent();
-                root.append(ch);
-            })
-        }
-    });
-}
-
 function dumpModel(root,tab) {
     console.log(tab+root.type+"  "+root.id);
     if(!root.isEmpty()) {
@@ -87,47 +44,6 @@ function dumpModel(root,tab) {
         if(root.type == 'text') console.log(tab+' ---  ' + root.text);
     }
 }
-function dataToModel(data) {
-    console.log("converting data to model",data);
-    var model = doc.makeModel();
-    model.setStyles(std_styles);
-    dataToModel_helper([data],model.getRoot(),model);
-    console.log("final model = ", model);
-    dumpModel(model.getRoot(),"");
-    return model;
-}
-function modelToData_helper(node) {
-    if(node.type == 'block') {
-        return {
-            type:'block',
-            style:node.style,
-            content: node.content.map(modelToData_helper)
-        }
-    }
-    if(node.type == 'text') {
-        return {
-            type:'text',
-            text:node.text
-        }
-    }
-    if(node.type == 'span') {
-        return {
-            type:'span',
-            style:node.style,
-            content: node.content.map(modelToData_helper)
-        }
-    }
-    if(node.type == 'root') {
-        return {
-            type: 'root',
-            content: node.content.map(modelToData_helper)
-        }
-    }
-}
-function modelToData(model) {
-    return modelToData_helper(model.getRoot());
-}
-
 
 var utils = {
     getJSON: function(url,cb) {
@@ -237,7 +153,7 @@ var PostDataStore = {
         var txt = model.makeText("new post here");
         blk.append(txt);
         model.append(blk);
-        var data = modelToData(model);
+        var data = model.toJSON();
         this.updateContent(post,data);
         this.selected = post;
         this.fire('selected');
@@ -366,7 +282,7 @@ var PostEditor = React.createClass({
             console.log("converting data to model.",props.post);
             if(props.post.format == 'jsem') {
                 console.log("yay! right format");
-                model = dataToModel(props.post.raw);
+                model = doc.fromJSON(props.post.raw);
                 console.log("the new model is",model);
                 var tree_root = document.getElementById("modeltree");
                 dom.renderTree(tree_root,model);
@@ -470,7 +386,7 @@ var BlockDropdown = React.createClass({
 
 var Toolbar = React.createClass({
     setModelToPost: function() {
-        var data = modelToData(model);
+        var data = model.toJSON();
         PostDataStore.updateContent(this.props.post,data);
     },
     doNewPost: function() {

@@ -440,7 +440,7 @@ test('delete backwards with empty text node in the middle',function(t) {
     t.equals(model.toPlainText(),"abdef");
 
     t.end();
-})
+});
 
 
 
@@ -463,8 +463,8 @@ test('delete backwards, remove empty span', function(t) {
     t.equals(block1.childCount(),2);
 
     t.end();
+});
 
-})
 test('delete backwards, remove empty span alt', function(t) {
     var model = doc.makeModel();
     var block1 = model.makeBlock();
@@ -484,5 +484,18 @@ test('delete backwards, remove empty span alt', function(t) {
     t.equals(block1.childCount(),2);
 
     t.end();
+});
 
+
+test('to json', function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    block1.append(model.makeText("abc"));
+    model.append(block1);
+    dumpTree(model.getRoot());
+    var json = model.toJSON();
+    console.log(json);
+    var model2 = doc.fromJSON(json);
+    dumpTree(model2.getRoot());
+    t.end();
 })
