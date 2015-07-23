@@ -216,6 +216,10 @@ var dom_table = {
         type:doc.BLOCK,
         style:'unordered-list'
     },
+    'ol':{
+        type:doc.BLOCK,
+        style:'ordered-list'
+    },
     'li':{
         type:doc.BLOCK,
         style:'list-item'
@@ -224,6 +228,15 @@ var dom_table = {
         type:doc.BLOCK,
         style:'subheader'
     },
+    'h2':{
+        type:doc.BLOCK,
+        style:'header'
+    },
+    'div': {
+        type:doc.BLOCK,
+        style:'body'
+    },
+
     '#text': {
         type:doc.TEXT,
         style:'none'
@@ -236,6 +249,10 @@ var dom_table = {
         type:doc.SPAN,
         style:'bold'
     },
+    'b': {
+        type:doc.SPAN,
+        style:'bold'
+    },
     'i': {
         type: doc.SPAN,
         style:'italic'
@@ -243,6 +260,10 @@ var dom_table = {
     'a': {
         type:doc.SPAN,
         style:'link'
+    },
+    'del': {
+        type:doc.SPAN,
+        style:'delete'
     },
     '#comment': {
         type:'skip',

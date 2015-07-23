@@ -39,6 +39,13 @@
     color: #444;
     border: 1px solid darkgreen;
 }
+
+.semantic-view .ordered-list {
+    background: #caedca;
+    color: #444;
+    border: 1px solid darkgreen;
+}
+
 .semantic-view .list-item {
     border: 1px solid darkgreen;
 }
@@ -65,6 +72,7 @@
 .semantic-view .block-code:after { content: "code block"; }
 .semantic-view .block-quote:after { content: "block quote"; }
 .semantic-view .unordered-list:after { content: "unordered list"; }
+.semantic-view .ordered-list:after { content: "ordered list"; }
 .semantic-view .list-item:after { content: "item"; }
 
 /* inline styles */
@@ -101,4 +109,8 @@
 .semantic-view .image {
     display: inline-block;
     border: 1px solid green;
+}
+
+.semantic-view .delete {
+    text-decoration: line-through;
 }
