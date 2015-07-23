@@ -224,6 +224,25 @@ var PostDataStore = {
         xml.send();
     },
 
+    makeNewPost: function() {
+        var post = {
+            title:'no title set',
+            slug:'no_slug_set',
+            timestamp: moment().unix(),
+            format : 'jsem',
+            tags : []
+        };
+        model = doc.makeModel();
+        var blk = model.makeBlock();
+        var txt = model.makeText("new post here");
+        blk.append(txt);
+        model.append(blk);
+        var data = modelToData(model);
+        this.updateContent(post,data);
+        this.selected = post;
+        this.fire('selected');
+    },
+
     setEditor: function(ed) {
         this.editor = ed;
     },
@@ -454,25 +473,15 @@ var Toolbar = React.createClass({
         var data = modelToData(model);
         PostDataStore.updateContent(this.props.post,data);
     },
-    doEditTest: function() {
-        console.log("doing");
-        var editor = PostDataStore.getEditor();
-        console.log("got the editor",editor);
-        utils.getJSON("/testcase1",function(payload) {
-            console.log("payload",payload);
-            dom.setRawHtml(editor,payload.data);
-            model = dom.domToNewModel(editor);
-            console.log("the new model is",model);
-            keystrokes.setModel(model);
-            dom.syncDom(editor,model);
-        });
+    doNewPost: function() {
+        PostDataStore.makeNewPost();
     },
     render: function() {
         return <div className='grow' id="toolbar">
             <BlockDropdown styles={model.getStyles().block} type="block"/>
             <BlockDropdown styles={model.getStyles().inline} type="inline"/>
             <button className="btn btn-default" onClick={this.setModelToPost}>Save</button>
-            <button className="btn btn-default" onClick={this.doEditTest}>edit test</button>
+            <button className="btn btn-default" onClick={this.doNewPost}>New</button>
             </div>
     }
 });
