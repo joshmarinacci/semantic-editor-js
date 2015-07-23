@@ -237,9 +237,14 @@ exports.domToNewModel = function(dom_root) {
         var dom_node = dom_root.childNodes[i];
         u.indent();
         var ch = domToModel(dom_node,model);
+        if(ch == null) {
+            console.log("no child generated. ERROR?");
+            continue;
+        }
         if(ch.type == 'text') {
             console.log("can't have a text child of the root. moving to a block");
             var blk = model.makeBlock();
+            blk.style = 'body';
             blk.append(ch);
             model.getRoot().append(blk);
         } else {

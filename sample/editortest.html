@@ -26,11 +26,16 @@
             flex:1;
             -webkit-flex: 1;
         }
-        #post-list, #post-editor, #post-meta, #toolbar {
-            border: 1px solid red;
-            min-width: 20em;
+        #post-list, #post-editor, #post-meta, #toolbar, #modeltree {
+            min-width: 10em;
             padding: 1em;
             margin: 0;
+            flex:0;
+            -webkit-flex:0;
+        }
+        #post-editor {
+            -webkit-flex:1;
+            flex:1;
         }
         #post-editor textarea {
             width: 100%;
@@ -55,6 +60,11 @@
             background-color: white;
             padding: 0.5em;
             border-radius: 0.5em;
+        }
+        .scroll {
+            border: 1px solid green;
+            height: 700px;
+            overflow: scroll;
         }
     </style>
 </head>

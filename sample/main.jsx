@@ -192,6 +192,23 @@ var posts = [
     }
 ];
 
+var utils = {
+    getJSON: function(url,cb) {
+        var url = "http://localhost:39865"+url;
+        console.log("loading posts from",url);
+        var xml = new XMLHttpRequest();
+        var self = this;
+        xml.onreadystatechange = function(e) {
+            if(this.readyState == 4 && this.status == 200) {
+                cb(xml.response);
+            }
+        };
+        xml.responseType = 'json';
+        xml.open("GET",url);
+        xml.send();
+    }
+};
+
 var PostDataStore = {
     selected:null,
     posts: [],
@@ -207,8 +224,11 @@ var PostDataStore = {
         return model;
     },
     selectById:function(id) {
-        this.selected = this.posts.find(function(post) { return post.id == id; });
-        this.fire('selected');
+        var self = this;
+        utils.getJSON("/load?id="+id,function(post){
+            self.selected = post;
+            self.fire('selected');
+        });
     },
     getSelected: function() {
         return this.selected
@@ -282,7 +302,7 @@ var PostList = React.createClass({
         var posts = this.props.posts.map(function(post){
             return <PostItem key={post.id} post={post}/>
         });
-        return <ul id="post-list">{posts}</ul>
+        return <ul className='scroll' id="post-list">{posts}</ul>
     }
 });
 
@@ -343,21 +363,34 @@ var PostEditor = React.createClass({
         if (typeof props.post == 'undefined') return;
         var editor = React.findDOMNode(this.refs.editor);
         try {
-            console.log("covnerting data to model.");
-            console.log("data = ", props.post.raw);
-            model = dataToModel(props.post.raw);
+            console.log("converting data to model.",props.post);
+            if(props.post.format == 'semantic') {
+                console.log("not doing semantic yet");
+                return;
+            }
+            if(props.post.format == 'markdown') {
+                console.log("not doing markdown yet");
+                return;
+            }
+            if(typeof props.post.format == 'undefined') {
+                console.log("no format, must be old");
+                var editor = PostDataStore.getEditor();
+                dom.setRawHtml(editor,props.post.content);
+                model = dom.domToNewModel(editor);
+                console.log("the new model is",model);
+                keystrokes.setModel(model);
+                dom.syncDom(editor,model);
+                return;
+            }
         } catch (e) {
             console.log("error converting dataToModel",e);
         }
-        console.log("final model",model);
-        keystrokes.setModel(model);
-        dom.syncDom(editor,model);
     },
     keydown: function(e) {
         keystrokes.handleEvent(e);
     },
     render: function() {
-        return <div ref="editor" id="post-editor" className="semantic-view grow" contentEditable={true} spellCheck={false}
+        return <div ref="editor" id="post-editor" className="semantic-view grow scroll" contentEditable={true} spellCheck={false}
                     onKeyDown={this.keydown}
             ></div>
     }
@@ -438,22 +471,6 @@ var BlockDropdown = React.createClass({
     }
 });
 
-var utils = {
-    getJSON: function(url,cb) {
-        var url = "http://localhost:39865"+url;
-        console.log("loading posts from",url);
-        var xml = new XMLHttpRequest();
-        var self = this;
-        xml.onreadystatechange = function(e) {
-            if(this.readyState == 4 && this.status == 200) {
-                cb(xml.response);
-            }
-        };
-        xml.responseType = 'json';
-        xml.open("GET",url);
-        xml.send();
-    }
-};
 
 var Toolbar = React.createClass({
     exportToConsole: function() {
@@ -517,6 +534,9 @@ var MainView = React.createClass({
                 <div className='hbox'>
                     <PostList posts={this.state.posts}/>
                     <PostEditor post={this.state.selected}/>
+                    <div id="modeltree" className="scroll">
+                        tree goes here
+                    </div>
                 </div>
 
         </div>);
