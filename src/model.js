@@ -366,6 +366,20 @@ function DModel() {
             });
             return [a,b];
         }
+        if(node.type == exports.SPAN) {
+            var a = this.makeSpan();
+            var b = this.makeSpan();
+            a.style = node.style;
+            b.style = node.style;
+            var parent = node.getParent();
+            this.swapNode(node,a,b);
+            b.deleteFromParent();
+            var parent2 = this.makeBlock();
+            parent2.style = parent.style;
+            this.swapNode(parent,parent,parent2);
+            parent2.append(b);
+            return [a,b];
+        }
         if(node.type == exports.BLOCK) {
             var a = this.makeBlock();
             var b = this.makeBlock();
@@ -374,6 +388,7 @@ function DModel() {
             this.swapNode(node,a,b);
             return [a,b];
         }
+        console.log("WARNING can't split this node type",node.type);
     };
 
     //replaces the first node in it's parent with the rest of the nodes

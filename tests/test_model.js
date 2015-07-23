@@ -497,5 +497,28 @@ test('to json', function(t) {
     console.log(json);
     var model2 = doc.fromJSON(json);
     dumpTree(model2.getRoot());
+    t.equals(model2.toPlainText(),"abc");
     t.end();
-})
+});
+
+
+test('split span with enter key', function(t) {
+    var model = doc.makeModel();
+    var block = model.makeBlock();
+    model.getRoot().append(block);
+    var span = model.makeSpan();
+    var text = model.makeText("abcd");
+    span.append(text);
+    block.append(span);
+
+    dumpTree(model.getRoot());
+    model.splitBlockAt(text,2);
+
+    dumpTree(model.getRoot());
+    t.equals(model.toPlainText(),"abcd");
+    t.equals(model.getRoot().child(1).child(0).child(0).text.length,2);
+
+
+    t.end();
+
+});
