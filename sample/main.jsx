@@ -428,6 +428,67 @@ var BlockDropdown = React.createClass({
     }
 });
 
+function deleteEmptyText(root) {
+    if(root.childCount() > 0) {
+        root.content.forEach(deleteEmptyText);
+    }
+    if(root.type == doc.TEXT && root.text.trim().length == 0) {
+        console.log("found some text to delete");
+        root.deleteFromParent();
+    }
+}
+function deleteEmptyBlocks(root) {
+    if(root.childCount() > 0) {
+        root.content.forEach(deleteEmptyBlocks);
+    } else {
+        if(root.type == doc.BLOCK) {
+            console.log("found an empty block");
+            root.deleteFromParent();
+        }
+    }
+}
+
+var CleanupDropdown = React.createClass({
+    getInitialState: function() {
+        return {
+            open:false
+        }
+    },
+    toggleDropdown: function() {
+        this.setState({
+            open:!this.state.open
+        })
+    },
+    removeEmptyBlocks: function() {
+        console.log("removing the empty blocks",model);
+        deleteEmptyBlocks(model.getRoot());
+        var editor = PostDataStore.getEditor();
+        dom.syncDom(editor,model);
+        keystrokes.markAsChanged();
+        this.setState({open:false})
+    },
+    removeEmptyText: function() {
+        deleteEmptyText(model.getRoot());
+        var editor = PostDataStore.getEditor();
+        dom.syncDom(editor,model);
+        keystrokes.markAsChanged();
+        this.setState({open:false})
+    },
+    render: function() {
+        var openClass = toClass(["btn-group"],{ open:this.state.open });
+        var buttonClass = toClass(["btn","btn-default","dropdown-toggle"]);
+        return <div className={openClass}>
+            <button type="button" className={buttonClass} onClick={this.toggleDropdown}>
+                    clean up <span className="caret"></span>
+            </button>
+            <ul className="dropdown-menu">
+                <li><a href='#' onClick={this.removeEmptyBlocks}>remove empty blocks</a></li>
+                <li><a href='#' onClick={this.removeEmptyText}>remove empty text</a></li>
+            </ul>
+        </div>
+    }
+})
+
 
 var Toolbar = React.createClass({
     getInitialState: function() {
@@ -460,10 +521,11 @@ var Toolbar = React.createClass({
         return <div className='grow' id="toolbar">
             <BlockDropdown styles={this.state.styles.block} type="block"/>
             <BlockDropdown styles={this.state.styles.inline} type="inline"/>
+            <CleanupDropdown/>
             <button className="btn btn-default" onClick={this.setModelToPost}>Save</button>
             <button className="btn btn-default" onClick={this.doNewPost}>New</button>
             <button className="btn btn-default" onClick={this.doDeletePost}>Delete</button>
-            </div>
+        </div>
     }
 });
 

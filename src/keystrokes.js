@@ -309,6 +309,10 @@ exports.setEditor = function(ed) {
 };
 
 
+exports.markAsChanged = function() {
+    fireEvent('change',{});
+};
+
 var listeners = {};
 exports.on = function(type, listener) {
     if(!listeners[type]) listeners[type] = [];
