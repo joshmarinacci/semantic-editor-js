@@ -448,6 +448,38 @@ function deleteEmptyBlocks(root) {
     }
 }
 
+function convertPlainSpans(root) {
+    if(root.type == doc.SPAN && root.style == 'plain') {
+        if(root.childCount() == 1) {
+            model.swapNode(root,root.child(0));
+            return;
+        }
+        return;
+    }
+    if(root.childCount() > 0) {
+        root.content.forEach(convertPlainSpans);
+    }
+}
+
+function mergeAdjacentText(root) {
+    if(root.type == doc.TEXT) return;
+    if(root.childCount() <= 1) return;
+
+    var child = root.child(0);
+    var i=1;
+    while(i<root.childCount()) {
+        var chnext = root.child(i);
+        if(child.type == doc.TEXT && chnext.type == doc.TEXT) {
+            child.text = child.text + chnext.text;
+            chnext.deleteFromParent();
+        } else {
+            i++;
+            child = chnext;
+        }
+    }
+    root.content.forEach(mergeAdjacentText);
+}
+
 var CleanupDropdown = React.createClass({
     getInitialState: function() {
         return {
@@ -474,6 +506,20 @@ var CleanupDropdown = React.createClass({
         keystrokes.markAsChanged();
         this.setState({open:false})
     },
+    removePlainSpans: function() {
+        convertPlainSpans(model.getRoot());
+        var editor = PostDataStore.getEditor();
+        dom.syncDom(editor,model);
+        keystrokes.markAsChanged();
+        this.setState({open:false})
+    },
+    mergeAdjacentText: function() {
+        mergeAdjacentText(model.getRoot());
+        var editor = PostDataStore.getEditor();
+        dom.syncDom(editor,model);
+        keystrokes.markAsChanged();
+        this.setState({open:false})
+    },
     render: function() {
         var openClass = toClass(["btn-group"],{ open:this.state.open });
         var buttonClass = toClass(["btn","btn-default","dropdown-toggle"]);
@@ -484,6 +530,8 @@ var CleanupDropdown = React.createClass({
             <ul className="dropdown-menu">
                 <li><a href='#' onClick={this.removeEmptyBlocks}>remove empty blocks</a></li>
                 <li><a href='#' onClick={this.removeEmptyText}>remove empty text</a></li>
+                <li><a href='#' onClick={this.removePlainSpans}>remove plain spans</a></li>
+                <li><a href='#' onClick={this.mergeAdjacentText}>merge adjacent text</a></li>
             </ul>
         </div>
     }
