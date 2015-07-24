@@ -324,6 +324,11 @@ function domToModel(dom,model,options) {
             }
         }
         out.style = def.style;
+        if(def.style == 'link') {
+            out.meta = {
+                href: dom.href
+            }
+        }
         if(def.style == 'image') {
             out.meta = {
                 src: dom.src

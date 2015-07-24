@@ -262,7 +262,6 @@ var PostMeta = React.createClass({
         PostDataStore.updateTitle(post,this.state.title);
     },
     render: function() {
-        console.log("this props",this.props);
         if(!this.props.post|| !this.props.post.format) {
             var format = "unknown";
         } else {
@@ -325,11 +324,9 @@ var PostEditor = React.createClass({
         if (typeof props.post == 'undefined') return;
         var editor = React.findDOMNode(this.refs.editor);
         try {
-            console.log("converting data to model.",props.post);
             if(props.post.format == 'jsem') {
-                console.log("yay! right format");
                 model = doc.fromJSON(props.post.raw);
-                console.log("the new model is",model);
+                model.setStyles(std_styles);
                 var tree_root = document.getElementById("modeltree");
                 dom.renderTree(tree_root,model);
                 keystrokes.setModel(model);
@@ -345,6 +342,7 @@ var PostEditor = React.createClass({
                     }
                 }
                 model = dom.domToNewModel(editor,options);
+                model.setStyles(std_styles);
                 console.log("the new model is",model);
                 var tree_root = document.getElementById("modeltree");
                 dom.renderTree(tree_root,model);
@@ -360,6 +358,7 @@ var PostEditor = React.createClass({
                 console.log("no format, must be old");
                 dom.setRawHtml(editor,props.post.content);
                 model = dom.domToNewModel(editor);
+                model.setStyles(std_styles);
                 console.log("the new model is",model);
                 var tree_root = document.getElementById("modeltree");
                 dom.renderTree(tree_root,model);
@@ -431,6 +430,22 @@ var BlockDropdown = React.createClass({
 
 
 var Toolbar = React.createClass({
+    getInitialState: function() {
+        return {
+            styles:{
+                block:[],
+                inline:[]
+            },
+        }
+    },
+    componentDidMount: function() {
+        var self = this;
+        PostDataStore.on('selected',function() {
+            self.setState({
+                styles:model.getStyles()
+            });
+        });
+    },
     setModelToPost: function() {
         var data = model.toJSON();
         PostDataStore.updateContent(this.props.post,data);
@@ -443,8 +458,8 @@ var Toolbar = React.createClass({
     },
     render: function() {
         return <div className='grow' id="toolbar">
-            <BlockDropdown styles={model.getStyles().block} type="block"/>
-            <BlockDropdown styles={model.getStyles().inline} type="inline"/>
+            <BlockDropdown styles={this.state.styles.block} type="block"/>
+            <BlockDropdown styles={this.state.styles.inline} type="inline"/>
             <button className="btn btn-default" onClick={this.setModelToPost}>Save</button>
             <button className="btn btn-default" onClick={this.doNewPost}>New</button>
             <button className="btn btn-default" onClick={this.doDeletePost}>Delete</button>

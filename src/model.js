@@ -426,7 +426,8 @@ function modelToData_helper(node) {
         return {
             type:'block',
             style:node.style,
-            content: node.content.map(modelToData_helper)
+            content: node.content.map(modelToData_helper),
+            meta: node.meta
         }
     }
     if(node.type == 'text') {
@@ -439,7 +440,8 @@ function modelToData_helper(node) {
         return {
             type:'span',
             style:node.style,
-            content: node.content.map(modelToData_helper)
+            content: node.content.map(modelToData_helper),
+            meta: node.meta
         }
     }
     if(node.type == 'root') {
