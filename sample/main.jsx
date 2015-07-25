@@ -4,6 +4,9 @@ var doc = require('../src/model');
 var dom = require('../src/dom');
 var keystrokes = require('../src/keystrokes');
 var moment = require('moment');
+var PostDataStore = require('./PostDataStore');
+var PostMeta = require('./PostMeta.jsx');
+var utils = require('./utils');
 
 var model = doc.makeModel();
 var std_styles = {
@@ -45,169 +48,12 @@ function dumpModel(root,tab) {
     }
 }
 
-var utils = {
-    getJSON: function(url,cb) {
-        var url = "http://localhost:39865"+url;
-        console.log("loading posts from",url);
-        var xml = new XMLHttpRequest();
-        var self = this;
-        xml.onreadystatechange = function(e) {
-            if(this.readyState == 4 && this.status == 200) {
-                cb(xml.response);
-            }
-        };
-        xml.responseType = 'json';
-        xml.open("GET",url);
-        xml.send();
-    },
-    postJSON: function(url,cb) {
-        var url = "http://localhost:39865"+url;
-        console.log("loading posts from",url);
-        var xml = new XMLHttpRequest();
-        var self = this;
-        xml.onreadystatechange = function(e) {
-            if(this.readyState == 4 && this.status == 200) {
-                cb(xml.response);
-            }
-        };
-        xml.responseType = 'json';
-        xml.open("POST",url);
-        xml.send();
-    }
-};
 function dumpStringAscii(str) {
     console.log("dumping string",str);
     for(var i=0; i<str.length; i++) {
         console.log(str[i], str.charCodeAt(i));
     }
 }
-
-var PostDataStore = {
-    selected:null,
-    posts: [],
-    listeners:{},
-    setPosts: function(posts) {
-        this.posts = posts;
-        this.fire('posts');
-    },
-    getPosts: function() {
-        return this.posts;
-    },
-    getModel: function() {
-        return model;
-    },
-    selectById:function(id) {
-        var self = this;
-        utils.getJSON("/load?id="+id,function(post){
-            if(typeof post.slug == 'undefined') {
-                post.slug = post.name;
-                console.log("FIXED broken slug to",post.slug);
-                if(!post.slug) {
-                    console.log("SLUG still broken");
-                }
-            }
-            self.selected = post;
-
-            self.fire('selected');
-        });
-    },
-    getSelected: function() {
-        return this.selected
-    },
-    on:function(type, callback) {
-        if(!this.listeners[type]) this.listeners[type] = [];
-        this.listeners[type].push(callback);
-    },
-    fire: function(type) {
-        this.listeners[type].forEach(function(l){
-            l();
-        });
-    },
-    updateSlug: function(post, slug) {
-        post.slug = slug;
-    },
-    updateTitle: function(post, title) {
-        post.title = title;
-    },
-    updateContent: function(post, content) {
-        var url = "http://localhost:39865/save";
-        post.raw = content;
-        post.format = 'jsem';
-        console.log("POSTING to ",url);
-        var xml = new XMLHttpRequest();
-        xml.onreadystatechange = function(e) {
-            if(this.readyState == 4 && this.status == 200) {
-                console.log("request succeeded",xml.response);
-            }
-        };
-        xml.responseType = 'json';
-        xml.open("POST",url,true);
-        var outstr = JSON.stringify(post);
-        //replace non-breaking spaces with regular spaces
-        //outstr = outstr.replace(/\s/g,' ');
-        //replace smart quotes with regular ones;
-        //outstr = outstr.replace(/’/g,"'");
-        xml.send(outstr);
-    },
-    deletePost:function(post) {
-        var self = this;
-        console.log("deleting post",post.title,post.id);
-        utils.postJSON("/delete?id="+post.id,function(post) {
-            console.log("got the result of deleting",post);
-            for(var i=0; i<self.posts.length; i++) {
-                var oldpost = self.posts[i];
-                if(oldpost.id == post.id) {
-                    self.posts.splice(i,1);
-                    break;
-                }
-            }
-            self.fire('posts');
-            self.selectById(self.posts[0].id);
-        });
-    },
-
-    loadPosts: function() {
-        var url = "http://localhost:39865/posts";
-        console.log("loading posts from",url);
-        var xml = new XMLHttpRequest();
-        var self = this;
-        xml.onreadystatechange = function(e) {
-            if(this.readyState == 4 && this.status == 200) {
-                self.setPosts(xml.response);
-            }
-        };
-        xml.responseType = 'json';
-        xml.open("GET",url);
-        xml.send();
-    },
-
-    makeNewPost: function() {
-        var post = {
-            title:'no title set',
-            slug:'no_slug_set',
-            timestamp: moment().unix(),
-            format : 'jsem',
-            tags : []
-        };
-        model = doc.makeModel();
-        var blk = model.makeBlock();
-        var txt = model.makeText("new post here");
-        blk.append(txt);
-        model.append(blk);
-        var data = model.toJSON();
-        this.updateContent(post,data);
-        this.fire('posts');
-        this.selectById(post.id);
-    },
-
-    setEditor: function(ed) {
-        this.editor = ed;
-    },
-
-    getEditor: function() {
-        return this.editor;
-    }
-};
 
 var PostItem = React.createClass({
     selectPost: function(e) {
@@ -228,81 +74,6 @@ var PostList = React.createClass({
     }
 });
 
-var PostMeta = React.createClass({
-    getInitialState: function() {
-        return {
-            slug:"slug value",
-            title:"title value",
-            timestamp:0,
-        }
-    },
-    componentWillReceiveProps:function(props) {
-        var post = PostDataStore.getSelected();
-        if(!post) return;
-        this.setState({
-            slug:post.slug,
-            title: post.title,
-            timestamp:post.timestamp
-        });
-    },
-    updateSlug: function(e) {
-        this.setState({
-            slug: e.target.value
-        });
-    },
-    updateTitle: function(e) {
-        this.setState({
-            title: e.target.value
-        })
-    },
-    updateModel: function(e) {
-        var post = PostDataStore.getSelected();
-        if(!post) return;
-        PostDataStore.updateSlug(post,this.state.slug);
-        PostDataStore.updateTitle(post,this.state.title);
-    },
-    render: function() {
-        if(!this.props.post|| !this.props.post.format) {
-            var format = "unknown";
-        } else {
-            var format = this.props.post.format;
-        }
-        if(!this.props.post || !this.props.post.timestamp) {
-            var timestamp = "unknown";
-        } else {
-            var timestamp = moment
-                .unix(this.props.post.timestamp)
-                .format("YYYY MMM DD - hh:mm A");
-        }
-
-        return <div id="post-meta">
-            <form className='form-horizontal'>
-                <div className='form-group'>
-                    <label className='col-sm-3 control-label'>slug</label>
-                    <div className="col-sm-9">
-                        <input className='form-control' type='text' value={this.state.slug} onChange={this.updateSlug} onBlur={this.updateModel}/>
-                    </div>
-                </div>
-                <div className='form-group'>
-                    <label className='col-sm-3 control-label'>title</label>
-                    <div className="col-sm-9">
-                        <input className='form-control' type='text' value={this.state.title} onChange={this.updateTitle} onBlur={this.updateModel}/><br/>
-                    </div>
-                </div>
-                <div className='form-group'>
-                    <label className='col-sm-3 control-label'>timestamp</label>
-                    <div className="col-sm-9">
-                        <label className='col-sm-9 control-label'>{timestamp}</label>
-                    </div>
-                </div>
-                <div className='form-group'>
-                    <label className='col-sm-3 control-label'>format</label>
-                    <label className='col-sm-9 control-label'>{format}</label>
-                </div>
-            </form>
-        </div>
-    }
-});
 
 var PostEditor = React.createClass({
     componentWillUpdate: function() {
@@ -381,15 +152,6 @@ var PostEditor = React.createClass({
     }
 });
 
-function toClass(def, cond) {
-    var str = def.join(" ");
-    for(var name in cond) {
-        if(cond[name] === true) {
-            str += " " + name
-        }
-    }
-    return str;
-}
 
 var BlockDropdown = React.createClass({
     getInitialState: function() {
@@ -412,8 +174,8 @@ var BlockDropdown = React.createClass({
         this.setState({open:false})
     },
     render: function() {
-        var openClass = toClass(["btn-group"],{ open:this.state.open });
-        var buttonClass = toClass(["btn","btn-default","dropdown-toggle"]);
+        var openClass = utils.toClass(["btn-group"],{ open:this.state.open });
+        var buttonClass = utils.toClass(["btn","btn-default","dropdown-toggle"]);
         var styles = this.props.styles;
         var items = [];
         for(var name in styles) {
@@ -521,8 +283,8 @@ var CleanupDropdown = React.createClass({
         this.setState({open:false})
     },
     render: function() {
-        var openClass = toClass(["btn-group"],{ open:this.state.open });
-        var buttonClass = toClass(["btn","btn-default","dropdown-toggle"]);
+        var openClass = utils.toClass(["btn-group"],{ open:this.state.open });
+        var buttonClass = utils.toClass(["btn","btn-default","dropdown-toggle"]);
         return <div className={openClass}>
             <button type="button" className={buttonClass} onClick={this.toggleDropdown}>
                     clean up <span className="caret"></span>
