@@ -3,6 +3,7 @@ var PostDataStore = require('./PostDataStore');
 var doc = require('../src/model');
 var dom = require('../src/dom');
 var keystrokes = require('../src/keystrokes');
+var MarkdownParser = require('./markdown_parser');
 
 
 var PostEditor = React.createClass({
@@ -54,8 +55,15 @@ var PostEditor = React.createClass({
                 return;
             }
             if(props.post.format == 'markdown') {
-                console.log("not doing markdown yet");
+                console.log("doing markdown yet");
                 console.log(props.post);
+                var model = MarkdownParser.parse(props.post.raw);
+                console.log("the node model is",model);
+                PostDataStore.setModel(model);
+                var tree_root = document.getElementById("modeltree");
+                dom.renderTree(tree_root,model);
+                keystrokes.setModel(model);
+                dom.syncDom(editor,model);
                 return;
             }
             if(typeof props.post.format == 'undefined') {
