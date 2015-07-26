@@ -390,7 +390,7 @@ exports.domToNewModel = function(dom_root, options) {
 exports.scanForChanges = function(dom_root,mod_root) {
     var changes = [];
     if(dom_root.childNodes.length != mod_root.childCount()) {
-        u.p("WARNING: length has changed");
+        //u.p("WARNING: length has changed");
     }
 
     //do children first

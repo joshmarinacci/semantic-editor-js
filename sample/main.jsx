@@ -5,38 +5,20 @@ var dom = require('../src/dom');
 var keystrokes = require('../src/keystrokes');
 var moment = require('moment');
 var PostDataStore = require('./PostDataStore');
+var PostEditor = require('./PostEditor.jsx');
 var PostMeta = require('./PostMeta.jsx');
 var utils = require('./utils');
 
-var model = doc.makeModel();
-var std_styles = {
-    block:{
-        //name of style : css classname
-        header:'header',
-        subheader:'subheader',
-        body:'body',
-        'block-code':'block-code',
-        'block-quote':'block-quote'
-    },
-    inline: {
-        bold:'bold',
-        italic:'italic',
-        'inline-code':'inline-code',
-        link:'link',
-        subscript:'subscript',
-        superscript:'superscript'
-    }
-};
 
-model.setStyles(std_styles);
-function setupModel(model) {
+function setupModel() {
+    var model = doc.makeModel();
     var block1 = model.makeBlock();
     var text1 = model.makeText("This is an empty post. please create a new one.");
     block1.append(text1);
     model.append(block1);
-    return model;
+    PostDataStore.setModel(model);
 }
-var model = setupModel(model);
+setupModel();
 
 function dumpModel(root,tab) {
     console.log(tab+root.type+"  "+root.id);
@@ -75,82 +57,6 @@ var PostList = React.createClass({
 });
 
 
-var PostEditor = React.createClass({
-    componentWillUpdate: function() {
-        return false;
-    },
-    componentDidMount:function() {
-        var editor = React.findDOMNode(this.refs.editor);
-        keystrokes.setEditor(editor);
-        keystrokes.setModel(model);
-        dom.syncDom(editor,model);
-        editor.addEventListener("input", keystrokes.handleBrowserInputEvent, false);
-        keystrokes.on('change',function(){
-            var tree_root = document.getElementById("modeltree");
-            dom.renderTree(tree_root,model);
-        });
-        PostDataStore.setEditor(editor);
-    },
-    componentWillReceiveProps: function(props) {
-        if (typeof props.post == 'undefined') return;
-        var editor = React.findDOMNode(this.refs.editor);
-        try {
-            if(props.post.format == 'jsem') {
-                model = doc.fromJSON(props.post.raw);
-                model.setStyles(std_styles);
-                var tree_root = document.getElementById("modeltree");
-                dom.renderTree(tree_root,model);
-                keystrokes.setModel(model);
-                dom.syncDom(editor,model);
-                return;
-            }
-            if(props.post.format == 'semantic') {
-                console.log("doing semantic");
-                dom.setRawHtml(editor,props.post.raw);
-                var options = {
-                    style_to_element_map:{
-                        'blocktype_header':'h3'
-                    }
-                }
-                model = dom.domToNewModel(editor,options);
-                model.setStyles(std_styles);
-                console.log("the new model is",model);
-                var tree_root = document.getElementById("modeltree");
-                dom.renderTree(tree_root,model);
-                keystrokes.setModel(model);
-                dom.syncDom(editor,model);
-                return;
-            }
-            if(props.post.format == 'markdown') {
-                console.log("not doing markdown yet");
-                return;
-            }
-            if(typeof props.post.format == 'undefined') {
-                console.log("no format, must be old");
-                dom.setRawHtml(editor,props.post.content);
-                model = dom.domToNewModel(editor);
-                model.setStyles(std_styles);
-                console.log("the new model is",model);
-                var tree_root = document.getElementById("modeltree");
-                dom.renderTree(tree_root,model);
-                keystrokes.setModel(model);
-                dom.syncDom(editor,model);
-                return;
-            }
-        } catch (e) {
-            console.log("error converting dataToModel");
-            console.log(e);
-        }
-    },
-    keydown: function(e) {
-        keystrokes.handleEvent(e);
-    },
-    render: function() {
-        return <div ref="editor" id="post-editor" className="semantic-view grow scroll" contentEditable={true} spellCheck={false}
-                    onKeyDown={this.keydown}
-            ></div>
-    }
-});
 
 
 var BlockDropdown = React.createClass({
@@ -165,6 +71,7 @@ var BlockDropdown = React.createClass({
         })
     },
     selectedStyle: function(name,e) {
+        var model = PostDataStore.getModel();
         if(this.props.type == 'block') {
             keystrokes.changeBlockStyle(model.getStyles().block[name]);
         }
@@ -195,7 +102,6 @@ function deleteEmptyText(root) {
         root.content.forEach(deleteEmptyText);
     }
     if(root.type == doc.TEXT && root.text.trim().length == 0) {
-        console.log("found some text to delete");
         root.deleteFromParent();
     }
 }
@@ -204,13 +110,13 @@ function deleteEmptyBlocks(root) {
         root.content.forEach(deleteEmptyBlocks);
     } else {
         if(root.type == doc.BLOCK) {
-            console.log("found an empty block");
             root.deleteFromParent();
         }
     }
 }
 
 function convertPlainSpans(root) {
+    var model = PostDataStore.getModel();
     if(root.type == doc.SPAN && root.style == 'plain') {
         if(root.childCount() == 1) {
             model.swapNode(root,root.child(0));
@@ -254,6 +160,7 @@ var CleanupDropdown = React.createClass({
         })
     },
     removeEmptyBlocks: function() {
+        var model = PostDataStore.getModel();
         console.log("removing the empty blocks",model);
         deleteEmptyBlocks(model.getRoot());
         var editor = PostDataStore.getEditor();
@@ -262,6 +169,7 @@ var CleanupDropdown = React.createClass({
         this.setState({open:false})
     },
     removeEmptyText: function() {
+        var model = PostDataStore.getModel();
         deleteEmptyText(model.getRoot());
         var editor = PostDataStore.getEditor();
         dom.syncDom(editor,model);
@@ -269,6 +177,7 @@ var CleanupDropdown = React.createClass({
         this.setState({open:false})
     },
     removePlainSpans: function() {
+        var model = PostDataStore.getModel();
         convertPlainSpans(model.getRoot());
         var editor = PostDataStore.getEditor();
         dom.syncDom(editor,model);
@@ -276,6 +185,7 @@ var CleanupDropdown = React.createClass({
         this.setState({open:false})
     },
     mergeAdjacentText: function() {
+        var model = PostDataStore.getModel();
         mergeAdjacentText(model.getRoot());
         var editor = PostDataStore.getEditor();
         dom.syncDom(editor,model);
@@ -312,12 +222,14 @@ var Toolbar = React.createClass({
     componentDidMount: function() {
         var self = this;
         PostDataStore.on('selected',function() {
+            var model = PostDataStore.getModel();
             self.setState({
                 styles:model.getStyles()
             });
         });
     },
     setModelToPost: function() {
+        var model = PostDataStore.getModel();
         var data = model.toJSON();
         PostDataStore.updateContent(this.props.post,data);
     },

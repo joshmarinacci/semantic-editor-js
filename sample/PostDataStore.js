@@ -3,10 +3,31 @@
  */
 var moment = require('moment');
 var utils = require('./utils');
+
+var std_styles = {
+    block:{
+        //name of style : css classname
+        header:'header',
+        subheader:'subheader',
+        body:'body',
+        'block-code':'block-code',
+        'block-quote':'block-quote'
+    },
+    inline: {
+        bold:'bold',
+        italic:'italic',
+        'inline-code':'inline-code',
+        link:'link',
+        subscript:'subscript',
+        superscript:'superscript'
+    }
+};
+
 var PostDataStore = {
     selected:null,
     posts: [],
     listeners:{},
+    model:null,
     setPosts: function(posts) {
         this.posts = posts;
         this.fire('posts');
@@ -15,7 +36,11 @@ var PostDataStore = {
         return this.posts;
     },
     getModel: function() {
-        return model;
+        return this.model;
+    },
+    setModel: function(model) {
+        model.setStyles(std_styles);
+        this.model = model;
     },
     selectById:function(id) {
         var self = this;
@@ -101,12 +126,12 @@ var PostDataStore = {
             format : 'jsem',
             tags : []
         };
-        model = doc.makeModel();
-        var blk = model.makeBlock();
-        var txt = model.makeText("new post here");
+        this.model = doc.makeModel();
+        var blk = this.model.makeBlock();
+        var txt = this.model.makeText("new post here");
         blk.append(txt);
-        model.append(blk);
-        var data = model.toJSON();
+        this.model.append(blk);
+        var data = this.model.toJSON();
         this.updateContent(post,data);
         this.fire('posts');
         this.selectById(post.id);
