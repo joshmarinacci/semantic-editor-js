@@ -68,29 +68,18 @@ var PostDataStore = {
         post.status = status;
     },
     updateContent: function(post, content) {
-        var url = "http://localhost:39865/save";
+        console.log("updating content");
+        post.content = null;
         post.raw = content;
         post.format = 'jsem';
-        console.log("POSTING to ",url);
-        var xml = new XMLHttpRequest();
-        xml.onreadystatechange = function(e) {
-            if(this.readyState == 4 && this.status == 200) {
-                console.log("request succeeded",xml.response);
-            }
-        };
-        xml.responseType = 'json';
-        xml.open("POST",url,true);
-        var outstr = JSON.stringify(post);
-        //replace non-breaking spaces with regular spaces
-        //outstr = outstr.replace(/\s/g,' ');
-        //replace smart quotes with regular ones;
-        //outstr = outstr.replace(/’/g,"'");
-        xml.send(outstr);
+        utils.postJSON('/save',post,function(res){
+            console.log("saved with result",res);
+        });
     },
     deletePost:function(post) {
         var self = this;
         console.log("deleting post",post.title,post.id);
-        utils.postJSON("/delete?id="+post.id,function(post) {
+        utils.postJSON("/delete?id="+post.id,{},function(post) {
             console.log("got the result of deleting",post);
             for(var i=0; i<self.posts.length; i++) {
                 var oldpost = self.posts[i];
@@ -105,18 +94,10 @@ var PostDataStore = {
     },
 
     loadPosts: function() {
-        var url = "http://localhost:39865/posts";
-        console.log("loading posts from",url);
-        var xml = new XMLHttpRequest();
         var self = this;
-        xml.onreadystatechange = function(e) {
-            if(this.readyState == 4 && this.status == 200) {
-                self.setPosts(xml.response);
-            }
-        };
-        xml.responseType = 'json';
-        xml.open("GET",url);
-        xml.send();
+        utils.getJSON('/posts',function(resp){
+            self.setPosts(resp);
+        });
     },
 
     makeNewPost: function() {

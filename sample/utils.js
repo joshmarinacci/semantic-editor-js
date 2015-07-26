@@ -1,9 +1,11 @@
 /**
  * Created by josh on 7/25/15.
  */
+
 var utils = {
+    BASE_URL: 'http://joshondesign.com:39865',
     getJSON: function(url,cb) {
-        var url = "http://localhost:39865"+url;
+        var url = this.BASE_URL+url;
         console.log("loading posts from",url);
         var xml = new XMLHttpRequest();
         var self = this;
@@ -16,9 +18,9 @@ var utils = {
         xml.open("GET",url);
         xml.send();
     },
-    postJSON: function(url,cb) {
-        var url = "http://localhost:39865"+url;
-        console.log("loading posts from",url);
+    postJSON: function(url,payload,cb) {
+        var url = this.BASE_URL+url;
+        console.log("POST to",url,payload);
         var xml = new XMLHttpRequest();
         var self = this;
         xml.onreadystatechange = function(e) {
@@ -28,7 +30,8 @@ var utils = {
         };
         xml.responseType = 'json';
         xml.open("POST",url);
-        xml.send();
+        var outstr = JSON.stringify(payload);
+        xml.send(outstr);
     },
     toClass:function(def, cond) {
         var str = def.join(" ");
