@@ -311,7 +311,7 @@ function domToModel(dom,model,options) {
         var classes = dom.className.split(" ");
         classes.forEach(function(cls) {
             if(typeof options.style_to_element_map[cls] !== 'undefined') {
-                console.log("need to convert", cls ,'to',options.style_to_element_map[cls]);
+                //console.log("need to convert", cls ,'to',options.style_to_element_map[cls]);
                 name = options.style_to_element_map[cls];
             }
         })
@@ -322,7 +322,7 @@ function domToModel(dom,model,options) {
         return null;
     }
     if(def.type == 'skip') {
-        u.p("skipping",dom);
+        //u.p("skipping",dom);
         return null;
     }
     if(def.type == doc.BLOCK){
@@ -374,7 +374,7 @@ exports.domToNewModel = function(dom_root, options) {
         u.indent();
         var ch = domToModel(dom_node,model, options);
         if(ch == null) {
-            u.p("no child generated. ERROR?");
+            //u.p("no child generated. ERROR?");
             continue;
         }
         //move text and span children into a block. can't be top-level
