@@ -22,13 +22,8 @@ var PostDataStore = {
         utils.getJSON("/load?id="+id,function(post){
             if(typeof post.slug == 'undefined') {
                 post.slug = post.name;
-                console.log("FIXED broken slug to",post.slug);
-                if(!post.slug) {
-                    console.log("SLUG still broken");
-                }
             }
             self.selected = post;
-
             self.fire('selected');
         });
     },
@@ -54,11 +49,10 @@ var PostDataStore = {
         if(typeof tags == 'undefined' || tags == null ) {
             tags = "";
         }
-        console.log("tags = ", tags);
         var tags = tags.split(",");
         var ftags = [];
         tags.forEach(function(tag) {
-            if(tag.trim().length > 0) ftags.push(tag);
+            if(tag.trim().length > 0) ftags.push(tag.trim());
         });
         post.tags = ftags;
         console.log("set final tags to",post.tags);
@@ -68,7 +62,6 @@ var PostDataStore = {
         post.status = status;
     },
     updateContent: function(post, content) {
-        console.log("updating content");
         post.content = null;
         post.raw = content;
         post.format = 'jsem';
