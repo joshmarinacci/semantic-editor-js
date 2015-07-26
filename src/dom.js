@@ -249,6 +249,10 @@ var dom_table = {
         type:doc.BLOCK,
         style:'block-code'
     },
+    'blockquote':{
+        type:doc.BLOCK,
+        style:'block-quote'
+    },
 
 
     '#text': {

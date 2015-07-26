@@ -7,6 +7,7 @@ var moment = require('moment');
 var PostDataStore = require('./PostDataStore');
 var PostEditor = require('./PostEditor.jsx');
 var PostMeta = require('./PostMeta.jsx');
+var PostList = require('./PostList.jsx');
 var utils = require('./utils');
 
 
@@ -36,25 +37,6 @@ function dumpStringAscii(str) {
         console.log(str[i], str.charCodeAt(i));
     }
 }
-
-var PostItem = React.createClass({
-    selectPost: function(e) {
-        PostDataStore.selectById(this.props.post.id);
-    },
-    render: function() {
-        return <li><a href='#' onClick={this.selectPost}>{this.props.post.title}</a></li>
-    }
-});
-
-var PostList = React.createClass({
-    render: function() {
-        var self = this;
-        var posts = this.props.posts.map(function(post){
-            return <PostItem key={post.id} post={post}/>
-        });
-        return <ul className='scroll' id="post-list">{posts}</ul>
-    }
-});
 
 
 
