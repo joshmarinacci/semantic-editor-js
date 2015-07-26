@@ -224,6 +224,11 @@ var dom_table = {
         type:doc.BLOCK,
         style:'list-item'
     },
+
+    'h4':{
+        type:doc.BLOCK,
+        style:'subheader'
+    },
     'h3':{
         type:doc.BLOCK,
         style:'subheader'
@@ -232,15 +237,25 @@ var dom_table = {
         type:doc.BLOCK,
         style:'header'
     },
+    'h1':{
+        type:doc.BLOCK,
+        style:'header'
+    },
     'div': {
         type:doc.BLOCK,
         style:'body'
     },
+    'pre': {
+        type:doc.BLOCK,
+        style:'block-code'
+    },
+
 
     '#text': {
         type:doc.TEXT,
         style:'none'
     },
+
     'em': {
         type:doc.SPAN,
         style:'italic'
@@ -280,6 +295,10 @@ var dom_table = {
     'img': {
         type:doc.SPAN,
         style:'image'
+    },
+    'code': {
+        type:doc.SPAN,
+        style:'inline-code'
     }
 }
 function domToModel(dom,model,options) {
