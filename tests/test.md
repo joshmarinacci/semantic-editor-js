@@ -141,5 +141,192 @@ smart watch, or the Windows Toaster, they will find it a lot easier to get devel
 built an open community up first.  Efforts like CodePlex are nice, but this philosophy has to come
 from the top.
 
-Good Luck Nadella."
+Good Luck Nadella.
+
+I’ve been working
+on [Amino](https://github.com/joshmarinacci/aminolang), my 
+graphics library, for several years now.  I’ve ported it from 
+pures Java, to JavaScript, to a complex custom-language generator
+system (I was really into code-gen two years ago), and 
+back to JS. It has accreted features and bloat.  
+And yet, through all that time, even with blog posts 
+and the [goamino.org](http://goamino.org/) website, I don’t 
+think anyone but me has ever used it.  I had accepted 
+this fact and continued tweaking it to meet my personal 
+needs; satisfied that I was creating something that lets 
+me build other useful things. Until earlier this year.
+
+# OSCON
+
+In January I thought to submit a session to OSCON entitled [Data Dashboards with Amino, NodeJS, and the Raspberry Pi](http://www.oscon.com/oscon2014/public/schedule/detail/34535). The concept was simple:  Raspberry Pis are cheap but with a surprisingly powerful GPU. Flat screen TVs are also cheap. I can get a [32in model at Costco](http://www.costco.com/Vizio-32%22-Class-720P-LED-HDTV-E320-B0.product.100089402.html) for 200$. Combine them with a wall mount and you have a cheap data dashboard.  Much to my shock the talk was accepted. 
+
+The session at OSCON was very well attended, proving there is clearly interest in Amino, at least on the Raspberry Pi.  The demos I was able to pull off for the talk show that Amino is powerful enough to really push the Pi. My final example was an over the top futuristic dashboard for 'Awesomonium Levels', clearly at home in every super villain’s lair. If Amino can pull this off then it’s found it’s niche. X windows and browsers are so slow on the Pi that people are willing to use something different.  
+
+![globe](https://dl.dropboxusercontent.com/s/2woolscwfrlbigv/globe_super.png)
+
+# Refactoring
+
+However, Amino still needs some work. While putting the demos together for my session a noticed how inefficient the API is.  I’ve been working on Amino in various forms for at least 3 years, so the API patterns were set quite a while ago. The objects full of getters and setters clearly reflect my previous Java background. Not only have I improved my Javascript skills since then, I have read a lot about functional programming styles lately (book reports coming soon). This let me finally see ways to improve the API.
+
+Much like any other UI toolkit, the core of the Amino API has always been a tree of nodes. Architecturally there are actually two trees, the Javascript one you interact with and the native one that actually makes the OpenGL calls; however the native one is generally hidden away. 
+
+Since I came from a Java background I started with an object full of properties accessed with getters and setters.  While this works, the syntax is annoying. You have to type the extra get/set words and remember to camel case the property names.  Is the font name set with setFontName or setFontname?  Because the getter and setter functions were just functions there was no place to access the property as a single object. This means other property functions have to be controlled with a separate API.  To animate a property you must refer to it indirectly with a string, like this:
+
+```
+var rect = new amino.ProtoRect().setX(5);
+var anim = core.createPropAnim(rect,’x’,0,100,1000);
+```
+
+Not only is the animation configured through a separate object (core) but you have to remember the exact order of the various parameters for starting and end values, duration, and the property name.  Amino needs a more fluent API.
+
+# Enter Super Properties
+
+After playing with Javascript native getters and setters for a bit (which I’ve determined have no real use) I started looking at the JQuery API.  A property can be represented by a single function which both gets and sets depending on the arguments.  Since functions in Javascript are also objects, we can attach extra functionality to the function itself. Magic behavior like binding and animation. The property itself becomes the natural place to put this behavior.  I call these super properties. Here’s what they look like.
+
+
+To get the x property of a rectangle
+
+```
+rect.x()
+```
+
+to set the x property of a rectangle:
+
+```
+rect.x(5);
+```
+
+the setter returns a reference to the parent object, so super properties are chain able:
+
+```
+rect.x(5).y(5).w(5);
+```
+
+This syntax is already more compact than the old one:
+
+```
+rect.setX(5).setY(5).setWidth(5);
+```
+
+The property accessor is also an object with it’s own set of listeners. If I want to know when a property changes I can _watch_ it like this:
+
+```
+rect.x.watch(function(val) {
+     console.log(“x changed to “+val);
+});
+```
+
+Notice that I am referring to the accessor as an object *without* the parenthesis. 
+
+Now that we can watch for variable changes we can also bind them together.
+
+```
+rect.x.bindto(otherRect.x);
+```
+
+If we combine binding with a modifier function, then properties become very powerful. To make rect.x always be the value of otherRect.x plus 10:
+
+```
+rect.x.bindto(otherRect.x, function(val) {
+     return val + 10;
+});
+```
+
+Modifier functions can be used to convert types as well. Let’s format a string based on a number:
+
+```
+label.text.bindto(rect.x, function(val) {
+     return “The value is “ + val;
+});
+```
+
+Since Javascript is a functional language we can improve this syntax with some meta-functions. This example creates a reusable string formatter.
+
+```
+function formatter(str) {
+     return function(val) {
+          return str.replace(‘%’,val);
+     }
+}
+
+label1.text.bindto(rect.x, formatter(‘the x value is %’));
+label2.text.bindto(rect.y, formatter(‘the y value is %’));
+```
+
+Taking a page out of JQuery’s book, I added a find function to the Group object. It returns a selection with proxies the properties to the underlying objects.  This lets me manipulate multiple objects at once. 
+
+Suppose I have a group with ten rectangles. Each has a different position but they should all be the same size and color:
+
+```
+group.find(‘Rect’).w(20).h(30).fill(‘#00FF00’);
+```
+
+Soon Amino will support searching by CSS class and ID selectors.
+
+# Animation
+
+Lets get back to animation for a second.  The old syntax was like this:
+
+```
+var rect = new amino.ProtoRect().setX(5);
+var anim = core.createPropAnim(rect,’x’,0,100,1000);
+```
+
+Here is the new syntax:
+
+```
+var rect = new Rect().x(5);
+rect.x.anim().from(0).to(100).dur(1000).start();
+```
+
+We don’t need to pass in the object and property because the `anim` function is already attached to the property itself.  Chaining the functions makes the syntax more natural.  The `from` and `dur` functions are optional. If you don’t specifiy them the animation will start with the current value of the property (which is usually what you wanted anyway) and a default duration (1/4 sec).  Without those it looks like:
+
+```
+rect.x.anim().to(100).start();
+```
+
+Using a start function makes the animation behavior more explicit. If you don’t call `start` then the animation doesn’t start. This lets you set up and save a reference to the animation to be used later.
+
+```
+var anim = rect.x.anim().from(-100).to(100).dur(1000).loop(5);
+//some time later
+anim.start();
+```
+
+Delayed start also lets us add more complex animation control in the future, like chained or parallel animations:
+
+```
+Anim.parallel([
+     rect.x.anim().to(1000),
+     circle.radius.anim().to(50),
+     group.y.anim().from(50).to(100)
+]).start();
+```
+
+I’m really happy with the new syntax. Simple functions built on a common pattern of objects and super properties.  Not only does this make a nicer syntax, but the implementation is cleaner as well.  I was able to deleted about a third of Amino’s JavaScript code!  That’s an all-round win!
+
+Since this changes Amino so much I’ve started a new repo for it.  The old amino is still available at:
+
+[https://github.com/joshmarinacci/aminolang](https://github.com/joshmarinacci/aminolang)
+
+The new amino, the only one you should be using, is at:
+
+[https://github.com/joshmarinacci/aminogfx](https://github.com/joshmarinacci/aminogfx)
+
+
+
+
+
+
+
+
+The session at OSCON 
+was very well 
+attended.
+
+![globe](https://dl.dropboxusercontent.com/s/2woolscwfrlbigv/globe_super.png)
+
+# Refactoring
+
+However, Amino still needs some work.
 
