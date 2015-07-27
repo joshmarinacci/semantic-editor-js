@@ -2,6 +2,7 @@
  * Created by josh on 7/25/15.
  */
 
+var config = {password:"foo"};
 var utils = {
     BASE_URL: 'http://joshondesign.com:39865',
     getJSON: function(url,cb) {
@@ -16,6 +17,7 @@ var utils = {
         };
         xml.responseType = 'json';
         xml.open("GET",url);
+        xml.setRequestHeader('jauth',config.password);
         xml.send();
     },
     postJSON: function(url,payload,cb) {
@@ -30,6 +32,7 @@ var utils = {
         };
         xml.responseType = 'json';
         xml.open("POST",url);
+        xml.setRequestHeader('jauth',config.password);
         var outstr = JSON.stringify(payload);
         xml.send(outstr);
     },

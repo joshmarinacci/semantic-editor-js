@@ -190,45 +190,23 @@ function setupModel() {
         }
     });
 
+    var block0 = model.makeBlock();
+    var text1 = model.makeText("abc");
+    block0.append(text1);
+    model.append(block0);
 
     var block1 = model.makeBlock();
-    model.setBlockStyle(block1,'header');
-    var text1 = model.makeText("This is a header");
-    block1.append(text1);
-    var text2 = model.makeText(" with some");
-    block1.append(text2);
-    var text3 = model.makeText(" text");
-    block1.append(text3);
-    model.getRoot().append(block1);
-
-    var block2 = model.makeBlock();
-    model.getRoot().append(block2);
-    model.setBlockStyle(block2,'body');
-    block2.append(model.makeText("This is a paragraph of body text"));
-
-
     var span1 = model.makeSpan();
-    span1.style = 'bold';
-    span1.append(model.makeText(" with some bold"));
-    block2.append(span1);
-
+    var text1 = model.makeText("ABC");
     var span2 = model.makeSpan();
+    span1.append(text1);
+    span1.style='link';
     span2.style = 'italic';
-    span2.append(model.makeText(" and italic"));
-    block2.append(span2);
+    span2.append(span1);
+    block1.append(span2);
 
-    block2.append(model.makeText(" text to read."));
-    block2.append(model.makeText(" And now some more text that we will read and read and it just goes on and on."));
 
-    var block3 = model.makeBlock();
-    model.getRoot().append(block3);
-    model.setBlockStyle(block3,'body');
-    block3.append(model.makeText("This is another paragraph of body text"));
-
-    var block3 = model.makeBlock();
-    model.getRoot().append(block3);
-    model.setBlockStyle(block3,'block-code');
-    block3.append(model.makeText("//codeblock\nfor(var i=0; i<8; i++) {\n  console.log(i);\n}"));
+    model.append(block1);
     return model;
 }
 
@@ -240,16 +218,16 @@ keystrokes.setModel(model);
 
 document.getElementById("editor").addEventListener("input", keystrokes.handleBrowserInputEvent, false);
 
-keystrokes.on(keystrokes.UPDATE_CURRENT_STYLE, function(styleInfo) {
+/*keystrokes.on(keystrokes.UPDATE_CURRENT_STYLE, function(styleInfo) {
     $("#current-style").html(
             "id: <b>"+styleInfo.id + "</b>"
             +" offset: <b>" + styleInfo.offset + "</b>"
             +" span:<b>" +styleInfo.spanStyles.join("") + "</b>"
             +" block: <b>" + styleInfo.blockStyles.join("")+"</b>");
 });
-
-keystrokes.populateKeyDocs(document.getElementById("key-docs"));
-
+*/
+//keystrokes.populateKeyDocs(document.getElementById("key-docs"));
+/*
 var saved_info;
 $("#emoji1").click(function(e) {
     $("#popup").addClass('hidden');
@@ -301,7 +279,7 @@ $("#switch-markdown").click(function() {
 $("#set-inline-link").click(function(e) {
     console.log("saved info = ", saved_info);
 });
-
+*/
 
 
 </script>

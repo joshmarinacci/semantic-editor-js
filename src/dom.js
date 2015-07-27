@@ -38,7 +38,7 @@ exports.renderTree = renderTree;
 exports.setRawHtml = function(editor, html) {
     clearChildren(editor);
     editor.innerHTML = html;
-}
+};
 
 function syncDomChildren(mod,dom) {
     mod.content.forEach(function(mod_ch){
@@ -64,7 +64,7 @@ function syncDom(mod,edi) {
                 if (mod.meta.href) {
                     dom.setAttribute("href", mod.meta.href);
                     dom.setAttribute("class","with-tooltip");
-                    dom.innerHTML = "<b class='link-tooltip'>"+mod.meta.href+"</b>";
+                    //dom.innerHTML = "<b class='link-tooltip' domtype='skip'>"+mod.meta.href+"</b>";
                 }
             }
             if( mod.style == 'image') {
@@ -121,14 +121,14 @@ exports.saveSelection = function (model) {
 
 
 function genModelFromDom(node) {
-    if(node.nodeType == Element.TEXT_NODE) {
+    if(node.nodeType == Node.TEXT_NODE) {
         return {
             id:doc.genId(),
             type:'text',
             content: node.nodeValue
         }
     }
-    if(node.nodeType == Element.ELEMENT_NODE) {
+    if(node.nodeType == Node.ELEMENT_NODE) {
         var content = [];
         for(var i=0; i<node.childNodes.length; i++) {
             content.push(genModelFromDom(node.childNodes[i]));
@@ -543,6 +543,19 @@ exports.setSelectionFromPosition = function(pos) {
     pos.path.forEach(function(index){
         node = node.childNodes[index];
     });
+    console.log("target node is", node);
+    if(node.nodeType !== Node.TEXT_NODE) {
+        console.log('we have a problem. not at a text node. go down more.', node.childNodes.length);
+        for(var i=0; i<node.childNodes.length; i++) {
+            var ch = node.childNodes[i];
+            console.log("child = ",ch);
+            if(ch.nodeType == Node.TEXT_NODE) {
+                console.log("found a text child");
+            }
+        }
+    }
+    console.log("target offset is",pos.offset);
+
     range.setStart(node, pos.offset);
     range.collapse(true);
     var wsel = window.getSelection();

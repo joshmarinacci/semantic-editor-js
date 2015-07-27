@@ -73,32 +73,6 @@ test('delete text, two text nodes',function(t) {
     t.end();
 });
 */
-/*
-function randomTree() {
-    var model = doc.makeModel();
-    var root = model.getRoot();
-    var familySize = Math.floor(Math.random()*4);
-    for(var i=0; i<familySize; i++) {
-        var block = model.makeBlock();
-        root.append(block);
-        randomTreeHelper(model,block,1);
-    }
-    return model;
-}
-
-function randomTreeHelper(model,root,depth) {
-    var familySize = Math.floor(Math.random()*4);
-    for(var i=0; i<familySize; i++) {
-        if(i%2 == 0) {
-            root.append(model.makeText("some text"));
-        } else {
-            var span = model.makeSpan();
-            root.append(span);
-            span.append(model.makeText("some text"));
-        }
-    }
-}
-*/
 
 test('iterator',function(t) {
     var model = doc.makeModel();
@@ -538,4 +512,25 @@ test('back delete into a span', function(t) {
     var pos = model.deleteTextBackwards(text2,0);
     dumpTree(model.getRoot());
     t.end();
-})
+});
+
+
+test("nested spans",function(t) {
+    var model = doc.makeModel();
+    var block1 = model.makeBlock();
+    var span1 = model.makeSpan();
+    var span2 = model.makeSpan();
+    var text1 = model.makeText("abc");
+    span2.append(text1);
+    span1.append(span2);
+    block1.append(span1);
+    model.getRoot().append(block1);
+    var text2 = model.makeText("def");
+    span1.append(text2);
+    dumpTree(model.getRoot());
+
+    var pos = model.deleteTextBackwards(text2,0);
+    dumpTree(model.getRoot());
+
+    t.end();
+});
