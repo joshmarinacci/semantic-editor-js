@@ -3,9 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title></title>
+    <link rel="stylesheet" href="../semantic.css">
+    <style type="text/css">
+        .semantic-view {
+            border: 1px solid red;
+        }
+        .semantic-view {
+            margin-right: 30em;
+        }
+        #model-tree {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 25em;
+            border: 1px solid red;
+        }
+    </style>
+
 </head>
 <body>
 <div id="editor" class="semantic-view" contenteditable="true" spellcheck="false"></div>
+<div id="model-tree"></div>
 </body>
 <script src="../bundle.js"></script>
 <script type='text/javascript'>
@@ -51,10 +69,23 @@
 
         Dom.applyChanges(changes,model);
         Dom.updateDomFromModel(range,model, dom_root, document);
-
+        renderModelTree(model,document.getElementById("model-tree"));
     });
 
+renderModelTree(model, document.getElementById("model-tree"));
 
+function renderModelTree(model,dom) {
+    if(model.getRoot) {
+        dom.innerHTML = "<ul>"+model.getRoot().content.map(renderModelTree).join("")+"</ul>";
+    }
+
+    if(model.type == Model.TEXT) {
+        return "<li>text: <i>"+model.text+"</i></li>";
+    }
+    if(model.type == Model.BLOCK || model.type == Model.SPAN) {
+        return "<li><b>"+model.type+"#"+model.id+"."+model.style+"</b><ul>"+model.content.map(renderModelTree).join("")+"</ul></li>";
+    }
+}
 
 
 </script>

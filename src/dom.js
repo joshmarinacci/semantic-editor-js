@@ -609,6 +609,7 @@ function modelToDom(mod,dom, doc) {
     if(mod.type == Model.BLOCK) {
         var block = doc.createElement('div');
         block.id = mod.id;
+        block.classList.add(mod.style);
         mod.content.forEach(function(modch){
             block.appendChild(modelToDom(modch,dom,doc));
         });
@@ -617,6 +618,7 @@ function modelToDom(mod,dom, doc) {
     if(mod.type == Model.SPAN) {
         var block = doc.createElement('span');
         block.id = mod.id;
+        block.classList.add(mod.style);
         mod.content.map(function(modch){
             block.appendChild(modelToDom(modch,dom,doc));
         });
