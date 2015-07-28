@@ -14,7 +14,7 @@ test('make one block',function(t){
     block.append(text);
     model.append(block);
 
-    t.equal(model.countCharacters(),9);
+    t.equals(model.toPlainText(),'some text');
     t.end();
 });
 
@@ -27,7 +27,7 @@ test('make two blocks, one empty', function(t) {
     var block2 = model.makeBlock();
     model.append(block2);
 
-    t.equals(model.countCharacters(),9);
+    t.equals(model.toPlainText(),'some text');
     t.end();
 });
 
@@ -38,9 +38,8 @@ test('insert text',function(t) {
     block.append(text);
     model.append(block);
     model.insertText(text,0,'def');
-    t.equals(model.countCharacters(),6);
+    t.equals(model.toPlainText(),'defabc');
     model.insertText(text,6,'def');
-    t.equal(model.countCharacters(),9);
     t.equal(model.toPlainText(),'defabcdef');
     t.end();
 });
@@ -96,7 +95,7 @@ test('iterator',function(t) {
             total+= node.text.length;
         }
     }
-    t.equal(model.countCharacters(),total);
+    t.equal(9,total);
     t.end();
 });
 

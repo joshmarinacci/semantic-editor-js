@@ -186,96 +186,6 @@ var u = {
     }
 };
 
-exports.scanForChanges = function(dom_root,mod_root) {
-    var changes = [];
-    if(dom_root.childNodes.length != mod_root.childCount()) {
-        //u.p("WARNING: length has changed");
-    }
-
-    //do children first
-    var dom_i = 0;
-    var dom_len = dom_root.childNodes.length;
-    var mod_i = 0;
-    var mod_len = mod_root.childCount();
-    if(mod_len > 0 && dom_len > 0) {
-        while(true) {
-            var dom_node = dom_root.childNodes[dom_i];
-            var mod_node = mod_root.child(mod_i);
-            //if next dom matches current node, then a new node was inserted
-            //if cur dom matches next model, then a node was deleted
-            if(dom_node.nodeType == Node.ELEMENT_NODE) {
-                if(dom_node.id != mod_node.id) {
-                    if(mod_i+1 < mod_len) {
-                        var next_mod = mod_root.child(mod_i+1);
-                    }
-                    if(dom_i+1 < dom_len) {
-                        var next_dom = dom_root.childNodes[dom_i+1];
-                        if(next_dom.id == mod_node.id) {
-                            //u.p("a new item was inserted");
-                        }
-                    }
-                    if(next_mod && next_dom) {
-                        if(next_mod.id == next_dom.id) {
-                            changes.push({
-                                type:'transform',
-                                model_node:mod_node,
-                                model_index:mod_i,
-                                dom_node:dom_node,
-                                dom_index:dom_i
-                            })
-                        }
-                    }
-                }
-            }
-            if(mod_i+1 < mod_len) {
-                var next_mod = mod_root.child(mod_i+1);
-                if(next_mod.id == dom_node.id) {
-                    //u.p("next matchup");
-                }
-            }
-            changes = changes.concat(exports.scanForChanges(dom_node,mod_node));
-
-
-            mod_i++;
-            dom_i++;
-            if(mod_i >= mod_len || dom_i >= dom_len ) break;
-        }
-        if(mod_i < mod_len) {
-            changes.push({
-                type:'delete',
-                model:mod_root,
-                mod_i:mod_i
-            });
-        }
-        if(dom_i < dom_len) {
-            //u.p("there was an extra dom node. Insertion");
-        }
-    }
-    if(dom_len == 0 && mod_len > 0) {
-        //u.p("too many model nodes. must delete them");
-        changes.push({
-            type:'delete',
-            model:mod_root,
-            mod_i:0
-        })
-    }
-
-    //node itself
-    if(dom_root.nodeType == TEXT_NODE) {
-        if(mod_root.text != dom_root.nodeValue) {
-            changes.push({
-                type:'text',
-                old_text:mod_root.text,
-                new_text:dom_root.nodeValue.toString(),
-                model_node:mod_root,
-                dom_node:dom_root
-            });
-        }
-    }
-    u.outdent();
-    return changes;
-};
-
 exports.findParentBlockDom = function(elem) {
     var parent = elem.parentElement;
     if(parent.tagName == 'DIV') {
@@ -317,10 +227,9 @@ exports.findModelFromPosition = function(pos,model) {
 
 exports.textNodeToSelectionPosition = function(node,offset) {
     var parent = node.getParent();
-    var n = parent.content.indexOf(node);
     return {
         id:parent.id,
-        path:[n],
+        path:[node.getIndex()],
         offset:offset
     }
 };
@@ -416,9 +325,7 @@ exports.modelToDom = modelToDom;
 
 
 function domIndexOf(dom_child) {
-    var chn = dom_child.parentNode.childNodes;
-    var n = Array.prototype.indexOf.call(chn,dom_child);
-    return n;
+    return Array.prototype.indexOf.call(dom_child.parentNode.childNodes,dom_child);
 }
 
 function findModelForId(model,id) {
@@ -454,13 +361,11 @@ exports.findDomForModel = function(modch, dom_root) {
     if(modch.type == Model.TEXT) {
         var mod_par = modch.getParent();
         var dom_par = dom_root.ownerDocument.getElementById(mod_par.id);
-        var n = mod_par.content.indexOf(modch);
-        var dom_ch = dom_par.childNodes[n];
-        return dom_ch;
+        return dom_par.childNodes[modch.getIndex()];
     }
     if(modch.type == Model.ROOT) return dom_root;
     console.log("can't handle model node type", modch.type);
-}
+};
 
 function isText(node) {
     if(node.type && node.type == Model.TEXT) return true;
@@ -549,7 +454,7 @@ function prevDom(dom) {
     return null;
 }
 function prevMod(mod) {
-    var n = mod.getParent().content.indexOf(mod);
+    var n = mod.getIndex();
     if(n > 0) {
         return mod.getParent().child(n-1);
     }
@@ -606,7 +511,7 @@ function applyChanges(changes, model) {
             var txt = chg.dom.nodeValue;
             var txtn = model.makeText(txt);
             var par = chg.mod.getParent();
-            var n = par.content.indexOf(chg.mod);
+            var n = chg.mod.getIndex();
             par.content.splice(n,0,txtn);
             return;
         }
@@ -619,7 +524,7 @@ function applyChanges(changes, model) {
         }
         if(chg.type == 'insert-after') {
             var par = chg.mod.getParent();
-            var n = par.content.indexOf(chg.mod);
+            var n = chg.mod.getIndex();
             var nn = chg.insert;
             par.content.splice(n+1,0,nn);
             nn.parent = par;

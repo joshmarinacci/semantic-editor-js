@@ -292,17 +292,6 @@ exports.handleEvent = function(e) {
     return false;
 };
 
-exports.handleBrowserInputEvent = function(e) {
-    console.log("INPUT EVENT");
-    var sel = dom.saveSelection(model);
-    var changes = dom.scanForChanges(editor,model.getRoot());
-    dom.applyChanges(editor,model,changes);
-    dom.syncDom(editor,model);
-    dom.setSelectionFromPosition(sel.startpos);
-    fireEvent('change',{});
-};
-
-
 exports.setModel = function(mod) {
     model = mod;
 };

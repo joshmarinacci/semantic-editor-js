@@ -14,22 +14,6 @@ function makeStdModel() {
     return model;
 }
 
-function pm(model,tab) {
-    if(!tab) tab = "";
-    if(model.getRoot) return pm(model.getRoot(),"");
-    if(model.type == Model.TEXT) {
-        console.log(tab + model.type + "#"+model.id+ "." + model.style + " '" + model.text+"'");
-        return;
-    }
-    console.log(tab + model.type + "#"+model.id+ "." + model.style);
-    if(model.childCount() > 0) {
-        model.content.forEach(function(node){
-            pm(node,tab+"  ");
-        })
-    }
-}
-
-
 var VirtualDoc = {
     _change_count:0,
     _ids:{},
@@ -119,7 +103,6 @@ var VirtualDoc = {
 test("insert character",function(t) {
     //make a model
     var model = makeStdModel();
-    pm(model);
     var dom_root = VirtualDoc.createElement("div");
     dom_root.id = model.getRoot().id;
 
@@ -147,7 +130,6 @@ test("insert character",function(t) {
 
     //modify the model
     Dom.applyChanges(changes,model);
-    pm(model);
     t.equals(model.getRoot().child(0).child(0).text,'abXc','text updated');
 
     //incrementally update the dom
@@ -171,7 +153,6 @@ test('insert text before span',function(t) {
     block.append(model.makeText("ghi"));
 
 
-    pm(model);
 
     var dom = VirtualDoc.createElement("div");
     dom.id = model.getRoot().id;
@@ -199,7 +180,6 @@ test('insert text before span',function(t) {
 
     //modify the model
     Dom.applyChanges(changes,model);
-    pm(model);
     t.equals(model.getRoot().child(0).child(0).text,'XXX','text inserted');
     t.end();
 });
@@ -216,7 +196,6 @@ test('insert text inside span',function(t) {
     block.append(model.makeText("ghi"));
 
 
-    pm(model);
 
     var dom = VirtualDoc.createElement("div");
     dom.id = model.getRoot().id;
@@ -245,7 +224,6 @@ test('insert text inside span',function(t) {
 
     //modify the model
     Dom.applyChanges(changes,model);
-    pm(model);
     t.equals(model.getRoot().child(0).child(0).child(0).text,'dxef','text inserted');
     t.end();
 });
@@ -260,9 +238,6 @@ test('insert text after span',function(t) {
     span.append(model.makeText("def"));
     block.append(span);
     block.append(model.makeText("ghi"));
-
-
-    pm(model);
 
     var dom = VirtualDoc.createElement("div");
     dom.id = model.getRoot().id;
@@ -290,7 +265,6 @@ test('insert text after span',function(t) {
 
     //modify the model
     Dom.applyChanges(changes,model);
-    pm(model);
     t.equals(model.getRoot().child(0).child(1).text,'gxhi','text inserted');
     t.end();
 });
@@ -359,10 +333,10 @@ test("delete text across spans", function(t) {
 
     Model.print(model);
 
-    t.equal(model.findNodeById("id_22").text,'a');
-    t.equal(model.findNodeById("id_24"),null);
-    t.equal(model.findNodeById("id_27"),null);
-    t.equal(model.findNodeById("id_29").text,'pqr');
+    t.equal(model.findNodeById("id_3").text,'a');
+    t.equal(model.findNodeById("id_4"),null);
+    t.equal(model.findNodeById("id_5"),null);
+    t.equal(model.findNodeById("id_10").text,'pqr');
 
     var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
     t.equals(com_mod.id,block1.id,'common parent id');
@@ -558,9 +532,9 @@ test("delete selection across block boundaries", function(t) {
     Model.print(model);
     t.equal(changes.length,4,'change count');
 
-    t.equal(model.findNodeById("id_62").text,'a');
-    t.equal(model.findNodeById("id_63"),null);
-    t.equal(model.findNodeById("id_64").text,'ef');
+    t.equal(model.findNodeById("id_3").text,'a');
+    t.equal(model.findNodeById("id_4"),null);
+    t.equal(model.findNodeById("id_5").text,'ef');
 
     t.equals(com_mod.id,model.getRoot().id,'common parent id');
     var com_dom = Dom.findDomForModel(com_mod,dom_root);
@@ -632,13 +606,3 @@ test("split block in half w/ span and more text", function(t) {
     Model.print(model);
     t.end();
 });
-
-/*
-    can't forward delete from text into a span
-    can't style two adjacent text nodes
-    short cut to clear all styles in selection
-    doing bold again will undo bold if already set at the cursor point
-    comment out scan for changes
- */
-
-

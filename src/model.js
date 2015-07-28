@@ -7,16 +7,10 @@ exports.TEXT = 'text';
 exports.SPAN = 'span';
 exports.BLOCK = 'block';
 
-var _id_count = 0;
-exports.genId = function() {
-    _id_count++;
-    return "id_"+_id_count;
-}
-
-
-function DNode(type,text) {
+function DNode(type,text,model) {
     this.type = type;
-    this.id = exports.genId();
+    this.model = model;
+    this.id = model.genId();
     this.style = 'body';
     this.parent = null;
 
@@ -53,18 +47,9 @@ function DNode(type,text) {
         if(this.type == exports.BLOCK && this.content.length == 0) return true;
         return false;
     }
-}
-
-
-function countChars(par) {
-    var total = 0;
-    if(par.content) {
-        par.content.forEach(function(n){
-            total += countChars(n);
-        })
+    this.getIndex = function() {
+        return this.getParent().content.indexOf(this);
     }
-    if(par.type == exports.TEXT) return par.text.length;
-    return total;
 }
 
 function flattenChars(par) {
@@ -79,14 +64,10 @@ function DNodeIterator(thecurrent) {
     current.didKids = false;
     var nextNode = calculateNextNode();
 
-    function getIndex(node) {
-        var parent = node.parent;
-        return parent.content.indexOf(node);
-    }
     function getNextSibling(node) {
         if(typeof node.parent == 'undefined') return null;
         if(node.parent == null) return null;
-        var n = getIndex(node);
+        var n = node.getIndex();
         if(n < node.parent.content.length-1) {
             return node.parent.child(n+1);
         }
@@ -123,8 +104,7 @@ function DNodeIterator(thecurrent) {
 
     this.deleteNow = function() {
         if(current.parent == null) throw new Error("can't delete a node without a parent");
-        var n = getIndex(current);
-        current.parent.content.splice(n,1);
+        current.deleteFromParent();
     }
 
 }
@@ -144,7 +124,13 @@ function mergeParentBlocksIfNeeded(nodeA, nodeB) {
 }
 
 function DModel() {
-    var root = new DNode('root');
+    var _id_count = 0;
+    this.genId = function() {
+        _id_count++;
+        return "id_"+_id_count;
+    };
+
+    var root = new DNode('root',null, this);
     this._root = root;
     this.styles = {
         block:{
@@ -156,21 +142,18 @@ function DModel() {
     };
 
     this.makeBlock = function() {
-        return new DNode(exports.BLOCK);
+        return new DNode(exports.BLOCK, null, this);
     };
     this.makeText = function(text) {
-        return new DNode(exports.TEXT,text);
+        return new DNode(exports.TEXT,text,this);
     };
     this.makeSpan = function() {
-        return new DNode(exports.SPAN);
+        return new DNode(exports.SPAN, null, this);
     };
     this.append = function(node) {
         root.append(node);
     };
 
-    this.countCharacters = function() {
-        return countChars(root);
-    };
 
     this.insertText = function(node, offset, text) {
         if(node.type != exports.TEXT) throw new Error("this isn't a text node");
@@ -180,7 +163,7 @@ function DModel() {
     this.getPreviousTextNode = function(tnode) {
         if(typeof tnode.parent == 'undefined' || tnode.parent == null) throw new Error("invalid node with no parent");
 
-        var n = tnode.parent.content.indexOf(tnode);
+        var n = tnode.getIndex();
         if(n == 0) {
             return this.getPreviousTextNode(tnode.getParent());
         }
@@ -352,7 +335,7 @@ function DModel() {
             var a = this.makeText(node.text.substring(0,offset));
             var b = this.makeText(node.text.substring(offset));
             var parent = node.getParent();
-            var index  = parent.content.indexOf(node);
+            var index  = node.getIndex();
             var before = parent.content.slice(0,index);
             var after  = parent.content.slice(index+1);
             var parents = this.splitBlockAt(parent,-1);
@@ -372,7 +355,7 @@ function DModel() {
             a.style = node.style;
             b.style = node.style;
             var parent = node.getParent();
-            var index  = parent.content.indexOf(node);
+            var index  = node.getIndex();
             var before = parent.content.slice(0,index);
             var after  = parent.content.slice(index+1);
 
@@ -405,7 +388,7 @@ function DModel() {
         var oldnode = args.shift();
         var rest = args;
         var parent = oldnode.parent;
-        var index = parent.content.indexOf(oldnode);
+        var index = oldnode.getIndex();
         var cargs = [index,1].concat(rest);
         parent.content.splice.apply(parent.content,cargs);
         rest.forEach(function(node) {
@@ -532,7 +515,7 @@ exports.print = function(model,tab) {
 
 exports.nodeToPath = function(node) {
     if(node.getParent() == null) return [];
-    var n = node.getParent().content.indexOf(node);
+    var n = node.getIndex();
     var arr = exports.nodeToPath(node.getParent());
     arr.push(n);
     return arr;
