@@ -72,6 +72,8 @@ var model = setupModel();
 var dom_root = document.getElementById("editor");
 dom_root.id = model.getRoot().id;
 Dom.modelToDom(model,dom_root,document);
+Keystrokes.setModel(model);
+Keystrokes.setEditor(dom_root);
 
 dom_root.addEventListener("input", function(e){
     var sel = window.getSelection();
@@ -99,86 +101,6 @@ function stop(e) {
     }
 }
 
-Keystrokes.actions_map["delete-backward"] = function(e) {
-    stop(e);
-    if(window.getSelection().getRangeAt(0).collapsed === false) {
-        var range = makeRangeFromSelection(model, window);
-    } else {
-        var range = makeRangeFromSelection(model, window);
-        range.start.offset--;
-        if(range.start.offset < 0) {
-            var prevtext = model.getPreviousTextNode(range.start.mod);
-            range.start.mod = prevtext;
-            range.start.offset = prevtext.text.length;
-        }
-    }
-
-    var changes = Dom.makeDeleteTextRange(range,model);
-    var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
-    Dom.applyChanges(changes,model);
-    renderModelTree(model,document.getElementById("model-tree"));
-    var com_dom = Dom.findDomForModel(com_mod,dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
-    setCursorAtModel(range.start.mod,range.start.offset);
-};
-
-function setCursorAtModel(mod,offset) {
-    var dom = Dom.findDomForModel(mod,dom_root);
-    var range = document.createRange();
-    range.setStart(dom,offset);
-    var sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-}
-
-
-Keystrokes.actions_map["delete-forward"] = function(e) {
-    stop(e);
-    if(window.getSelection().getRangeAt(0).collapsed === false) {
-        var range = makeRangeFromSelection(model, window);
-    } else {
-        var range = makeRangeFromSelection(model, window);
-        range.end.offset++;
-        if(range.end.offset > range.end.mod.text.length) {
-            var nexttext = model.getNextTextNode(range.end.mod);
-            range.end.mod = nexttext;
-            range.end.offset = 0;
-        }
-    }
-
-    var changes = Dom.makeDeleteTextRange(range,model);
-    var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
-    Dom.applyChanges(changes,model);
-    renderModelTree(model,document.getElementById("model-tree"));
-    var com_dom = Dom.findDomForModel(com_mod,dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
-    setCursorAtModel(range.start.mod,range.start.offset);
-};
-
-Keystrokes.actions_map['style-bold'] = function(e) {
-    Keystrokes.styleSelection(e,'bold');
-    renderModelTree(model,document.getElementById("model-tree"));
-};
-
-Keystrokes.actions_map['style-italic'] = function(e) {
-    Keystrokes.styleSelection(e,'italic');
-    renderModelTree(model,document.getElementById("model-tree"));
-};
-
-Keystrokes.actions_map['split-line'] = function(e) {
-    stop(e);
-    var range = makeRangeFromSelection(model,window);
-    var path = Model.nodeToPath(range.start.mod);
-    var com_mod = range.start.mod.findBlockParent().getParent();
-    var changes = Dom.makeSplitChange(range,model);
-    Dom.applyChanges(changes,model);
-    renderModelTree(model,document.getElementById("model-tree"));
-    var com_dom = Dom.findDomForModel(com_mod,dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
-    var new_mod = Model.pathToNode(path,model.getRoot());
-    var new_text = model.getNextTextNode(new_mod);
-    setCursorAtModel(new_text,0);
-};
 
 dom_root.addEventListener("keydown", function(e) {
     Keystrokes.handleEvent(e);

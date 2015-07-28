@@ -56,6 +56,15 @@ exports.styleSelection = function(e,style) {
     fireEvent('change',{});
 };
 
+function setCursorAtModel(mod,offset) {
+    var dom = Dom.findDomForModel(mod,editor);
+    var range = document.createRange();
+    range.setStart(dom,offset);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+
 function setSelectionAtModel(smod, soff, emod, eoff) {
     var sdom = Dom.findDomForModel(smod,editor);
     var rng = document.createRange();
@@ -102,7 +111,7 @@ var key_to_actions = {
     "cmd-shift-c":"style-inline-code",
     "cmd-shift-a":"style-inline-link",
     "cmd-shift-e":"insert-emoji",
-    "enter":"split-line",
+    "enter":"split-line"
 };
 
 function stopKeyboardEvent(e) {
@@ -148,6 +157,22 @@ function wrapTextInInlineStyle(node,style,model) {
     return inline;
 };
 
+exports.splitLine = function(e) {
+    stopKeyboardEvent(e);
+    var range = makeRangeFromSelection(model,window);
+    var path = Model.nodeToPath(range.start.mod);
+    var com_mod = range.start.mod.findBlockParent().getParent();
+    console.log("com_mod = ", com_mod);
+    var changes = Dom.makeSplitChange(range,model);
+    Dom.applyChanges(changes,model);
+    var com_dom = Dom.findDomForModel(com_mod,editor);
+    console.log("com dom = ", editor.id);
+    Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
+    var new_mod = Model.pathToNode(path,model.getRoot());
+    var new_text = model.getNextTextNode(new_mod);
+    setCursorAtModel(new_text,0);
+};
+
 var actions_map = {
     "style-bold": function(e) {
         exports.styleSelection(e,'bold');
@@ -155,39 +180,51 @@ var actions_map = {
     "style-italic": function(e) {
         exports.styleSelection(e,'italic');
     },
+    "split-line":function(e) {
+        exports.splitLine(e);
+    },
     "delete-backward":function(e) {
         stopKeyboardEvent(e);
-        var info = dom.saveSelection(model);
-        //delete a selection
-        if(info.collapsed === false) {
-            model.deleteText(info.startpos.node,info.startpos.offset,
-                info.endpos.node,info.endpos.offset);
-            dom.syncDom(editor,model);
-            dom.setSelectionFromPosition(info.startpos);
-            fireEvent('change',{});
-            return;
-        }
-
-        //delete a single char
-        var mod = info.startpos.node;
-        //handle browser bug when block is directly selected
-        if(mod.type == doc.BLOCK) {
-            if(!mod.isEmpty() && mod.child(0).type == doc.TEXT) {
-                mod = mod.child(0);
+        if(window.getSelection().getRangeAt(0).collapsed === false) {
+            var range = makeRangeFromSelection(model, window);
+        } else {
+            var range = makeRangeFromSelection(model, window);
+            range.start.offset--;
+            if(range.start.offset < 0) {
+                var prevtext = model.getPreviousTextNode(range.start.mod);
+                range.start.mod = prevtext;
+                range.start.offset = prevtext.text.length;
             }
         }
-        var pos = model.deleteTextBackwards(mod,info.startpos.offset);
-        dom.syncDom(editor,model);
-        dom.setSelectionFromPosition(dom.textNodeToSelectionPosition(pos.node,pos.offset));
-        fireEvent('change',{});
+
+        var changes = Dom.makeDeleteTextRange(range,model);
+        var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
+        Dom.applyChanges(changes,model);
+        var com_dom = Dom.findDomForModel(com_mod,dom_root);
+        Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
+        setCursorAtModel(range.start.mod,range.start.offset);
     },
     "delete-forward":function(e) {
         stopKeyboardEvent(e);
-        var info = dom.saveSelection(model);
-        model.deleteTextForwards(info.startpos.node,info.startpos.offset);
-        dom.syncDom(editor,model);
-        dom.setSelectionFromPosition(info.startpos);
-        fireEvent('change',{});
+        if(window.getSelection().getRangeAt(0).collapsed === false) {
+            var range = makeRangeFromSelection(model, window);
+        } else {
+            var range = makeRangeFromSelection(model, window);
+            range.end.offset++;
+            if(range.end.offset > range.end.mod.text.length) {
+                var nexttext = model.getNextTextNode(range.end.mod);
+                range.end.mod = nexttext;
+                range.end.offset = 0;
+            }
+        }
+
+        var changes = Dom.makeDeleteTextRange(range,model);
+        var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
+        Dom.applyChanges(changes,model);
+
+        var com_dom = Dom.findDomForModel(com_mod,dom_root);
+        Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
+        setCursorAtModel(range.start.mod,range.start.offset);
     },
     "style-inline-code":function(e){
         exports.styleSelection(e,'inline-code');
