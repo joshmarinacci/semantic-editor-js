@@ -506,3 +506,17 @@ function dataToModel_helper(data,root,model) {
     });
 }
 
+exports.print = function(model,tab) {
+    if(!tab) tab = "";
+    if(model.getRoot) return exports.print(model.getRoot(),"");
+    if(model.type == exports.TEXT) {
+        console.log(tab + model.type + "#"+model.id+ "." + model.style + " '" + model.text+"'");
+        return;
+    }
+    console.log(tab + model.type + "#"+model.id+ "." + model.style);
+    if(model.childCount() > 0) {
+        model.content.forEach(function(node){
+            exports.print(node,tab+"  ");
+        })
+    }
+}

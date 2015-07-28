@@ -436,8 +436,102 @@ test("calculate common parent path",function(t) {
     t.end();
 });
 
+function makeTextSubsetRange(mod,start,end,dom_root) {
+    return {
+        start: {
+            mod: mod,
+            dom: Dom.findDomForModel(mod,dom_root),
+            offset:start
+        },
+        end: {
+            mod: mod,
+            dom: Dom.findDomForModel(mod,dom_root),
+            offset:end
+        }
+    }
+}
+
+
+test("selection to bold",function(t) {
+    var model = Model.makeModel();
+    var block1 = model.makeBlock();
+    var text1  = model.makeText("abcdefghi");
+    block1.append(text1);
+    model.getRoot().append(block1);
+    Model.print(model);
+    var dom_root = VirtualDoc.createElement("div");
+    dom_root.id="editor";
+    Dom.modelToDom(model,dom_root,VirtualDoc);
+    Dom.print(dom_root);
+
+    var range = makeTextSubsetRange(text1,3,6, dom_root);
+    var changes = Dom.makeStyleTextRange(range,model,'bold');
+    var com_mod = range.start.mod.getParent();
+    console.log('changes',changes);
+    Dom.applyChanges(changes,model);
+    Model.print(model);
+    //var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
+    var com_dom = Dom.findDomForModel(com_mod,dom_root);
+    console.log("common = ", com_mod.id);
+    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, VirtualDoc);
+    Dom.print(dom_root);
+    t.end();
+});
+
+test("delete after text",function(t) {
+    var model = Model.makeModel();
+    var block1 = model.makeBlock();
+    var text1  = model.makeText("abc");
+    block1.append(text1);
+    var span = model.makeBlock();
+    var text2 = model.makeText('def');
+    span.append(text2);
+    block1.append(span);
+    var text3 = model.makeText('ghi');
+    block1.append(text3);
+    model.getRoot().append(block1);
+    Model.print(model);
+    var dom_root = VirtualDoc.createElement("div");
+    dom_root.id="editor";
+    Dom.modelToDom(model,dom_root,VirtualDoc);
+    Dom.print(dom_root);
+
+    var range = {
+        start: {
+            mod: text3,
+            dom: Dom.findDomForModel(text3,dom_root),
+            offset:1
+        },
+        end: {
+            mod: text3,
+            dom: Dom.findDomForModel(text3,dom_root),
+            offset:2
+        }
+    };
+
+    var changes = Dom.makeDeleteTextRange(range,model);
+    console.log('changes',changes);
+    Dom.applyChanges(changes,model);
+    Model.print(model);
+    var com_mod = range.start.mod.getParent();
+    var com_dom = Dom.findDomForModel(com_mod,dom_root);
+    console.log("common = ", com_mod.id);
+    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, VirtualDoc);
+    Dom.print(dom_root);
+    t.end();
+});
 
 //delete text inside a block
-//add in keystroke for enter
+//add in keystroke for enter.
 //test with an image to see if it doesn't refresh the image
 
+//unit test for split block w/ spans w/ a keystroke. should use a change list
+//calculate correct cursor position after deleting
+//unit test for converting a selection into a bold span. should use a change list
+//clean up code
+
+//move Dom.domToNewModel to code specific to blog editor
+//do we use scan for changes anymore? just to handle copy & paste? needs a unit test
+//then shower and food
+
+//deleting from text after a span is breaking.

@@ -167,41 +167,6 @@ function genModelFromDom(node) {
     console.log("ERROR. UNSUPPORTED NODE TYPE",node.nodeType,node);
 }
 
-exports.applyChanges = function(editor,model,changes) {
-    changes.forEach(function(ch){
-        if(ch.type=='text') {
-            ch.model_node.text = ch.new_text;
-        }
-        if(ch.type == 'append') {
-            if(ch.dom_node.nodeType == Element.ELEMENT_NODE) {
-                ch.model.push(genModelFromDom(ch.dom_node));
-            }
-            if(ch.dom_node.nodeType == TEXT_NODE) {
-                ch.model.push(genModelFromDom(ch.dom_node));
-            }
-        }
-        if(ch.type == 'remove'){
-            ch.model.splice(ch.mod_i,1);
-        }
-        if(ch.type == 'delete'){
-            ch.model.content.splice(ch.mod_i,1);
-        }
-        if(ch.type == 'insert') {
-            var mod = genModelFromDom(ch.dom_node);
-            ch.model.splice(ch.mod_i,0,mod);
-        }
-        if(ch.type == 'transform') {
-            if(ch.model_node.type == 'block') {
-                if(ch.dom_node.nodeName == 'BR') {
-                    var parent = ch.model_node.getParent();
-                    var n = parent.content.indexOf(ch.model_node);
-                    parent.content.splice(n,1);
-                }
-            }
-        }
-    });
-}
-
 var u = {
     incount: 0,
     genTab: function() {
@@ -814,6 +779,7 @@ function applyChanges(changes, model) {
                     parent.deleteFromParent();
                 }
             }
+            return;
         }
         if(chg.type == 'insert-text-before') {
             var txt = chg.dom.nodeValue;
@@ -821,13 +787,24 @@ function applyChanges(changes, model) {
             var par = chg.mod.getParent();
             var n = par.content.indexOf(chg.mod);
             par.content.splice(n,0,txtn);
+            return;
         }
         if(chg.type == 'delete') {
             var parent = chg.mod.deleteFromParent();
             if(parent.isEmpty()) {
                 parent.deleteFromParent();
             }
+            return;
         }
+        if(chg.type == 'insert-after') {
+            var par = chg.mod.getParent();
+            var n = par.content.indexOf(chg.mod);
+            var nn = chg.insert;
+            par.content.splice(n+1,0,nn);
+            nn.parent = par;
+            return;
+        }
+        console.log("don't know how to handle change type",chg.type);
     });
 }
 exports.applyChanges = applyChanges;
@@ -938,3 +915,32 @@ exports.rebuildDomFromModel = function(mod,dom, dom_root,doc) {
 
     console.log("cant handle ",mod.type);
 };
+
+
+exports.makeStyleTextRange = function(range, model, style) {
+    var changes = [];
+    if(range.start.mod == range.end.mod) {
+        //console.log("in the same mod", range.start.offset, range.end.offset);
+        var txt = range.start.mod.text;
+        changes.push({
+            type:'text-change',
+            mod: range.start.mod,
+            text: txt.substring(0,range.start.offset)
+        });
+        changes.push({
+            type:'insert-after',
+            mod: range.start.mod,
+            insert: model.makeText(txt.substring(range.end.offset))
+        });
+        var span = model.makeSpan();
+        span.style = style;
+        span.append(model.makeText(txt.substring(range.start.offset,range.end.offset)));
+        changes.push({
+            type:'insert-after',
+            mod: range.start.mod,
+            insert: span
+        });
+        return changes;
+    }
+
+}
