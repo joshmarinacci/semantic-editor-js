@@ -1,8 +1,23 @@
 var doc = require('./model');
+var Model = doc;
 
+if(typeof document === 'undefined') {
+    var TEXT_NODE = 'TEXT_NODE';
+    var ELEMENT_NODE = 'ELEMENT_NODE';
+    console.log("initin Node object");
+} else {
+    var TEXT_NODE = document.TEXT_NODE;
+    var ELEMENT_NODE = document.ELEMENT_NODE;
+}
+
+
+exports.Node = {
+    ELEMENT_NODE: ELEMENT_NODE,
+    TEXT_NODE: TEXT_NODE
+}
 /**
- * Created by josh on 7/18/15.
- */
+* Created by josh on 7/18/15.
+*/
 
 function clearChildren(root) {
     while (root.firstChild) root.removeChild(root.firstChild);
@@ -121,7 +136,7 @@ exports.saveSelection = function (model) {
 
 
 function genModelFromDom(node) {
-    if(node.nodeType == Node.TEXT_NODE) {
+    if(node.nodeType == TEXT_NODE) {
         return {
             id:doc.genId(),
             type:'text',
@@ -162,7 +177,7 @@ exports.applyChanges = function(editor,model,changes) {
             if(ch.dom_node.nodeType == Element.ELEMENT_NODE) {
                 ch.model.push(genModelFromDom(ch.dom_node));
             }
-            if(ch.dom_node.nodeType == Element.TEXT_NODE) {
+            if(ch.dom_node.nodeType == TEXT_NODE) {
                 ch.model.push(genModelFromDom(ch.dom_node));
             }
         }
@@ -466,7 +481,7 @@ exports.scanForChanges = function(dom_root,mod_root) {
     }
 
     //node itself
-    if(dom_root.nodeType == Node.TEXT_NODE) {
+    if(dom_root.nodeType == TEXT_NODE) {
         if(mod_root.text != dom_root.nodeValue) {
             changes.push({
                 type:'text',
@@ -493,7 +508,7 @@ exports.findParentBlockDom = function(elem) {
 function findParentNonTextNode(dom) {
     var node = dom;
     var path = [];
-    while(node.nodeType == Node.TEXT_NODE || node.id == "") {
+    while(node.nodeType == TEXT_NODE || node.id == "") {
         var parent = node.parentNode;
         var nn = -1;
         for(var i=0; i<parent.childNodes.length; i++) {
@@ -544,12 +559,12 @@ exports.setSelectionFromPosition = function(pos) {
         node = node.childNodes[index];
     });
     console.log("target node is", node);
-    if(node.nodeType !== Node.TEXT_NODE) {
+    if(node.nodeType !== TEXT_NODE) {
         console.log('we have a problem. not at a text node. go down more.', node.childNodes.length);
         for(var i=0; i<node.childNodes.length; i++) {
             var ch = node.childNodes[i];
             console.log("child = ",ch);
-            if(ch.nodeType == Node.TEXT_NODE) {
+            if(ch.nodeType == TEXT_NODE) {
                 console.log("found a text child");
             }
         }
@@ -579,3 +594,212 @@ exports.getCaretClientPosition = function() {
     }
     return { x: x, y: y };
 };
+
+
+function modelToDom(mod,dom, doc) {
+    if(mod.getRoot) return modelToDom(mod.getRoot(),dom,doc);
+    if(mod.type == Model.ROOT) {
+        mod.content.forEach(function(modch){
+            dom.appendChild(modelToDom(modch,dom,doc));
+        });
+        return dom;
+    }
+    if(mod.type == Model.TEXT) {
+        return doc.createTextNode(mod.text);
+    }
+    if(mod.type == Model.BLOCK) {
+        var block = doc.createElement('div');
+        block.id = mod.id;
+        mod.content.forEach(function(modch){
+            block.appendChild(modelToDom(modch,dom,doc));
+        });
+        return block;
+    }
+    if(mod.type == Model.SPAN) {
+        var block = doc.createElement('span');
+        block.id = mod.id;
+        mod.content.map(function(modch){
+            block.appendChild(modelToDom(modch,dom,doc));
+        });
+        return block;
+    }
+}
+
+exports.modelToDom = modelToDom;
+
+
+function domIndexOf(dom_child) {
+    var chn = dom_child.parentNode.childNodes;
+    var n = Array.prototype.indexOf.call(chn,dom_child);
+    return n;
+}
+
+function findModelForId(model,id) {
+    if(model.id == id) return model;
+    if(model.getRoot) return findModelForId(model.getRoot(),id);
+    if(model.type != Model.TEXT) {
+        for(var i=0; i<model.content.length; i++) {
+            var found = findModelForId(model.content[i],id);
+            if(found != null) return found;
+        }
+    }
+    return null;
+}
+
+function findModelForDom(model,domch) {
+    if(domch.nodeType == ELEMENT_NODE) {
+        return findModelForId(model,domch.id);
+    }
+    if(domch.nodeType == TEXT_NODE) {
+        var parent_mod = findModelForDom(model,domch.parentNode);
+        var n = domIndexOf(domch);
+        return parent_mod.child(n);
+    }
+    console.log("UNKNOWN DOM NODE TYPE",domch.nodeType,TEXT_NODE);
+}
+
+function isText(node) {
+    if(node.type && node.type == Model.TEXT) return true;
+    if(node.nodeType && node.nodeType == TEXT_NODE) return true;
+    return false;
+}
+
+function calculateChangeRange(model,dom,sel) {
+    var change = {};
+    //is there a previous sibling?
+    var domch = sel.start_node;
+    console.log("domch",domch);
+    var modch = findModelForDom(model,domch);
+    console.log("modch",modch);
+    if(modch == null) {
+        throw new Error("cannot find model for dom", domch);
+    }
+    var n = domIndexOf(domch);
+    //var n = domch.parentNode.childNodes.indexOf(domch);
+    if(n == 0) {
+        if(isText(domch) && !isText(modch)) {
+            if(sameParentId(modch,domch)) {
+                change.start = {
+                    dom: domch,
+                    mod: modch,
+                }
+            }
+        }
+        if(modch.type == Model.TEXT && domch.nodeType == TEXT_NODE) {
+            if(modch.text == domch.nodeValue) {
+            } else {
+                change.start = {
+                    dom: domch,
+                    mod: modch
+                }
+            }
+        }
+    }
+
+    //check the next sibling
+    if(domch.parentNode.childNodes.length > n+1) {
+        var sib = domch.parentNode.childNodes[n+1];
+        //if dom_sib == modch then this is an insertion
+        if(sib.id == modch.id) {
+            change.end = {
+                dom: sib,
+                mod: modch
+            }
+        }
+    } else {
+        change.end = {
+            dom: domch,
+            mod: modch
+        }
+    }
+
+    return change;
+
+}
+
+exports.calculateChangeRange = calculateChangeRange;
+
+function sameParentId(mod,dom) {
+    if(mod.getParent().id == dom.parentNode.id) return true;
+    return false;
+}
+function nextDom(dom) {
+    var n = domIndexOf(dom);
+    if(dom.parentNode.childNodes.length > n+1) {
+        return dom.parentNode.childNodes[n+1];
+    }
+    return null;
+}
+
+
+function calculateChangeList(range) {
+    var dom = range.start.dom;
+    var mod = range.start.mod;
+    var changes = [];
+    if(isText(dom) && isText(mod)) {
+        if(dom.nodeValue == mod.text) {
+        } else {
+            if(sameParentId(mod,dom)) {
+                changes.push({
+                    type:'text-change',
+                    mod:mod,
+                    dom:dom
+                });
+            }
+        }
+    }
+    if(isText(dom) && !isText(mod)) {
+        var dom_sib = nextDom(dom);
+        if(dom_sib && dom_sib.id == mod.id) {
+            changes.push({
+                type:'insert-text-before',
+                mod:mod,
+                dom:dom
+            })
+        }
+    }
+    return changes;
+}
+
+exports.calculateChangeList = calculateChangeList;
+
+
+function applyChanges(changes, model) {
+    changes.forEach(function(chg) {
+        //for text change, just copy string to the model
+        if(chg.type == 'text-change') {
+            chg.mod.text = chg.dom.nodeValue;
+        }
+        if(chg.type == 'insert-text-before') {
+            var txt = chg.dom.nodeValue;
+            var txtn = model.makeText(txt);
+            var par = chg.mod.getParent();
+            var n = par.content.indexOf(chg.mod);
+            par.content.splice(n,0,txtn);
+        }
+    });
+}
+exports.applyChanges = applyChanges;
+
+function updateDomFromModel(range, doc) {
+    if(isText(range.start.mod) && isText(range.start.dom)) {
+        range.start.dom.nodeValue = range.start.mod.text;
+    }
+}
+exports.updateDomFromModel = updateDomFromModel;
+
+
+function print(dom,tab) {
+    if(!tab) tab = "";
+    if(dom.nodeType == ELEMENT_NODE) {
+        console.log(tab + dom.nodeName + "#"+dom.id);
+        dom.childNodes.forEach(function(domch){
+            print(domch,tab+"  ");
+        })
+    }
+    if(dom.nodeType == TEXT_NODE) {
+        console.log(tab + dom.nodeType + ' ' + dom.nodeValue);
+    }
+}
+
+exports.print = print;

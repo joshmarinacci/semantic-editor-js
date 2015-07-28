@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<div id="editor" class="semantic-view" contenteditable="true" spellcheck="false"></div>
+</body>
+<script src="../bundle.js"></script>
+<script type='text/javascript'>
+    console.log(Node);
+    var Model = require('model');
+    var Dom = require('dom');
+
+    var model = Model.makeModel();
+    var block0 = model.makeBlock();
+    block0.append(model.makeText("XXX"));
+    model.getRoot().append(block0);
+    var block = model.makeBlock();
+    model.getRoot().append(block);
+    //block.append(model.makeText("abc"));
+    var span = model.makeSpan();
+    span.style = 'italic';
+    span.append(model.makeText("def"));
+    block.append(span);
+    block.append(model.makeText("ghi"));
+
+    var dom = document.getElementById("editor");
+    dom.id = model.getRoot().id;
+    Dom.modelToDom(model,dom,document);
+
+    dom.addEventListener("input", function(e){
+        console.log("event",e);
+        var sel = window.getSelection();
+        console.log(sel);
+        var range = sel.getRangeAt(0);
+        console.log("range = ", range);
+        var start_dom = range.startContainer;
+        var start_off = range.startOffset;
+        var ssel = {
+            start_node:start_dom,
+            start_offset:start_off
+        };
+        var range = Dom.calculateChangeRange(model,dom,ssel);
+        console.log("change range = ", range);
+        var changes = Dom.calculateChangeList(range);
+        console.log("changes = ", changes);
+        console.log(changes.map(function(ch) {
+            return ch.mod.text
+                    + " => "
+                    + ch.dom.nodeValue
+        }).join(" "));
+
+        Dom.applyChanges(changes,model);
+        Dom.updateDomFromModel(range,document);
+
+    });
+
+
+    //add in keystroke for backspace
+
+
+</script>
+</html>
