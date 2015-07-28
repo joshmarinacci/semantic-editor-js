@@ -4,7 +4,6 @@ var Model = doc;
 if(typeof document === 'undefined') {
     var TEXT_NODE = 'TEXT_NODE';
     var ELEMENT_NODE = 'ELEMENT_NODE';
-    console.log("initin Node object");
 } else {
     var TEXT_NODE = document.TEXT_NODE;
     var ELEMENT_NODE = document.ELEMENT_NODE;
@@ -14,7 +13,7 @@ if(typeof document === 'undefined') {
 exports.Node = {
     ELEMENT_NODE: ELEMENT_NODE,
     TEXT_NODE: TEXT_NODE
-}
+};
 /**
 * Created by josh on 7/18/15.
 */
@@ -668,14 +667,11 @@ function calculateChangeRange(model,dom,sel) {
     var change = {};
     //is there a previous sibling?
     var domch = sel.start_node;
-    console.log("domch",domch);
     var modch = findModelForDom(model,domch);
-    console.log("modch",modch);
     if(modch == null) {
         throw new Error("cannot find model for dom", domch);
     }
     var n = domIndexOf(domch);
-    //var n = domch.parentNode.childNodes.indexOf(domch);
     if(n == 0) {
         if(isText(domch) && !isText(modch)) {
             if(sameParentId(modch,domch)) {
@@ -694,7 +690,17 @@ function calculateChangeRange(model,dom,sel) {
                 }
             }
         }
+    } else {
+        var prev_dom = prevDom(domch);
+        var prev_mod = prevMod(modch);
+        if(prev_mod.id == prev_dom.id && sameParentId(prev_mod,prev_dom)) {
+            change.start = {
+                dom: domch,
+                mod: modch
+            }
+        }
     }
+
 
     //check the next sibling
     if(domch.parentNode.childNodes.length > n+1) {
@@ -727,6 +733,20 @@ function nextDom(dom) {
     var n = domIndexOf(dom);
     if(dom.parentNode.childNodes.length > n+1) {
         return dom.parentNode.childNodes[n+1];
+    }
+    return null;
+}
+function prevDom(dom) {
+    var n = domIndexOf(dom);
+    if(n > 0) {
+        return dom.parentNode.childNodes[n-1];
+    }
+    return null;
+}
+function prevMod(mod) {
+    var n = mod.getParent().content.indexOf(mod);
+    if(n > 0) {
+        return mod.getParent().child(n-1);
     }
     return null;
 }

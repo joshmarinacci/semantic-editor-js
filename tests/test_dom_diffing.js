@@ -168,7 +168,7 @@ test('insert text before span',function(t) {
     t.equals(model.getRoot().child(0).child(0).text,'XXX','text inserted');
     t.end();
 });
-/*
+
 test('insert text inside span',function(t) {
     var model = Model.makeModel();
     var block = model.makeBlock();
@@ -199,7 +199,7 @@ test('insert text inside span',function(t) {
     Dom.print(dom);
     //create selection at the change
     var sel = {
-        start_node: dom.childNodes[0].childNodes[0],
+        start_node: dom.childNodes[0].childNodes[0].childNodes[0],
         start_offset:2,
     };
 
@@ -211,11 +211,54 @@ test('insert text inside span',function(t) {
     //modify the model
     Dom.applyChanges(changes,model);
     pm(model);
-    t.equals(model.getRoot().child(0).child(0).text,'XXX','text inserted');
+    t.equals(model.getRoot().child(0).child(0).child(0).text,'dxef','text inserted');
     t.end();
 });
-*/
-//insert text after a span
-//insert text inside a span (should already work)
+
+test('insert text after span',function(t) {
+    var model = Model.makeModel();
+    var block = model.makeBlock();
+    model.getRoot().append(block);
+    //block.append(model.makeText("abc"));
+    var span = model.makeSpan();
+    span.style = 'link';
+    span.append(model.makeText("def"));
+    block.append(span);
+    block.append(model.makeText("ghi"));
+
+
+    pm(model);
+
+    var dom = VirtualDoc.createElement("div");
+    dom.id = model.getRoot().id;
+
+    //generate a dom
+    Dom.modelToDom(model,dom,VirtualDoc);
+    Dom.print(dom);
+
+    //modify the dom
+    var ch = dom.childNodes[0].childNodes[1];
+    ch.nodeValue = ch.nodeValue.substring(0,1)
+        +'x'
+        +ch.nodeValue.substring(1);
+    Dom.print(dom);
+    //create selection at the change
+    var sel = {
+        start_node: ch,
+        start_offset:2
+    };
+
+    var range = Dom.calculateChangeRange(model,dom,sel);
+
+    //calculate the change list
+    var changes = Dom.calculateChangeList(range);
+
+    //modify the model
+    Dom.applyChanges(changes,model);
+    pm(model);
+    t.equals(model.getRoot().child(0).child(1).text,'gxhi','text inserted');
+    t.end();
+});
+
 //delete text inside a span (should already work)
 //delete text inside a block
