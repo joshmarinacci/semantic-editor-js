@@ -154,12 +154,6 @@ function DModel() {
         root.append(node);
     };
 
-
-    this.insertText = function(node, offset, text) {
-        if(node.type != exports.TEXT) throw new Error("this isn't a text node");
-        node.text = node.text.substring(0,offset) + text + node.text.substring(offset);
-    };
-
     this.getPreviousTextNode = function(tnode) {
         if(typeof tnode.parent == 'undefined' || tnode.parent == null) throw new Error("invalid node with no parent");
 
@@ -298,20 +292,11 @@ function DModel() {
         }
     };
 
-    this.toPlainText = function() {
-        return flattenChars(root);
-    };
+    this.toPlainText = function() {     return flattenChars(root);  };
 
     this.getRoot = function() { return root};
 
-
-    this.getIterator = function(node) {
-        return new DNodeIterator(node);
-    };
-
-    this.setBlockStyle = function(node, styleName) {
-        node.style = styleName;
-    };
+    this.getIterator = function(node) { return new DNodeIterator(node);    };
 
     this.setStyles = function(styles) {
         this.styles = styles;

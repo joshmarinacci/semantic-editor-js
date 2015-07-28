@@ -131,14 +131,6 @@ function setCursorAtModel(mod,offset) {
     sel.addRange(range);
 }
 
-function setSelectionAtModel(smod, soff, emod, eoff) {
-    var sdom = Dom.findDomForModel(smod,dom_root);
-    var rng = document.createRange();
-    rng.setStart(sdom, soff);
-    var sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(rng);
-}
 
 Keystrokes.actions_map["delete-forward"] = function(e) {
     stop(e);
@@ -163,58 +155,14 @@ Keystrokes.actions_map["delete-forward"] = function(e) {
     setCursorAtModel(range.start.mod,range.start.offset);
 };
 
-function makeRangeFromSelection(model,window) {
-    var selection = window.getSelection().getRangeAt(0);
-    var range = {
-        start: {
-            dom: selection.startContainer,
-            mod: Dom.findModelForDom(model, selection.startContainer),
-            offset: selection.startOffset
-        },
-        end: {
-            dom: selection.endContainer,
-            mod: Dom.findModelForDom(model, selection.endContainer),
-            offset: selection.endOffset
-        }
-    };
-    return range;
-}
 Keystrokes.actions_map['style-bold'] = function(e) {
-    console.log("styling to be bold");
-    stop(e);
-    var collapsed = window.getSelection().isCollapsed
-    var range = makeRangeFromSelection(model,window);
-    var changes = Dom.makeStyleTextRange(range,model,'bold');
-    var com_mod = range.start.mod.getParent();
-    Dom.applyChanges(changes,model);
+    Keystrokes.styleSelection(e,'bold');
     renderModelTree(model,document.getElementById("model-tree"));
-    var com_dom = Dom.findDomForModel(com_mod,dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
-    setSelectionAtModel(
-            range.start.mod,
-            range.start.mod.text.length,
-            range.end.mod,
-            range.end.offset
-    );
-
 };
 
 Keystrokes.actions_map['style-italic'] = function(e) {
-    console.log("styling to be italic");
-    stop(e);
-    var range = makeRangeFromSelection(model,window);
-    var changes = Dom.makeStyleTextRange(range,model,'italic');
-    var com_mod = range.start.mod.getParent();
-    Dom.applyChanges(changes,model);
+    Keystrokes.styleSelection(e,'italic');
     renderModelTree(model,document.getElementById("model-tree"));
-    var com_dom = Dom.findDomForModel(com_mod,dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
-    setSelectionAtModel(
-            range.start.mod,
-            range.start.mod.text.length,
-            range.end.mod,
-            range.end.offset
-    );
 };
 
 Keystrokes.actions_map['split-line'] = function(e) {

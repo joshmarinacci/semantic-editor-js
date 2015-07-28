@@ -192,6 +192,37 @@ domToNewModel = function(dom_root, options) {
 };
 
 
+function clearChildren(root) {
+    while (root.firstChild) root.removeChild(root.firstChild);
+}
+function renderTree(root,model) {
+    clearChildren(root);
+    root.appendChild(renderTreeChild(model.getRoot()));
+}
+
+function renderTreeChild(mnode) {
+    var ul = document.createElement('ul');
+    for(var i=0; i<mnode.childCount(); i++) {
+        var li = document.createElement('li');
+
+        var child = mnode.child(i);
+        var text = child.type + " " + child.id + " " + child.style;
+        li.appendChild(document.createTextNode(text));
+        if(child.type == doc.TEXT) {
+            li.appendChild(document.createTextNode(': "'+child.text+'"'));
+        }
+        if(child.childCount() > 0) {
+            var child_dom = renderTreeChild(child);
+            li.appendChild(child_dom);
+        }
+        ul.appendChild(li);
+    }
+    return ul;
+}
+
+
+
+
 var PostEditor = React.createClass({
     componentWillUpdate: function() {
         return false;
@@ -206,7 +237,7 @@ var PostEditor = React.createClass({
         keystrokes.on('change',function(){
             var tree_root = document.getElementById("modeltree");
             var model = PostDataStore.getModel();
-            dom.renderTree(tree_root,model);
+            renderTree(tree_root,model);
         });
         PostDataStore.setEditor(editor);
     },
@@ -218,7 +249,7 @@ var PostEditor = React.createClass({
                 var model = doc.fromJSON(props.post.raw);
                 PostDataStore.setModel(model);
                 var tree_root = document.getElementById("modeltree");
-                dom.renderTree(tree_root,model);
+                renderTree(tree_root,model);
                 keystrokes.setModel(model);
                 dom.syncDom(editor,model);
                 return;
@@ -235,7 +266,7 @@ var PostEditor = React.createClass({
                 PostDataStore.setModel(model);
                 console.log("the new model is",model);
                 var tree_root = document.getElementById("modeltree");
-                dom.renderTree(tree_root,model);
+                renderTree(tree_root,model);
                 keystrokes.setModel(model);
                 dom.syncDom(editor,model);
                 return;
@@ -247,7 +278,7 @@ var PostEditor = React.createClass({
                 console.log("the node model is",model);
                 PostDataStore.setModel(model);
                 var tree_root = document.getElementById("modeltree");
-                dom.renderTree(tree_root,model);
+                renderTree(tree_root,model);
                 keystrokes.setModel(model);
                 dom.syncDom(editor,model);
                 return;
@@ -259,7 +290,7 @@ var PostEditor = React.createClass({
                 PostDataStore.setModel(model);
                 console.log("the new model is",model);
                 var tree_root = document.getElementById("modeltree");
-                dom.renderTree(tree_root,model);
+                renderTree(tree_root,model);
                 keystrokes.setModel(model);
                 dom.syncDom(editor,model);
                 return;

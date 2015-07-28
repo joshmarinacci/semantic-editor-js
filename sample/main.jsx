@@ -58,7 +58,7 @@ var BlockDropdown = React.createClass({
             keystrokes.changeBlockStyle(model.getStyles().block[name]);
         }
         if(this.props.type == 'inline') {
-            keystrokes.styleSelectionInline(model.getStyles().inline[name]);
+            keystrokes.styleSelection(null,model.getStyles().inline[name]);
         }
         this.setState({open:false})
     },

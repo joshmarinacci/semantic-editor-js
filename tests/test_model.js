@@ -31,18 +31,6 @@ test('make two blocks, one empty', function(t) {
     t.end();
 });
 
-test('insert text',function(t) {
-    var model = doc.makeModel();
-    var block = model.makeBlock();
-    var text  = model.makeText("abc");
-    block.append(text);
-    model.append(block);
-    model.insertText(text,0,'def');
-    t.equals(model.toPlainText(),'defabc');
-    model.insertText(text,6,'def');
-    t.equal(model.toPlainText(),'defabcdef');
-    t.end();
-});
 
 function makeSimpleTextBlock(string) {
     var model = doc.makeModel();

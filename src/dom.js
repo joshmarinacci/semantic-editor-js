@@ -22,32 +22,6 @@ function clearChildren(root) {
     while (root.firstChild) root.removeChild(root.firstChild);
 }
 
-function renderTree(root,model) {
-    clearChildren(root);
-    root.appendChild(renderTreeChild(model.getRoot()));
-}
-
-function renderTreeChild(mnode) {
-    var ul = document.createElement('ul');
-    for(var i=0; i<mnode.childCount(); i++) {
-        var li = document.createElement('li');
-
-        var child = mnode.child(i);
-        var text = child.type + " " + child.id + " " + child.style;
-        li.appendChild(document.createTextNode(text));
-        if(child.type == doc.TEXT) {
-            li.appendChild(document.createTextNode(': "'+child.text+'"'));
-        }
-        if(child.childCount() > 0) {
-            var child_dom = renderTreeChild(child);
-            li.appendChild(child_dom);
-        }
-        ul.appendChild(li);
-    }
-    return ul;
-}
-
-exports.renderTree = renderTree;
 
 exports.setRawHtml = function(editor, html) {
     clearChildren(editor);

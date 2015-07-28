@@ -2,6 +2,7 @@
  * Created by josh on 7/18/15.
  */
 var dom = require('./dom');
+var Dom = dom;
 var doc = require('./model');
 var editor;
 
@@ -21,24 +22,48 @@ function splitThree(node,index1,index2,model) {
     return [parts1[0],parts2[0],parts2[1]];
 }
 
-function styleSelectionInline(style) {
-    var sel = window.getSelection();
-    var range = sel.getRangeAt(0);
-    if(range.collapsed) {
-        console.log("just change the state");
-        return;
-    }
-    var info = dom.saveSelection(model);
-    var parts = splitThree(
-        info.startpos.node,
-        info.startpos.offset,
-        info.endpos.offset,model)
-    wrapTextInInlineStyle(parts[1],style,model);
-    dom.syncDom(editor,model);
-    dom.setSelectionFromPosition(info.startpos);
+function makeRangeFromSelection(model,window) {
+    var selection = window.getSelection().getRangeAt(0);
+    var range = {
+        start: {
+            dom: selection.startContainer,
+            mod: Dom.findModelForDom(model, selection.startContainer),
+            offset: selection.startOffset
+        },
+        end: {
+            dom: selection.endContainer,
+            mod: Dom.findModelForDom(model, selection.endContainer),
+            offset: selection.endOffset
+        }
+    };
+    return range;
 }
 
-exports.styleSelectionInline = styleSelectionInline;
+exports.styleSelection = function(e,style) {
+    stopKeyboardEvent(e);
+    var range = makeRangeFromSelection(model,window);
+    var changes = Dom.makeStyleTextRange(range,model,style);
+    var com_mod = range.start.mod.getParent();
+    Dom.applyChanges(changes,model);
+    var com_dom = Dom.findDomForModel(com_mod,editor);
+    Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
+    setSelectionAtModel(
+        range.start.mod,
+        range.start.mod.text.length,
+        range.end.mod,
+        range.end.offset
+    );
+    fireEvent('change',{});
+};
+
+function setSelectionAtModel(smod, soff, emod, eoff) {
+    var sdom = Dom.findDomForModel(smod,editor);
+    var rng = document.createRange();
+    rng.setStart(sdom, soff);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(rng);
+}
 
 function changeBlockStyle(style) {
     var info = dom.saveSelection(model);
@@ -49,11 +74,6 @@ function changeBlockStyle(style) {
 }
 
 exports.changeBlockStyle = changeBlockStyle;
-
-function splitBlock() {
-    var pos = dom.saveSelection(model).startpos;
-    return model.splitBlockAt(pos.node,pos.offset);
-}
 
 var browser_keymap = {
     8:"backspace",
@@ -86,7 +106,7 @@ var key_to_actions = {
 };
 
 function stopKeyboardEvent(e) {
-    if(e.preventDefault) {
+    if(e && e.preventDefault) {
         e.preventDefault();
         e.stopPropagation();
     }
@@ -130,14 +150,10 @@ function wrapTextInInlineStyle(node,style,model) {
 
 var actions_map = {
     "style-bold": function(e) {
-        stopKeyboardEvent(e);
-        styleSelectionInline(model.getStyles().inline.bold);
-        fireEvent('change',{});
+        exports.styleSelection(e,'bold');
     },
     "style-italic": function(e) {
-        stopKeyboardEvent(e);
-        styleSelectionInline(model.getStyles().inline.italic);
-        fireEvent('change',{});
+        exports.styleSelection(e,'italic');
     },
     "delete-backward":function(e) {
         stopKeyboardEvent(e);
@@ -174,9 +190,7 @@ var actions_map = {
         fireEvent('change',{});
     },
     "style-inline-code":function(e){
-        stopKeyboardEvent(e);
-        styleSelectionInline(model.getStyles().inline['inline-code']);
-        fireEvent('change',{});
+        exports.styleSelection(e,'inline-code');
     },
     "style-inline-link":function(e) {
         stopKeyboardEvent(e);
