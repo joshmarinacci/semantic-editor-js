@@ -528,3 +528,20 @@ exports.print = function(model,tab) {
         })
     }
 }
+
+
+exports.nodeToPath = function(node) {
+    if(node.getParent() == null) return [];
+    var n = node.getParent().content.indexOf(node);
+    var arr = exports.nodeToPath(node.getParent());
+    arr.push(n);
+    return arr;
+};
+
+
+exports.pathToNode = function(path,root) {
+    if(path.length == 0) return root;
+    var n = path.shift();
+    root = root.child(n);
+    return exports.pathToNode(path,root);
+}

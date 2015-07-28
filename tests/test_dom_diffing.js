@@ -638,10 +638,13 @@ test("split block in half w/ span and more text", function(t) {
 
 split block with enter key and unit test
     //make a split-block change type which invokes the older model.splitBlockAt
-    set cursor after deletion
-    set cursor after split block?
-    set cursor after style change?
-    set cursor after insertion
+    //set cursor after deletion
+    //set cursor after split block?
+    //set cursor after style change?
+    //set cursor after insertion?
+
+    can't forward delete from text into a span
+
     short cut to clear all styles in selection
     doing bold again will undo bold if already set at the cursor point
     prove the image doesn't flicker

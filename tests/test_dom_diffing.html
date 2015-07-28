@@ -40,6 +40,7 @@ model.getRoot().append(block);
 //block.append(model.makeText("abc"));
 var span = model.makeSpan();
 span.style = 'italic';
+block.append(model.makeText("xxx"));
 span.append(model.makeText("def"));
 block.append(span);
 block.append(model.makeText("ghi"));
@@ -102,7 +103,29 @@ Keystrokes.actions_map["delete-backward"] = function(e) {
     renderModelTree(model,document.getElementById("model-tree"));
     var com_dom = Dom.findDomForModel(com_mod,dom_root);
     Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
+    setCursorAtModel(range.start.mod,range.start.offset);
 };
+
+function setCursorAtModel(mod,offset) {
+    var dom = Dom.findDomForModel(mod,dom_root);
+    console.log("the correct dom is",dom);
+    console.log("offset is",offset);
+    var range = document.createRange();
+    range.setStart(dom,offset);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+
+function setSelectionAtModel(smod, soff, emod, eoff) {
+    console.log("start = ", smod.id, soff,  emod.id, eoff);
+    var sdom = Dom.findDomForModel(smod,dom_root);
+    var rng = document.createRange();
+    rng.setStart(sdom, soff);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(rng);
+}
 
 Keystrokes.actions_map["delete-forward"] = function(e) {
     stop(e);
@@ -124,6 +147,7 @@ Keystrokes.actions_map["delete-forward"] = function(e) {
     renderModelTree(model,document.getElementById("model-tree"));
     var com_dom = Dom.findDomForModel(com_mod,dom_root);
     Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
+    setCursorAtModel(range.start.mod,range.start.offset);
 };
 
 function makeRangeFromSelection(model,window) {
@@ -145,6 +169,7 @@ function makeRangeFromSelection(model,window) {
 Keystrokes.actions_map['style-bold'] = function(e) {
     console.log("styling to be bold");
     stop(e);
+    var collapsed = window.getSelection().isCollapsed
     var range = makeRangeFromSelection(model,window);
     var changes = Dom.makeStyleTextRange(range,model,'bold');
     var com_mod = range.start.mod.getParent();
@@ -152,6 +177,13 @@ Keystrokes.actions_map['style-bold'] = function(e) {
     renderModelTree(model,document.getElementById("model-tree"));
     var com_dom = Dom.findDomForModel(com_mod,dom_root);
     Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
+    setSelectionAtModel(
+            range.start.mod,
+            range.start.mod.text.length,
+            range.end.mod,
+            range.end.offset
+    );
+
 };
 
 Keystrokes.actions_map['style-italic'] = function(e) {
@@ -164,18 +196,28 @@ Keystrokes.actions_map['style-italic'] = function(e) {
     renderModelTree(model,document.getElementById("model-tree"));
     var com_dom = Dom.findDomForModel(com_mod,dom_root);
     Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
+    setSelectionAtModel(
+            range.start.mod,
+            range.start.mod.text.length,
+            range.end.mod,
+            range.end.offset
+    );
 };
 
 Keystrokes.actions_map['split-line'] = function(e) {
     console.log("splitting the line");
     stop(e);
     var range = makeRangeFromSelection(model,window);
+    var path = Model.nodeToPath(range.start.mod);
     var com_mod = range.start.mod.findBlockParent().getParent();
     var changes = Dom.makeSplitChange(range,model);
     Dom.applyChanges(changes,model);
     renderModelTree(model,document.getElementById("model-tree"));
     var com_dom = Dom.findDomForModel(com_mod,dom_root);
     Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
+    var new_mod = Model.pathToNode(path,model.getRoot());
+    var new_text = model.getNextTextNode(new_mod);
+    setCursorAtModel(new_text,0);
 };
 
 dom_root.addEventListener("keydown", function(e) {
