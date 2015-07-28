@@ -31,30 +31,51 @@ var Model = require('model');
 var Dom = require('dom');
 var Keystrokes = require('keystrokes');
 
-var model = Model.makeModel();
-var block0 = model.makeBlock();
-block0.append(model.makeText("ABC"));
-model.getRoot().append(block0);
-var block = model.makeBlock();
-model.getRoot().append(block);
-//block.append(model.makeText("abc"));
-var span = model.makeSpan();
-span.style = 'italic';
-block.append(model.makeText("xxx"));
-span.append(model.makeText("def"));
-block.append(span);
-block.append(model.makeText("ghi"));
+function setupModel() {
+    var model = Model.makeModel();
+    var block0 = model.makeBlock();
+    block0.append(model.makeText("ABC"));
+    model.getRoot().append(block0);
+    var block = model.makeBlock();
+    model.getRoot().append(block);
+    var span = model.makeSpan();
+    span.style = 'italic';
+    block.append(model.makeText("xxx"));
+    span.append(model.makeText("def"));
+    block.append(span);
+    block.append(model.makeText("ghi"));
+
+    var ul = model.makeBlock();
+    ul.style = 'unordered-list';
+    var li1 = model.makeBlock();
+    li1.style = 'list-item';
+    li1.append(model.makeText("list item 1"));
+    ul.append(li1);
+    var li2 = model.makeBlock();
+    li2.style = 'list-item';
+    li2.append(model.makeText("list item 2"));
+    ul.append(li2);
+    model.getRoot().append(ul);
+
+    var img = model.makeSpan();
+    img.style = 'image';
+    img.meta = {
+        src: './earth.jpg'
+    };
+    var block3 = model.makeBlock();
+    block3.append(img);
+    model.getRoot().append(block3);
+    return model;
+}
+var model = setupModel();
 
 var dom_root = document.getElementById("editor");
 dom_root.id = model.getRoot().id;
 Dom.modelToDom(model,dom_root,document);
 
 dom_root.addEventListener("input", function(e){
-    console.log("event",e);
     var sel = window.getSelection();
-    console.log(sel);
     var range = sel.getRangeAt(0);
-    console.log("range = ", range);
     var start_dom = range.startContainer;
     var start_off = range.startOffset;
     var ssel = {
@@ -62,12 +83,7 @@ dom_root.addEventListener("input", function(e){
         start_offset:start_off
     };
     var range = Dom.calculateChangeRange(model,dom_root,ssel);
-    console.log("change range = ", range);
     var changes = Dom.calculateChangeList(range);
-    console.log("changes = ", changes);
-    console.log(changes.map(function(ch) {
-        return ch.mod.text + " => "
-    }).join(" "));
 
     Dom.applyChanges(changes,model);
     var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
@@ -108,8 +124,6 @@ Keystrokes.actions_map["delete-backward"] = function(e) {
 
 function setCursorAtModel(mod,offset) {
     var dom = Dom.findDomForModel(mod,dom_root);
-    console.log("the correct dom is",dom);
-    console.log("offset is",offset);
     var range = document.createRange();
     range.setStart(dom,offset);
     var sel = window.getSelection();
@@ -118,7 +132,6 @@ function setCursorAtModel(mod,offset) {
 }
 
 function setSelectionAtModel(smod, soff, emod, eoff) {
-    console.log("start = ", smod.id, soff,  emod.id, eoff);
     var sdom = Dom.findDomForModel(smod,dom_root);
     var rng = document.createRange();
     rng.setStart(sdom, soff);
@@ -205,7 +218,6 @@ Keystrokes.actions_map['style-italic'] = function(e) {
 };
 
 Keystrokes.actions_map['split-line'] = function(e) {
-    console.log("splitting the line");
     stop(e);
     var range = makeRangeFromSelection(model,window);
     var path = Model.nodeToPath(range.start.mod);

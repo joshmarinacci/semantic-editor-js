@@ -398,6 +398,11 @@ function modelToDom(mod,dom, doc) {
     }
     if(mod.type == Model.SPAN) {
         var block = doc.createElement('span');
+        if( mod.style == 'image') {
+            block = document.createElement('img');
+            block.setAttribute('src',mod.meta.src);
+        }
+
         block.id = mod.id;
         block.classList.add(mod.style);
         mod.content.map(function(modch){
@@ -729,7 +734,6 @@ exports.makeDeleteTextRange = function(range,model) {
     while(it.hasNext()) {
         prev = ch;
         ch = it.next();
-        console.log("next =", ch.id);
         if(ch == range.end.mod) {
             //console.log("changing and done");
             changes.push({

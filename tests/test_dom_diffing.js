@@ -634,49 +634,11 @@ test("split block in half w/ span and more text", function(t) {
 });
 
 /*
- unit tests for
-
-split block with enter key and unit test
-    //make a split-block change type which invokes the older model.splitBlockAt
-    //set cursor after deletion
-    //set cursor after split block?
-    //set cursor after style change?
-    //set cursor after insertion?
-
     can't forward delete from text into a span
-
+    can't style two adjacent text nodes
     short cut to clear all styles in selection
     doing bold again will undo bold if already set at the cursor point
-    prove the image doesn't flicker
-    preload with list, prove i can split it correctly (nested blocks case)
-
-
-
-
-
-    splitting block with enter key. reuse existing splitBlockAt code
-     set cursor after delete backwards
-     set cursor after delete forwards
-     set cursor after delete selection
-     //move Dom.domToNewModel to code specific to blog editor
-
-    deleting backwards across text->span boundary. update existing test
-    //deleting backwards across block boundary. update existing test
-    //delete selection across block boundaries. update existing test
-    //delete selection across span boundaries. update existing test
-
-    //implement delete backwards keystroke using selection delete
-    //implement delete forwards keystroke using selection delete
-
-
     comment out scan for changes
  */
 
-//add in keystroke for enter.
-//test with an image to see if it doesn't refresh the image
-//unit test for converting a selection into a bold span. should use a change list
-//clean up code
 
-//move Dom.domToNewModel to code specific to blog editor
-//do we use scan for changes anymore? just to handle copy & paste? needs a unit test
-//then shower and food
