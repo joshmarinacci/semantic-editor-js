@@ -144,10 +144,7 @@ function makeRangeFromSelection(model,window) {
 }
 Keystrokes.actions_map['style-bold'] = function(e) {
     console.log("styling to be bold");
-    if(e.preventDefault) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
+    stop(e);
     var range = makeRangeFromSelection(model,window);
     var changes = Dom.makeStyleTextRange(range,model,'bold');
     var com_mod = range.start.mod.getParent();
@@ -159,13 +156,22 @@ Keystrokes.actions_map['style-bold'] = function(e) {
 
 Keystrokes.actions_map['style-italic'] = function(e) {
     console.log("styling to be italic");
-    if(e.preventDefault) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
+    stop(e);
     var range = makeRangeFromSelection(model,window);
     var changes = Dom.makeStyleTextRange(range,model,'italic');
     var com_mod = range.start.mod.getParent();
+    Dom.applyChanges(changes,model);
+    renderModelTree(model,document.getElementById("model-tree"));
+    var com_dom = Dom.findDomForModel(com_mod,dom_root);
+    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
+};
+
+Keystrokes.actions_map['split-line'] = function(e) {
+    console.log("splitting the line");
+    stop(e);
+    var range = makeRangeFromSelection(model,window);
+    var com_mod = range.start.mod.findBlockParent().getParent();
+    var changes = Dom.makeSplitChange(range,model);
     Dom.applyChanges(changes,model);
     renderModelTree(model,document.getElementById("model-tree"));
     var com_dom = Dom.findDomForModel(com_mod,dom_root);

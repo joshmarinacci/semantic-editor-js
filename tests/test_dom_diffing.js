@@ -569,16 +569,93 @@ test("delete selection across block boundaries", function(t) {
     t.end();
 });
 
-return;
+test("split block in half w/ text", function(t) {
+    //make model
+    var model = Model.makeModel();
+    var block1 = model.makeBlock();
+    var text1 = model.makeText("abc");
+    block1.append(text1);
+    model.getRoot().append(block1);
+    Model.print(model);
 
+    var dom_root = VirtualDoc.createElement("div");
+    dom_root.id = model.getRoot().id;
+    Dom.modelToDom(model,dom_root,VirtualDoc);
+    Dom.print(dom_root);
+
+    var range = {
+        start: {
+            mod: text1,
+            offset:1
+        }
+    };
+    //var com_mod = findBlockParent(range.start.mod).getParent();
+    var changes = Dom.makeSplitChange(range,model);
+    console.log("changes = ", changes);
+    Dom.applyChanges(changes,model);
+    Model.print(model);
+    t.equal(model.getRoot().child(0).childCount(),1);
+    t.end();
+
+});
+
+test("split block in half w/ span and more text", function(t) {
+    //make model
+    var model = Model.makeModel();
+    var block1 = model.makeBlock();
+    var text1 = model.makeText("abc");
+    block1.append(text1);
+    var text2 = model.makeText("def");
+    var span = model.makeSpan();
+    span.append(text2);
+    block1.append(span);
+    var text3 = model.makeText("ghi");
+    block1.append(text3);
+    model.getRoot().append(block1);
+    Model.print(model);
+
+    var dom_root = VirtualDoc.createElement("div");
+    dom_root.id = model.getRoot().id;
+    Dom.modelToDom(model,dom_root,VirtualDoc);
+    Dom.print(dom_root);
+
+    var range = {
+        start: {
+            mod: text2,
+            offset:1
+        }
+    };
+    //var com_mod = findBlockParent(range.start.mod).getParent();
+    var changes = Dom.makeSplitChange(range,model);
+    console.log("changes = ", changes);
+    Dom.applyChanges(changes,model);
+    Model.print(model);
+    t.end();
+});
 
 /*
  unit tests for
+
+split block with enter key and unit test
+    //make a split-block change type which invokes the older model.splitBlockAt
+    set cursor after deletion
+    set cursor after split block?
+    set cursor after style change?
+    set cursor after insertion
+    short cut to clear all styles in selection
+    doing bold again will undo bold if already set at the cursor point
+    prove the image doesn't flicker
+    preload with list, prove i can split it correctly (nested blocks case)
+
+
+
+
+
     splitting block with enter key. reuse existing splitBlockAt code
      set cursor after delete backwards
      set cursor after delete forwards
      set cursor after delete selection
-     move Dom.domToNewModel to code specific to blog editor
+     //move Dom.domToNewModel to code specific to blog editor
 
     deleting backwards across text->span boundary. update existing test
     //deleting backwards across block boundary. update existing test

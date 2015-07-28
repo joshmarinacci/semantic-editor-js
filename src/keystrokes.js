@@ -81,7 +81,8 @@ var key_to_actions = {
     "cmd-i":"style-italic",
     "cmd-shift-c":"style-inline-code",
     "cmd-shift-a":"style-inline-link",
-    "cmd-shift-e":"insert-emoji"
+    "cmd-shift-e":"insert-emoji",
+    "enter":"split-line",
 };
 
 function stopKeyboardEvent(e) {
@@ -222,6 +223,7 @@ actions_map[exports.UPDATE_CURRENT_STYLE] = updateCurrentStyle;
 exports.actions_map = actions_map;
 
 exports.handleEvent = function(e) {
+    /*
     if(e.keyCode == 13) { //enter key
         stopKeyboardEvent(e);
         var info = dom.saveSelection(model);
@@ -244,6 +246,7 @@ exports.handleEvent = function(e) {
         }
         return true;
     }
+    */
 
     if(browser_keymap[e.keyCode]) {
         var keyname = browser_keymap[e.keyCode];

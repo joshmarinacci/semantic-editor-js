@@ -352,7 +352,7 @@ function DModel() {
             var a = this.makeText(node.text.substring(0,offset));
             var b = this.makeText(node.text.substring(offset));
             var parent = node.getParent();
-            var index = parent.content.indexOf(node);
+            var index  = parent.content.indexOf(node);
             var before = parent.content.slice(0,index);
             var after  = parent.content.slice(index+1);
             var parents = this.splitBlockAt(parent,-1);
@@ -372,12 +372,20 @@ function DModel() {
             a.style = node.style;
             b.style = node.style;
             var parent = node.getParent();
-            this.swapNode(node,a,b);
-            b.deleteFromParent();
-            var parent2 = this.makeBlock();
-            parent2.style = parent.style;
-            this.swapNode(parent,parent,parent2);
-            parent2.append(b);
+            var index  = parent.content.indexOf(node);
+            var before = parent.content.slice(0,index);
+            var after  = parent.content.slice(index+1);
+
+            var parents = this.splitBlockAt(parent,-1);
+
+            before.forEach(function(n){
+                parents[0].append(n);
+            });
+            parents[0].append(a);
+            parents[1].append(b);
+            after.forEach(function(n){
+                parents[1].append(n);
+            });
             return [a,b];
         }
         if(node.type == exports.BLOCK) {
