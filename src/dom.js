@@ -659,17 +659,20 @@ function findModelForDom(model,domch) {
     console.log("UNKNOWN DOM NODE TYPE",domch.nodeType,TEXT_NODE);
 }
 
+exports.findModelForDom = findModelForDom;
+
 exports.findDomForModel = function(modch, dom_root) {
     if(modch.type == Model.BLOCK || modch.type == Model.SPAN) {
-        return dom_root.document.getElementById(modch.id);
+        return dom_root.ownerDocument.getElementById(modch.id);
     }
     if(modch.type == Model.TEXT) {
         var mod_par = modch.getParent();
-        var dom_par = dom_root.document.getElementById(mod_par.id);
+        var dom_par = dom_root.ownerDocument.getElementById(mod_par.id);
         var n = mod_par.content.indexOf(modch);
         var dom_ch = dom_par.childNodes[n];
         return dom_ch;
     }
+    if(modch.type == Model.ROOT) return dom_root;
     console.log("can't handle model node type", modch.type);
 }
 
@@ -829,51 +832,24 @@ function applyChanges(changes, model) {
 }
 exports.applyChanges = applyChanges;
 
-function updateDomFromModel(range, model, dom_root, doc) {
-    console.log('updating dom',range.start.mod.id,"to",range.end.mod.id);
-    var it = model.getIterator(range.start.mod);
-    var mod = range.start.mod;
-    var dom = range.start.dom;
-    if(isText(mod) && isText(dom)) {
-        console.log('copying mod text to dom', mod.id, mod.text);
-        dom.nodeValue = mod.text;
-    }
+function getParentPath(mod) {
+    if(mod == null) return;
+    return [mod].concat(getParentPath(mod.getParent()));
+}
 
-    if(mod == range.end.mod) {
-        console.log("we are done early");
-        return;
-    }
-
-    var mod_par = mod.getParent();
-    var mod_i   = mod_par.content.indexOf(mod);
-    var dom_par = dom.parentNode;
-    var dom_i   = domIndexOf(dom);
-    console.log("parents = ", mod_par.id, mod_i, dom_par.id, dom_i);
-    while(true) {
-        var mod_ch = mod_par.child(mod_i);
-        var dom_ch = dom_par.childNodes[dom_i];
-        console.log("mod id",mod_i, mod_ch.id);
-        if(isText(mod_ch) && isText(dom_ch)) {
-            console.log("syncing text",mod_ch.id, mod_ch.text);
-            dom_ch.nodeValue = mod_ch.text;
-        }
-        mod_i++;
-        dom_i++;
-        if(mod_i >= mod_par.content.length) {
-            if(dom_par.childNodes.length > mod_par.content.length) {
-                console.log("we must delete the rest");
-                console.log('from',dom_i,dom_par.childNodes.length);
-                while(dom_par.childNodes.length > mod_par.content.length) {
-                    dom_ch = dom_par.childNodes[dom_i];
-                    dom_par.removeChild(dom_ch);
-                }
-            }
+exports.findCommonParent = function(a,b) {
+    var p1 = getParentPath(a);
+    var p2 = getParentPath(b);
+    var found = null;
+    for(var i=0; i<p2.length; i++) {
+        var pp = p2[i];
+        if(p1.indexOf(pp)>=0) {
+            found = pp;
             break;
         }
     }
-
-}
-exports.updateDomFromModel = updateDomFromModel;
+    return found;
+};
 
 
 function print(dom,tab) {
@@ -890,3 +866,75 @@ function print(dom,tab) {
 }
 
 exports.print = print;
+
+
+exports.makeDeleteTextRange = function(range,model) {
+    var changes = [];
+
+    if(range.start.mod == range.end.mod) {
+        //console.log("in the same mod", range.start.offset, range.end.offset);
+        var txt = range.start.mod.text;
+        changes.push({
+            type:'text-change',
+            mod: range.start.mod,
+            text: txt.substring(0,range.start.offset)
+            + txt.substring(range.end.offset)
+        });
+        return changes;
+    }
+    changes.push({
+        type:'text-change',
+        mod: range.start.mod,
+        text: range.start.mod.text.substring(0,range.start.offset)
+    });
+
+    var ch = range.start.mod;
+    if(ch == range.end.mod) {
+        //console.log("start and end in the same node");
+        return changes;
+    }
+    var it = model.getIterator(range.start.mod);
+    while(it.hasNext()) {
+        var ch = it.next();
+        //console.log("next =", ch.id);
+        if(ch == range.end.mod) {
+            //console.log("changing and done");
+            changes.push({
+                type:'text-change',
+                mod: range.end.mod,
+                text: range.end.mod.text.substring(range.end.offset)
+            });
+            break;
+        }
+        if(ch.type == Model.TEXT) {
+            //console.log('deleting');
+            changes.push({
+                type:'delete',
+                mod: ch
+            });
+        }
+    }
+    return changes;
+};
+
+
+exports.rebuildDomFromModel = function(mod,dom, dom_root,doc) {
+    if(mod.type == Model.TEXT) {
+        dom.nodeValue = mod.text;
+        return;
+    }
+    if(mod.type == Model.BLOCK) {
+        clearChildren(dom);
+        mod.content.forEach(function(modch){
+            dom.appendChild(modelToDom(modch,dom_root,doc));
+        });
+    }
+    if(mod.type == Model.ROOT) {
+        clearChildren(dom);
+        mod.content.forEach(function(modch){
+            dom.appendChild(modelToDom(modch,dom_root,doc));
+        });
+    }
+
+    console.log("cant handle ",mod.type);
+};
