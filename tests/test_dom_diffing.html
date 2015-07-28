@@ -25,11 +25,11 @@
     block.append(span);
     block.append(model.makeText("ghi"));
 
-    var dom = document.getElementById("editor");
-    dom.id = model.getRoot().id;
-    Dom.modelToDom(model,dom,document);
+    var dom_root = document.getElementById("editor");
+    dom_root.id = model.getRoot().id;
+    Dom.modelToDom(model,dom_root,document);
 
-    dom.addEventListener("input", function(e){
+    dom_root.addEventListener("input", function(e){
         console.log("event",e);
         var sel = window.getSelection();
         console.log(sel);
@@ -41,23 +41,20 @@
             start_node:start_dom,
             start_offset:start_off
         };
-        var range = Dom.calculateChangeRange(model,dom,ssel);
+        var range = Dom.calculateChangeRange(model,dom_root,ssel);
         console.log("change range = ", range);
         var changes = Dom.calculateChangeList(range);
         console.log("changes = ", changes);
         console.log(changes.map(function(ch) {
-            return ch.mod.text
-                    + " => "
-                    + ch.dom.nodeValue
+            return ch.mod.text + " => "
         }).join(" "));
 
         Dom.applyChanges(changes,model);
-        Dom.updateDomFromModel(range,document);
+        Dom.updateDomFromModel(range,model, dom_root, document);
 
     });
 
 
-    //add in keystroke for backspace
 
 
 </script>
