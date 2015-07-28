@@ -804,6 +804,11 @@ function applyChanges(changes, model) {
             nn.parent = par;
             return;
         }
+        if(chg.type == 'append') {
+            var par = chg.mod;
+            par.append(chg.target);
+            return;
+        }
         console.log("don't know how to handle change type",chg.type);
     });
 }
@@ -845,9 +850,38 @@ function print(dom,tab) {
 exports.print = print;
 
 
+
+function mergeParentBlocksIfNeeded(nodeA, nodeB) {
+    var startBlock = nodeA.findBlockParent();
+    var endBlock   = nodeB.findBlockParent();
+    if(startBlock.id != endBlock.id)  {
+        console.log('we need to merge parent blocks');
+        return mergeBlocksBackwards(startBlock,endBlock);
+    }
+    return [];
+}
+
+function mergeBlocksBackwards(start,end) {
+    var changes = [];
+    end.content.forEach(function(node) {
+        changes.push({
+            type:'append',
+            mod:start,
+            target:node
+        });
+        //start.append(node);
+    });
+    changes.push({
+        type:'delete',
+        mod:end
+    })
+    return changes;
+//    end.deleteFromParent();
+}
+
 exports.makeDeleteTextRange = function(range,model) {
     var changes = [];
-
+    console.log("deleting from",range.start.mod.id, range.end.mod.id);
     if(range.start.mod == range.end.mod) {
         //console.log("in the same mod", range.start.offset, range.end.offset);
         var txt = range.start.mod.text;
@@ -871,9 +905,11 @@ exports.makeDeleteTextRange = function(range,model) {
         return changes;
     }
     var it = model.getIterator(range.start.mod);
+    var prev;
     while(it.hasNext()) {
-        var ch = it.next();
-        //console.log("next =", ch.id);
+        prev = ch;
+        ch = it.next();
+        console.log("next =", ch.id);
         if(ch == range.end.mod) {
             //console.log("changing and done");
             changes.push({
@@ -881,6 +917,7 @@ exports.makeDeleteTextRange = function(range,model) {
                 mod: range.end.mod,
                 text: range.end.mod.text.substring(range.end.offset)
             });
+            changes = changes.concat(mergeParentBlocksIfNeeded(range.start.mod,ch));
             break;
         }
         if(ch.type == Model.TEXT) {
@@ -889,6 +926,10 @@ exports.makeDeleteTextRange = function(range,model) {
                 type:'delete',
                 mod: ch
             });
+            continue;
+        }
+        if(ch.type == Model.BLOCK && ch != prev.getParent()) {
+            console.log("entered a new block. need to collapse into the previous");
         }
     }
     return changes;

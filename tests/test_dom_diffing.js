@@ -116,13 +116,6 @@ var VirtualDoc = {
     }
 };
 
-
-
-
-
-
-
-
 test("insert character",function(t) {
     //make a model
     var model = makeStdModel();
@@ -332,7 +325,8 @@ test("delete text across spans", function(t) {
     var text3 = model.makeText("vwx");
     block3.append(text3);
     model.append(block3);
-    pm(model);
+
+    Model.print(model);
 
 
     var dom_root = VirtualDoc.createElement("div");
@@ -363,7 +357,7 @@ test("delete text across spans", function(t) {
     t.equal(changes.length,5,'change count');
     Dom.applyChanges(changes,model);
 
-    pm(model);
+    Model.print(model);
 
     t.equal(model.findNodeById("id_22").text,'a');
     t.equal(model.findNodeById("id_24"),null);
@@ -521,17 +515,88 @@ test("delete after text",function(t) {
     t.end();
 });
 
-//delete text inside a block
+
+test("delete selection across block boundaries", function(t) {
+    //make model
+    var model = Model.makeModel();
+    var block1 = model.makeBlock();
+    var text1  = model.makeText("abc");
+    block1.append(text1);
+    model.getRoot().append(block1);
+    var block2 = model.makeBlock();
+    var text2  = model.makeText("def");
+    block2.append(text2);
+    model.getRoot().append(block2);
+    Model.print(model);
+
+    //make dom
+    var dom_root = VirtualDoc.createElement("div");
+    dom_root.id = model.getRoot().id;
+    Dom.modelToDom(model,dom_root,VirtualDoc);
+    Dom.print(dom_root);
+
+    var range = {
+        start: {
+            dom:Dom.findDomForModel(text1,dom_root),
+            mod:text1,
+            offset:1
+        },
+        end:{
+            dom:Dom.findDomForModel(text2,dom_root),
+            mod:text2,
+            offset:1
+        }
+    };
+
+    t.equals(range.start.dom.nodeValue,'abc');
+    t.equals(range.end.dom.nodeValue,'def');
+
+    var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
+
+    var changes = Dom.makeDeleteTextRange(range,model);
+    Dom.applyChanges(changes,model);
+    Model.print(model);
+    t.equal(changes.length,4,'change count');
+
+    t.equal(model.findNodeById("id_62").text,'a');
+    t.equal(model.findNodeById("id_63"),null);
+    t.equal(model.findNodeById("id_64").text,'ef');
+
+    t.equals(com_mod.id,model.getRoot().id,'common parent id');
+    var com_dom = Dom.findDomForModel(com_mod,dom_root);
+    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, VirtualDoc);
+    Dom.print(dom_root);
+    t.end();
+});
+
+return;
+
+
+/*
+ unit tests for
+    splitting block with enter key. reuse existing splitBlockAt code
+     set cursor after delete backwards
+     set cursor after delete forwards
+     set cursor after delete selection
+     move Dom.domToNewModel to code specific to blog editor
+
+    deleting backwards across text->span boundary. update existing test
+    //deleting backwards across block boundary. update existing test
+    //delete selection across block boundaries. update existing test
+    //delete selection across span boundaries. update existing test
+
+    //implement delete backwards keystroke using selection delete
+    //implement delete forwards keystroke using selection delete
+
+
+    comment out scan for changes
+ */
+
 //add in keystroke for enter.
 //test with an image to see if it doesn't refresh the image
-
-//unit test for split block w/ spans w/ a keystroke. should use a change list
-//calculate correct cursor position after deleting
 //unit test for converting a selection into a bold span. should use a change list
 //clean up code
 
 //move Dom.domToNewModel to code specific to blog editor
 //do we use scan for changes anymore? just to handle copy & paste? needs a unit test
 //then shower and food
-
-//deleting from text after a span is breaking.

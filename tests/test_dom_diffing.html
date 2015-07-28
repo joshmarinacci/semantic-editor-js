@@ -75,74 +75,53 @@ dom_root.addEventListener("input", function(e){
     renderModelTree(model,document.getElementById("model-tree"));
 });
 
-
-Keystrokes.actions_map["delete-backward"] = function(e) {
+function stop(e) {
     if(e.preventDefault) {
         e.preventDefault();
         e.stopPropagation();
     }
-    var selection = window.getSelection().getRangeAt(0);
-    if(selection.collapsed === false) {
-        console.log("this is a chunk we must delete");
-        var range = {
-            start: {
-                dom: selection.startContainer,
-                mod: Dom.findModelForDom(model, selection.startContainer),
-                offset: selection.startOffset
-            },
-            end: {
-                dom: selection.endContainer,
-                mod: Dom.findModelForDom(model, selection.endContainer),
-                offset: selection.endOffset
-            }
-        };
+}
+
+Keystrokes.actions_map["delete-backward"] = function(e) {
+    stop(e);
+    if(window.getSelection().getRangeAt(0).collapsed === false) {
+        var range = makeRangeFromSelection(model, window);
     } else {
-        console.log("this is a single char to delete");
-        var range = {
-            start: {
-                dom: selection.startContainer,
-                mod: Dom.findModelForDom(model, selection.startContainer),
-                offset: selection.startOffset - 1
-            },
-            end: {
-                dom: selection.startContainer,
-                mod: Dom.findModelForDom(model, selection.startContainer),
-                offset: selection.startOffset
-            }
-        };
+        var range = makeRangeFromSelection(model, window);
+        range.start.offset--;
+        if(range.start.offset < 0) {
+            var prevtext = model.getPreviousTextNode(range.start.mod);
+            range.start.mod = prevtext;
+            range.start.offset = prevtext.text.length;
+        }
     }
 
     var changes = Dom.makeDeleteTextRange(range,model);
+    var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
     Dom.applyChanges(changes,model);
     renderModelTree(model,document.getElementById("model-tree"));
-    var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
     var com_dom = Dom.findDomForModel(com_mod,dom_root);
     Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
 };
 
 Keystrokes.actions_map["delete-forward"] = function(e) {
-    if(e.preventDefault) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    var selection = window.getSelection().getRangeAt(0);
-    var range = {
-        start: {
-            dom: selection.startContainer,
-            mod: Dom.findModelForDom(model, selection.startContainer),
-            offset: selection.startOffset
-        },
-        end: {
-            dom: selection.startContainer,
-            mod: Dom.findModelForDom(model, selection.startContainer),
-            offset: selection.startOffset+1
+    stop(e);
+    if(window.getSelection().getRangeAt(0).collapsed === false) {
+        var range = makeRangeFromSelection(model, window);
+    } else {
+        var range = makeRangeFromSelection(model, window);
+        range.end.offset++;
+        if(range.end.offset > range.end.mod.text.length) {
+            var nexttext = model.getNextTextNode(range.end.mod);
+            range.end.mod = nexttext;
+            range.end.offset = 0;
         }
-    };
+    }
 
-    var changes = Dom.makeDeleteTextRange(range);
+    var changes = Dom.makeDeleteTextRange(range,model);
+    var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
     Dom.applyChanges(changes,model);
     renderModelTree(model,document.getElementById("model-tree"));
-    var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
     var com_dom = Dom.findDomForModel(com_mod,dom_root);
     Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
 };
