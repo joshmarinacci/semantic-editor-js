@@ -51,6 +51,7 @@ function DNode(type,text,model) {
         return this.getParent().content.indexOf(this);
     }
     function stillInTree(mod) {
+        if(mod.type == exports.ROOT) return true;
         if(mod.getIndex() < 0) return false;
         if(mod.getParent().type == exports.ROOT) return true;
         return stillInTree(mod.getParent());

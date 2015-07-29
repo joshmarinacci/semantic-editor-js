@@ -484,14 +484,19 @@ function isLastTextNode(node) {
         if(node.childCount() > 1) return false;
         return isLastTextNode(node.getParent());
     }
-    if(node.type == Model.ROOT) {
+    if(node.type == Model.ROOT && node.childCount() == 1) {
         return true;
     }
+    return false;
 }
 function applyChanges(changes, model) {
     changes.forEach(function(chg) {
         //for text change, just copy string to the model
         if(chg.type == 'text-change') {
+            if(chg.mod.type !== Model.TEXT) {
+                console.log("trying to do a text change to a non-text node");
+                return;
+            }
             chg.mod.text = chg.text;
             if(chg.mod.text.length == 0) {
                 if(isLastTextNode(chg.mod)) {
@@ -515,8 +520,8 @@ function applyChanges(changes, model) {
         }
         if(chg.type == 'delete') {
             //don't delete if this is the last text node
-            if(isLastTextNode(chg.mod)) {
-                console.log("don't delete because we are the last");
+            if(chg.mod.type == Model.TEXT && isLastTextNode(chg.mod)) {
+                console.log("don't delete because we are the last", chg.mod.id);
                 return;
             }
             var parent = chg.mod.deleteFromParent();
@@ -618,6 +623,7 @@ exports.makeDeleteTextRange = function(range,model) {
     if(range.start.mod == range.end.mod) {
         //console.log("in the same mod", range.start.offset, range.end.offset);
         var txt = range.start.mod.text;
+        if(txt == null || typeof txt == 'undefined') txt = "";
         changes.push({
             type:'text-change',
             mod: range.start.mod,
@@ -644,10 +650,12 @@ exports.makeDeleteTextRange = function(range,model) {
         ch = it.next();
         if(ch == range.end.mod) {
             //console.log("changing and done");
+            var txt = range.end.mod.text;
+            if(txt == null || typeof txt == 'undefined') txt = "";
             changes.push({
                 type:'text-change',
                 mod: range.end.mod,
-                text: range.end.mod.text.substring(range.end.offset)
+                text: txt.substring(range.end.offset)
             });
             changes = changes.concat(mergeParentBlocksIfNeeded(range.start.mod,ch));
             break;

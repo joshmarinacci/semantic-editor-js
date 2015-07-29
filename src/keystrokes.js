@@ -165,6 +165,7 @@ exports.splitLine = function(e) {
     console.log("com_mod = ", com_mod);
     var changes = Dom.makeSplitChange(range,model);
     Dom.applyChanges(changes,model);
+    fireEvent('change',{});
     var com_dom = Dom.findDomForModel(com_mod,editor);
     console.log("com dom = ", editor.id);
     Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
@@ -215,7 +216,11 @@ var actions_map = {
         var com_dom = Dom.findDomForModel(com_mod,dom_root);
         Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
         if(!range.start.mod.stillInTree()) {
-            console.log("the start node is gone from the tree");
+            console.log("the start node is gone from the tree. it's",range.start.mod.id);
+            if(prev_mod == null) {
+                console.log("prev is null too. just bail");
+                return;
+            }
             setCursorAtModel(prev_mod,prev_mod.text.length);
         } else {
             setCursorAtModel(range.start.mod, range.start.offset);
