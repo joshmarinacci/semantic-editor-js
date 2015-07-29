@@ -6,6 +6,25 @@ var keystrokes = require('../src/keystrokes');
 var MarkdownParser = require('./markdown_parser');
 
 
+var u = {
+    incount: 0,
+    genTab: function() {
+        var str = "";
+        for(var i=0; i<this.incount; i++) str += "  ";
+        return str;
+    },
+    p: function(s) {
+        var args = Array.prototype.slice.call(arguments);
+        console.log(this.genTab()+args.join(" "));
+    },
+    indent: function() {
+        this.incount++;
+    },
+    outdent: function() {
+        this.incount--;
+    }
+};
+
 
 var dom_table = {
     'p':{
@@ -129,7 +148,7 @@ function domToModel(dom,model,options) {
         var out = model.makeBlock();
         for(var i=0; i<dom.childNodes.length; i++) {
             var node = dom.childNodes[i];
-            var ch = domToModel(node,model);
+            var ch = domToModel(node,model,options);
             if(ch != null) {
                 out.append(ch);
             }
@@ -141,7 +160,7 @@ function domToModel(dom,model,options) {
         var out = model.makeSpan();
         for(var i=0; i<dom.childNodes.length; i++) {
             var node = dom.childNodes[i];
-            var ch = domToModel(node,model);
+            var ch = domToModel(node,model,options);
             if(ch != null) {
                 out.append(ch);
             }
