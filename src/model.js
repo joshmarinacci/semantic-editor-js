@@ -50,6 +50,15 @@ function DNode(type,text,model) {
     this.getIndex = function() {
         return this.getParent().content.indexOf(this);
     }
+    function stillInTree(mod) {
+        if(mod.getIndex() < 0) return false;
+        if(mod.getParent().type == exports.ROOT) return true;
+        return stillInTree(mod.getParent());
+    }
+    this.stillInTree = function() {
+        return stillInTree(this);
+    }
+
 }
 
 function flattenChars(par) {
@@ -155,6 +164,9 @@ function DModel() {
     };
 
     this.getPreviousTextNode = function(tnode) {
+        if(tnode.type == exports.ROOT) {
+            return null;
+        }
         if(typeof tnode.parent == 'undefined' || tnode.parent == null) throw new Error("invalid node with no parent");
 
         var n = tnode.getIndex();
@@ -509,7 +521,7 @@ exports.nodeToPath = function(node) {
 
 exports.pathToNode = function(path,root) {
     if(path.length == 0) return root;
-    var n = path.shift();
+    var n = path[0];
     root = root.child(n);
-    return exports.pathToNode(path,root);
+    return exports.pathToNode(path.slice(1),root);
 }

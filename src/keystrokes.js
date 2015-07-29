@@ -5,7 +5,7 @@ var dom = require('./dom');
 var Dom = dom;
 var doc = require('./model');
 var editor;
-
+var Model = doc;
 
 exports.populateKeyDocs = function(elem) {
     for(var stroke in key_to_actions) {
@@ -192,18 +192,34 @@ var actions_map = {
             range.start.offset--;
             if(range.start.offset < 0) {
                 var prevtext = model.getPreviousTextNode(range.start.mod);
-                range.start.mod = prevtext;
-                range.start.offset = prevtext.text.length;
+                if(prevtext == null) {
+                    console.log("at the start of the doc. can't go backwards anymore");
+                    range.start.offset = 0;
+                } else {
+                    range.start.mod = prevtext;
+                    range.start.offset = prevtext.text.length;
+                }
             }
         }
+
+        var prev_mod = model.getPreviousTextNode(range.start.mod);
 
         var changes = Dom.makeDeleteTextRange(range,model);
         var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
         Dom.applyChanges(changes,model);
+        fireEvent('change',{});
+        while(!com_mod.stillInTree()) {
+            com_mod = com_mod.getParent();
+        }
+
         var com_dom = Dom.findDomForModel(com_mod,dom_root);
         Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
-        setCursorAtModel(range.start.mod,range.start.offset);
-        fireEvent('change',{});
+        if(!range.start.mod.stillInTree()) {
+            console.log("the start node is gone from the tree");
+            setCursorAtModel(prev_mod,prev_mod.text.length);
+        } else {
+            setCursorAtModel(range.start.mod, range.start.offset);
+        }
     },
     "delete-forward":function(e) {
         stopKeyboardEvent(e);
@@ -211,22 +227,40 @@ var actions_map = {
             var range = makeRangeFromSelection(model, window);
         } else {
             var range = makeRangeFromSelection(model, window);
+            if(range.end.mod.type !== Model.TEXT) {
+                console.log('something weird happened. bailing');
+                return;
+            }
             range.end.offset++;
             if(range.end.offset > range.end.mod.text.length) {
                 var nexttext = model.getNextTextNode(range.end.mod);
-                range.end.mod = nexttext;
-                range.end.offset = 1;
+                if(nexttext == null) {
+                    console.log("at the end of the doc. cant go forward anymore");
+                    range.end.offset = range.end.mod.text.length;
+                } else {
+                    range.end.mod = nexttext;
+                    range.end.offset = 1;
+                }
             }
         }
+        var next_mod = model.getNextTextNode(range.end.mod);
 
         var changes = Dom.makeDeleteTextRange(range,model);
         var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
         Dom.applyChanges(changes,model);
+        fireEvent('change',{});
+        while(!com_mod.stillInTree()) {
+            com_mod = com_mod.getParent();
+        }
 
         var com_dom = Dom.findDomForModel(com_mod,dom_root);
         Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
-        setCursorAtModel(range.start.mod,range.start.offset);
-        fireEvent('change',{});
+        if(!range.start.mod.stillInTree()) {
+            console.log("the start node is gone. must move to another one")
+            setCursorAtModel(next_mod, 0);
+        } else {
+            setCursorAtModel(range.start.mod, range.start.offset);
+        }
     },
     "style-inline-code":function(e){
         exports.styleSelection(e,'inline-code');

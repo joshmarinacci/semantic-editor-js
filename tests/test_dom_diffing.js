@@ -624,3 +624,36 @@ test("split block in half w/ span and more text", function(t) {
     Model.print(model);
     t.end();
 });
+
+
+test("delete single char span", function(t) {
+    //standard span test
+    var model = makeTextSpanText();
+    //change to be one char wide
+    model.getRoot().child(0).child(1).child(0).text = 'X';
+    Model.print(model);
+    var dom_root = makeDom(model);
+    //Dom.print(dom_root);
+    var range = makeRange(
+        model.getRoot().child(0).child(1).child(0),
+        0,
+        model.getRoot().child(0).child(1).child(0),
+        1,
+        dom_root
+    );
+
+    var changes = Dom.makeDeleteTextRange(range,model);
+    Dom.applyChanges(changes,model);
+    Model.print(model);
+    var com_mod = range.start.mod.getParent();
+    console.log("common_mod",com_mod.id);
+    while(!com_mod.stillInTree()) {
+        com_mod = com_mod.getParent();
+    }
+    var com_dom = Dom.findDomForModel(com_mod,dom_root);
+    console.log("com_dom = ", com_dom.id);
+    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, VirtualDoc);
+    Dom.print(dom_root);
+    t.end();
+
+})

@@ -404,6 +404,14 @@ function calculateChangeRange(model,dom,sel) {
         }
     }
 
+    if(!change.end) {
+        console.log("change end is still undefined!!!");
+        change.end = {
+            dom: domch,
+            mod: modch
+        }
+    }
+
     return change;
 
 }
@@ -468,13 +476,28 @@ function calculateChangeList(range) {
 
 exports.calculateChangeList = calculateChangeList;
 
-
+function isLastTextNode(node) {
+    if(node.type == Model.TEXT) {
+        return isLastTextNode(node.getParent());
+    }
+    if(node.type == Model.SPAN || node.type == Model.BLOCK) {
+        if(node.childCount() > 1) return false;
+        return isLastTextNode(node.getParent());
+    }
+    if(node.type == Model.ROOT) {
+        return true;
+    }
+}
 function applyChanges(changes, model) {
     changes.forEach(function(chg) {
         //for text change, just copy string to the model
         if(chg.type == 'text-change') {
             chg.mod.text = chg.text;
             if(chg.mod.text.length == 0) {
+                if(isLastTextNode(chg.mod)) {
+                    console.log("refusing to delete the last text node");
+                    return;
+                }
                 var parent = chg.mod.deleteFromParent();
                 if(parent.isEmpty()) {
                     parent.deleteFromParent();
@@ -491,6 +514,11 @@ function applyChanges(changes, model) {
             return;
         }
         if(chg.type == 'delete') {
+            //don't delete if this is the last text node
+            if(isLastTextNode(chg.mod)) {
+                console.log("don't delete because we are the last");
+                return;
+            }
             var parent = chg.mod.deleteFromParent();
             if(parent.isEmpty()) {
                 parent.deleteFromParent();
@@ -650,12 +678,21 @@ exports.rebuildDomFromModel = function(mod,dom, dom_root,doc) {
         mod.content.forEach(function(modch){
             dom.appendChild(modelToDom(modch,dom_root,doc));
         });
+        return;
+    }
+    if(mod.type == Model.SPAN) {
+        clearChildren(dom);
+        mod.content.forEach(function(modch){
+            dom.appendChild(modelToDom(modch,dom_root,doc));
+        });
+        return;
     }
     if(mod.type == Model.ROOT) {
         clearChildren(dom);
         mod.content.forEach(function(modch){
             dom.appendChild(modelToDom(modch,dom_root,doc));
         });
+        return;
     }
 
     console.log("cant handle ",mod.type);

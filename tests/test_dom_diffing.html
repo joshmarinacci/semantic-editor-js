@@ -38,7 +38,7 @@ function setupSpanTest() {
     block1.append(text1);
     var span = model.makeSpan();
     span.style = 'bold';
-    var text2 = model.makeText('def');
+    var text2 = model.makeText('X');
     span.append(text2);
     block1.append(span);
     var text3 = model.makeText('ghi');
@@ -123,7 +123,6 @@ dom_root.addEventListener("keydown", function(e) {
 });
 
 Keystrokes.on("change",function(){
-    console.log("stuff has changed");
     renderModelTree(model,document.getElementById("model-tree"));
 });
 
