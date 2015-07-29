@@ -4,6 +4,7 @@ var doc = require('../src/model');
 var dom = require('../src/dom');
 var keystrokes = require('../src/keystrokes');
 var MarkdownParser = require('./markdown_parser');
+var Model = doc;
 
 
 var u = {
@@ -266,6 +267,7 @@ var PostEditor = React.createClass({
         try {
             if(props.post.format == 'jsem') {
                 var model = doc.fromJSON(props.post.raw);
+                fixImages(model.getRoot());
                 PostDataStore.setModel(model);
                 var tree_root = document.getElementById("modeltree");
                 renderTree(tree_root,model);
@@ -329,3 +331,24 @@ var PostEditor = React.createClass({
     }
 });
 module.exports = PostEditor;
+
+function fixImages(root) {
+    if(root.type == Model.ROOT || root.type == Model.BLOCK) {
+        root.content.forEach(fixImages);
+    }
+    if(root.type == Model.SPAN && root.style == 'image') {
+        console.log("Found an image",root.meta.src);
+        var prefix = "http://localhost/images/";
+        if(root.meta.src.indexOf(prefix)==0) {
+            var path = root.meta.src.substring(prefix.length);
+            root.meta.src = "http://joshondesign.com/images/"+path;
+            console.log("changed to ",root.meta.src);
+        }
+    }
+}
+
+/*
+ Found an image http://localhost/images/69312_IMG_3195.JPG
+ http://joshondesign.com/wp-content/images/69312_IMG_3195.JPG
+
+ */
