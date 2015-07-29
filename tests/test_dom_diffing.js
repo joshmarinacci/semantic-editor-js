@@ -446,36 +446,54 @@ test("selection to bold",function(t) {
     t.end();
 });
 
-test("delete after text",function(t) {
+function makeTextSpanText() {
     var model = Model.makeModel();
     var block1 = model.makeBlock();
     var text1  = model.makeText("abc");
     block1.append(text1);
-    var span = model.makeBlock();
+    var span = model.makeSpan();
     var text2 = model.makeText('def');
     span.append(text2);
     block1.append(span);
     var text3 = model.makeText('ghi');
     block1.append(text3);
     model.getRoot().append(block1);
-    Model.print(model);
+    return model;
+}
+function makeDom(model) {
     var dom_root = VirtualDoc.createElement("div");
     dom_root.id="editor";
     Dom.modelToDom(model,dom_root,VirtualDoc);
-    Dom.print(dom_root);
-
+    return dom_root;
+}
+function makeRange(smod,soff,emod,eoff, dom_root) {
     var range = {
         start: {
-            mod: text3,
-            dom: Dom.findDomForModel(text3,dom_root),
-            offset:1
+            mod: smod,
+            dom: Dom.findDomForModel(smod,dom_root),
+            offset:soff
         },
         end: {
-            mod: text3,
-            dom: Dom.findDomForModel(text3,dom_root),
-            offset:2
+            mod: emod,
+            dom: Dom.findDomForModel(emod,dom_root),
+            offset:eoff
         }
     };
+    return range;
+}
+test("forward delete into span",function(t) {
+    var model = makeTextSpanText();
+    Model.print(model);
+    var dom_root = makeDom(model);
+    //Dom.print(dom_root);
+    var range = makeRange(
+        model.getRoot().child(0).child(0),
+        3,
+        model.getRoot().child(0).child(1).child(0),
+        0,
+        dom_root
+    );
+
 
     var changes = Dom.makeDeleteTextRange(range,model);
     console.log('changes',changes);

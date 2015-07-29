@@ -31,6 +31,21 @@ var Model = require('model');
 var Dom = require('dom');
 var Keystrokes = require('keystrokes');
 
+function setupSpanTest() {
+    var model = Model.makeModel();
+    var block1 = model.makeBlock();
+    var text1  = model.makeText("abc");
+    block1.append(text1);
+    var span = model.makeSpan();
+    span.style = 'bold';
+    var text2 = model.makeText('def');
+    span.append(text2);
+    block1.append(span);
+    var text3 = model.makeText('ghi');
+    block1.append(text3);
+    model.getRoot().append(block1);
+    return model;
+}
 function setupModel() {
     var model = Model.makeModel();
     var block0 = model.makeBlock();
@@ -67,7 +82,8 @@ function setupModel() {
     model.getRoot().append(block3);
     return model;
 }
-var model = setupModel();
+//var model = setupModel();
+var model = setupSpanTest();
 
 var dom_root = document.getElementById("editor");
 dom_root.id = model.getRoot().id;
@@ -105,6 +121,12 @@ function stop(e) {
 dom_root.addEventListener("keydown", function(e) {
     Keystrokes.handleEvent(e);
 });
+
+Keystrokes.on("change",function(){
+    console.log("stuff has changed");
+    renderModelTree(model,document.getElementById("model-tree"));
+});
+
 
 renderModelTree(model, document.getElementById("model-tree"));
 

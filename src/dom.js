@@ -329,6 +329,7 @@ function findModelForDom(model,domch) {
 exports.findModelForDom = findModelForDom;
 
 exports.findDomForModel = function(modch, dom_root) {
+    if(modch == null) throw new Error("model node is null");
     if(modch.type == Model.BLOCK || modch.type == Model.SPAN) {
         return dom_root.ownerDocument.getElementById(modch.id);
     }
@@ -585,7 +586,7 @@ function mergeBlocksBackwards(start,end) {
 
 exports.makeDeleteTextRange = function(range,model) {
     var changes = [];
-    console.log("deleting from",range.start.mod.id, range.end.mod.id);
+    console.log("deleting from",range.start.mod.id, range.start.offset, 'to', range.end.mod.id, range.end.offset);
     if(range.start.mod == range.end.mod) {
         //console.log("in the same mod", range.start.offset, range.end.offset);
         var txt = range.start.mod.text;

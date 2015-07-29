@@ -203,6 +203,7 @@ var actions_map = {
         var com_dom = Dom.findDomForModel(com_mod,dom_root);
         Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
         setCursorAtModel(range.start.mod,range.start.offset);
+        fireEvent('change',{});
     },
     "delete-forward":function(e) {
         stopKeyboardEvent(e);
@@ -214,7 +215,7 @@ var actions_map = {
             if(range.end.offset > range.end.mod.text.length) {
                 var nexttext = model.getNextTextNode(range.end.mod);
                 range.end.mod = nexttext;
-                range.end.offset = 0;
+                range.end.offset = 1;
             }
         }
 
@@ -225,6 +226,7 @@ var actions_map = {
         var com_dom = Dom.findDomForModel(com_mod,dom_root);
         Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
         setCursorAtModel(range.start.mod,range.start.offset);
+        fireEvent('change',{});
     },
     "style-inline-code":function(e){
         exports.styleSelection(e,'inline-code');
