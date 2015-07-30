@@ -52,12 +52,8 @@ exports.styleSelection = function(e,style) {
     fireEvent('change',{});
     var com_dom = Dom.findDomForModel(com_mod,editor);
     Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
-    setSelectionAtModel(
-        range.start.mod,
-        range.start.mod.text.length,
-        range.end.mod,
-        range.end.offset
-    );
+    var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
+    setCursorAtModel(nmod.node, nmod.offset);
 };
 
 function setCursorAtModel(mod,offset) {
