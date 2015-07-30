@@ -36,5 +36,6 @@ function countFile(path) {
 //1491, start
 //1367 july 28th, 2015
 //1554 after adding selection restoration and link code
+//1543 switch to document offset calcs. more deleting dead code
 
 

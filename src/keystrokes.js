@@ -150,14 +150,6 @@ function updateCurrentStyle() {
     },10);
 }
 
-function wrapTextInInlineStyle(node,style,model) {
-    var inline = model.makeSpan();
-    inline.style = style;
-    model.swapNode(node,inline);
-    inline.append(node);
-    return inline;
-};
-
 exports.splitLine = function(e) {
     stopKeyboardEvent(e);
     var range = makeRangeFromSelection(model,window);
