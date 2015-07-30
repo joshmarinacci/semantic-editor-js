@@ -36,6 +36,7 @@ function makeRangeFromSelection(model,window) {
             offset: selection.endOffset
         }
     };
+    range.collapsed = selection.collapsed;
     range.documentOffset =
         range.start.offset +
         Dom.modelToDocumentOffset(model.getRoot(), range.start.mod).offset;
@@ -190,10 +191,8 @@ var actions_map = {
     },
     "delete-backward":function(e) {
         stopKeyboardEvent(e);
-        if(window.getSelection().getRangeAt(0).collapsed === false) {
-            var range = makeRangeFromSelection(model, window);
-        } else {
-            var range = makeRangeFromSelection(model, window);
+        var range = makeRangeFromSelection(model, window);
+        if(range.collapsed) {
             range.documentOffset--;
             range.start.offset--;
             if(range.start.offset < 0) {
@@ -224,10 +223,8 @@ var actions_map = {
     },
     "delete-forward":function(e) {
         stopKeyboardEvent(e);
-        if(window.getSelection().getRangeAt(0).collapsed === false) {
-            var range = makeRangeFromSelection(model, window);
-        } else {
-            var range = makeRangeFromSelection(model, window);
+        var range = makeRangeFromSelection(model, window);
+        if(range.collapsed) {
             if(range.end.mod.type !== Model.TEXT) {
                 console.log('something weird happened. bailing');
                 return;
@@ -244,24 +241,15 @@ var actions_map = {
                 }
             }
         }
-        var next_mod = model.getNextTextNode(range.end.mod);
-
         var changes = Dom.makeDeleteTextRange(range,model);
         var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
         Dom.applyChanges(changes,model);
         fireEvent('change',{});
-        while(!com_mod.stillInTree()) {
-            com_mod = com_mod.getParent();
-        }
-
+        while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
         var com_dom = Dom.findDomForModel(com_mod,dom_root);
         Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
-        if(!range.start.mod.stillInTree()) {
-            console.log("the start node is gone. must move to another one")
-            setCursorAtModel(next_mod, 0);
-        } else {
-            setCursorAtModel(range.start.mod, range.start.offset);
-        }
+        var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
+        setCursorAtModel(nmod.node, nmod.offset);
     },
     "style-inline-code":function(e){
         exports.styleSelection(e,'inline-code');
