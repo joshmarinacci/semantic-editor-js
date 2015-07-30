@@ -36,6 +36,9 @@ function makeRangeFromSelection(model,window) {
             offset: selection.endOffset
         }
     };
+    range.documentOffset =
+        range.start.offset +
+        Dom.modelToDocumentOffset(model.getRoot(), range.start.mod).offset;
     return range;
 }
 
@@ -191,6 +194,7 @@ var actions_map = {
             var range = makeRangeFromSelection(model, window);
         } else {
             var range = makeRangeFromSelection(model, window);
+            range.documentOffset--;
             range.start.offset--;
             if(range.start.offset < 0) {
                 var prevtext = model.getPreviousTextNode(range.start.mod);
@@ -204,28 +208,19 @@ var actions_map = {
             }
         }
 
-        var prev_mod = model.getPreviousTextNode(range.start.mod);
-
         var changes = Dom.makeDeleteTextRange(range,model);
         var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
         Dom.applyChanges(changes,model);
         fireEvent('change',{});
-        while(!com_mod.stillInTree()) {
-            com_mod = com_mod.getParent();
-        }
+
+        //find a parent still in the tree
+        while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
 
         var com_dom = Dom.findDomForModel(com_mod,dom_root);
         Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
-        if(!range.start.mod.stillInTree()) {
-            console.log("the start node is gone from the tree. it's",range.start.mod.id);
-            if(prev_mod == null) {
-                console.log("prev is null too. just bail");
-                return;
-            }
-            setCursorAtModel(prev_mod,prev_mod.text.length);
-        } else {
-            setCursorAtModel(range.start.mod, range.start.offset);
-        }
+
+        var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
+        setCursorAtModel(nmod.node, nmod.offset);
     },
     "delete-forward":function(e) {
         stopKeyboardEvent(e);

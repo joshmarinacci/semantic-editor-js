@@ -814,3 +814,40 @@ exports.makeSplitChange = function(range,model) {
     });
     return changes;
 };
+
+
+exports.modelToDocumentOffset = function(node,target) {
+    if(node == target) return {found:true,offset:0};
+    if(node.type == Model.TEXT) {
+        return {found:false,offset:node.text.length};
+    } else {
+        var total = 0;
+        var found = false;
+        for(var i=0; i<node.content.length; i++) {
+            var res = exports.modelToDocumentOffset(node.content[i],target);
+            total += res.offset;
+            if(res.found === true) {
+                found = true;
+                break;
+            }
+        }
+        return {found:found, offset:total};
+    }
+};
+
+exports.documentOffsetToModel = function(root, off) {
+    if(root.type == Model.TEXT) {
+        if(off <= root.text.length) {
+            return {found:true, offset:off, node:root};
+        }
+        return {found:false, offset:off-root.text.length};
+    } else {
+        var toff = off;
+        for(var i=0; i<root.content.length; i++) {
+            var res = exports.documentOffsetToModel(root.content[i],toff);
+            if(res.found===true) return res;
+            toff = res.offset;
+        }
+        return {found:false, offset: toff};
+    }
+};
