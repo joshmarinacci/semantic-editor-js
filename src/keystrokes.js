@@ -121,6 +121,7 @@ function stopKeyboardEvent(e) {
     }
 }
 
+exports.stopKeyboardEvent = stopKeyboardEvent;
 exports.UPDATE_CURRENT_STYLE = 'update-current-style';
 
 function updateCurrentStyle() {
@@ -272,34 +273,7 @@ var actions_map = {
     },
     "style-inline-link":function(e) {
         stopKeyboardEvent(e);
-        var info = dom.saveSelection(model);
-        var style = model.getStyles().inline.link;
-
-        if(info.startpos.node != info.endpos.node) {
-            console.log("can't link across blocks");
-            return;
-        }
-        var parts = splitThree(
-            info.startpos.node,
-            info.startpos.offset,
-            info.endpos.offset,
-            model);
-        var span = wrapTextInInlineStyle(parts[1],style,model);
-        span.meta = {};
-        span.meta.elementName = "A";
-
-        $('#link-modal-text').val(parts[1].text);
-        $('#link-modal').modal('show');
-        $("#link-modal-submit").click(function(e) {
-            $(this).unbind(e);
-            $('#link-modal').modal('hide');
-            var text = $('#link-modal-text').val();
-            var url  = $('#link-modal-url').val();
-            span.meta.href = url;
-            dom.syncDom(editor,model);
-            fireEvent('change',{});
-        });
-        fireEvent('change',{});
+        console.log("links not implemented");
     },
     "insert-emoji": function(e) {
         stopKeyboardEvent(e);

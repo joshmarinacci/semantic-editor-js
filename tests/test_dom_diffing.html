@@ -126,6 +126,21 @@ Keystrokes.on("change",function(){
     renderModelTree(model,document.getElementById("model-tree"));
 });
 
+Keystrokes.actions_map['style-inline-link'] = function(e) {
+    Keystrokes.stopKeyboardEvent(e);
+
+    var sel = window.getSelection();
+    var range = sel.getRangeAt(0);
+    console.log('range = ', range.startContainer.parentNode.classList);
+    var mod = Dom.findModelForDom(model,range.startContainer);
+    console.log("mod = ", mod);
+    if(mod.getParent().style == 'link') {
+        console.log("inside of an existing link");
+    } else {
+        console.log("doing my own link");
+        Keystrokes.styleSelection(e,'link');
+    }
+};
 
 renderModelTree(model, document.getElementById("model-tree"));
 

@@ -2,7 +2,9 @@ var React = require('react');
 
 var doc = require('../src/model');
 var dom = require('../src/dom');
+var Dom = dom;
 var keystrokes = require('../src/keystrokes');
+var Keystrokes = keystrokes;
 var moment = require('moment');
 var PostDataStore = require('./PostDataStore');
 var PostEditor = require('./PostEditor.jsx');
@@ -143,7 +145,6 @@ var CleanupDropdown = React.createClass({
     },
     removeEmptyBlocks: function() {
         var model = PostDataStore.getModel();
-        console.log("removing the empty blocks",model);
         deleteEmptyBlocks(model.getRoot());
         var editor = PostDataStore.getEditor();
         dom.syncDom(editor,model);
@@ -233,11 +234,105 @@ var Toolbar = React.createClass({
     }
 });
 
+var LinkModal = React.createClass({
+    getInitialState: function() {
+        return {
+            targetModel:null,
+            linkModalShown: false
+        }
+    },
+    componentDidMount: function() {
+        var self = this;
+        Keystrokes.actions_map['style-inline-link'] = function(e) {
+            Keystrokes.stopKeyboardEvent(e);
+            var sel = window.getSelection();
+            var range = sel.getRangeAt(0);
+            var mod = Dom.findModelForDom(model,range.startContainer).getParent();
+            if(mod.style == 'link') {
+                console.log("inside of an existing link");
+                var link = "";
+                if(mod.meta && mod.meta.href) {
+                    link = mod.meta.href;
+                }
+                self.setState({
+                    targetModel:mod,
+                    linkModalShown:true,
+                    targetHref:link
+                });
+                //the input isn't rendered yet, so wait 100ms
+                setTimeout(function() {
+                    React.findDOMNode(self.refs.urlInput).focus();
+                },100);
+            } else {
+                console.log("doing my own link");
+                Keystrokes.styleSelection(e,'link');
+            }
+        };
+    },
+    close: function() {
+        this.setState({
+            linkModalShown: false,
+            targetModel: null,
+            targetHref: null
+        });
+    },
+    saveLink: function() {
+        var mod = this.state.targetModel;
+        if(!mod.meta) {
+            mod.meta = {}
+        }
+        mod.meta.href = this.state.targetHref;
+        this.close();
+    },
+    updateHref: function() {
+        this.setState({
+            targetHref: this.refs.urlInput.getDOMNode().value
+        });
+    },
+    checkEscape: function(e) {
+        if(e.keyCode == 27) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.close();
+        }
+    },
+    render: function() {
+        var linkModalStyle = {
+            display: this.state.linkModalShown?'block':'none'
+        };
+        return <div ref='linkModal' className='modal' style={linkModalStyle}>
+            <div className='modal-dialog'>
+                <div className='modal-content'>
+                    <div className='modal-header'>
+                        <h4 className='modal-title'>Link Properties</h4>
+                    </div>
+                    <div className='modal-body'>
+                        <div className="form-group">
+                            <label>URL</label>
+                            <input type='text'
+                                   className='form-control'
+                                   onChange={this.updateHref}
+                                   value={this.state.targetHref}
+                                   ref='urlInput'
+                                   onKeyDown={this.checkEscape}
+                                />
+                        </div>
+                    </div>
+                    <div className='modal-footer'>
+                        <button type="button" className="btn btn-default" onClick={this.close}>Close</button>
+                        <button type="button" className="btn btn-primary" onClick={this.saveLink}>Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+})
+
 var MainView = React.createClass({
     getInitialState: function() {
         return {
             posts: PostDataStore.getPosts(),
-            selected: PostDataStore.getPosts()[0],
+            selected: PostDataStore.getPosts()[0]
         }
     },
     componentDidMount: function() {
@@ -255,19 +350,21 @@ var MainView = React.createClass({
     },
     render: function() {
         return (
-            <div id="main-content" className='container-fluid vbox grow'>
-                <div className='hbox'>
-                    <PostMeta   post={this.state.selected}/>
-                    <Toolbar    post={this.state.selected}/>
-                </div>
-                <div className='hbox grow'>
-                    <PostList posts={this.state.posts}/>
-                    <PostEditor post={this.state.selected}/>
-                    <div id="modeltree" className="scroll">
-                        tree goes here
+            <div>
+                <LinkModal/>
+                <div id="main-content" className='container-fluid vbox grow'>
+                    <div className='hbox'>
+                        <PostMeta   post={this.state.selected}/>
+                        <Toolbar    post={this.state.selected}/>
+                    </div>
+                    <div className='hbox grow'>
+                        <PostList posts={this.state.posts}/>
+                        <PostEditor post={this.state.selected}/>
+                        <div id="modeltree" className="scroll">
+                            tree goes here
+                        </div>
                     </div>
                 </div>
-
         </div>);
     }
 });

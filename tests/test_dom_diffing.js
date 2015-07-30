@@ -691,3 +691,31 @@ test("make span around another, on the span",function(t){
     t.equal(block.child(1).childCount(),2);
     t.end();
 });
+
+test("make span around another, start on the span",function(t){
+    var model = makeTextSpanText();
+    Model.print(model);
+    var dom_root = makeDom(model);
+    var block = model.getRoot().child(0);
+    t.equal(block.childCount(),3);
+    t.equal(block.child(1).childCount(),1);
+    var range = makeRange(block.child(1).child(0),1,block.child(2),1, dom_root);
+    console.log("range = ", range.start.mod.id, range.end.mod.id);
+    var changes = Dom.makeStyleTextRange(range,model,'bold');
+    Dom.applyChanges(changes,model);
+    Model.print(model);
+    t.equal(block.childCount(),4);
+    t.equal(block.child(1).childCount(),2);
+
+    var com_mod = range.start.mod.getParent();
+    console.log("common_mod",com_mod.id);
+    while(!com_mod.stillInTree()) {
+        com_mod = com_mod.getParent();
+    }
+    var com_dom = Dom.findDomForModel(com_mod,dom_root);
+    console.log("com_dom = ", com_dom.id);
+    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, VirtualDoc);
+    Dom.print(dom_root);
+
+    t.end();
+});
