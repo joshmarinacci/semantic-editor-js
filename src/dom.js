@@ -732,7 +732,77 @@ exports.makeStyleTextRange = function(range, model, style) {
         });
         return changes;
     }
+    //assume everything is inside the same block
+    //make a span
+    var span = model.makeSpan();
+    span.style = style;
 
+    //split first text
+    var txt1 = range.start.mod.text;
+    changes.push({
+        type:"text-change",
+        mod: range.start.mod,
+        text: txt1.substring(0,range.start.offset)
+    });
+
+    //put second half of first text inside
+    //add the span
+    changes.push({
+        type:'insert-after',
+        mod:range.start.mod,
+        insert:span
+    });
+    changes.push({
+        type:'append',
+        mod:span,
+        target: model.makeText(txt1.substring(range.start.offset))
+    });
+
+    var it = model.getIterator(range.start.mod);
+    var tomove = {};
+    while(it.hasNext()) {
+        var ch = it.next();
+        if(ch == range.end.mod) {
+            //console.log("reached the end");
+            //console.log('we can move');
+
+            //only move nodes that don't have parents in the list
+            //and that aren't the end point
+            for(var id in tomove) {
+                if(id == range.end.mod.getParent().id) continue;
+                var pid = tomove[id].getParent().id;
+                if(typeof tomove[pid] !== 'undefined'){
+                    //console.log("parent already present. don't move it");
+                    continue;
+                }
+                //console.log('moving', id);
+                changes.push({
+                    type:'delete',
+                    mod:tomove[id]
+                });
+                changes.push({
+                    type:'append',
+                    mod:span,
+                    target: tomove[id]
+                });
+            }
+            //split the stop point in half, put half inside, leave the rest
+            var etxt = range.end.mod.text;
+            changes.push({
+                type:'append',
+                mod:span,
+                target: model.makeText(etxt.substring(0,range.end.offset))
+            });
+            changes.push({
+                type:'text-change',
+                mod: range.end.mod,
+                text: etxt.substring(range.end.offset)
+            });
+            break;
+        }
+        tomove[ch.id] = ch;
+    }
+    return changes;
 };
 
 exports.makeSplitChange = function(range,model) {

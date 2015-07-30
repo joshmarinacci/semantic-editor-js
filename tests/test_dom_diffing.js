@@ -656,4 +656,38 @@ test("delete single char span", function(t) {
     Dom.print(dom_root);
     t.end();
 
-})
+});
+
+
+test("make span around another",function(t){
+    var model = makeTextSpanText();
+    Model.print(model);
+    var dom_root = makeDom(model);
+    var block = model.getRoot().child(0);
+    t.equal(block.childCount(),3);
+    t.equal(block.child(1).childCount(),1);
+    var range = makeRange(block.child(0),1,block.child(2),1, dom_root);
+    var changes = Dom.makeStyleTextRange(range,model,'bold');
+    Dom.applyChanges(changes,model);
+    Model.print(model);
+    t.equal(block.childCount(),3);
+    t.equal(block.child(1).childCount(),3);
+    t.end();
+});
+
+test("make span around another, on the span",function(t){
+    var model = makeTextSpanText();
+    Model.print(model);
+    var dom_root = makeDom(model);
+    var block = model.getRoot().child(0);
+    t.equal(block.childCount(),3);
+    t.equal(block.child(1).childCount(),1);
+    var range = makeRange(block.child(0),1,block.child(1).child(0),1, dom_root);
+    console.log("range = ", range.start.mod.id, range.end.mod.id);
+    var changes = Dom.makeStyleTextRange(range,model,'bold');
+    Dom.applyChanges(changes,model);
+    Model.print(model);
+    t.equal(block.childCount(),4);
+    t.equal(block.child(1).childCount(),2);
+    t.end();
+});

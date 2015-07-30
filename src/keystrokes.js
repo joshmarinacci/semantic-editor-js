@@ -45,6 +45,7 @@ exports.styleSelection = function(e,style) {
     var changes = Dom.makeStyleTextRange(range,model,style);
     var com_mod = range.start.mod.getParent();
     Dom.applyChanges(changes,model);
+    fireEvent('change',{});
     var com_dom = Dom.findDomForModel(com_mod,editor);
     Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
     setSelectionAtModel(
@@ -53,7 +54,6 @@ exports.styleSelection = function(e,style) {
         range.end.mod,
         range.end.offset
     );
-    fireEvent('change',{});
 };
 
 function setCursorAtModel(mod,offset) {
