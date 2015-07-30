@@ -15,13 +15,6 @@ exports.populateKeyDocs = function(elem) {
     }
 };
 
-
-function splitThree(node,index1,index2,model) {
-    var parts1 = model.splitNode(node,index1);
-    var parts2 = model.splitNode(parts1[1],index2-index1);
-    return [parts1[0],parts2[0],parts2[1]];
-}
-
 function makeRangeFromSelection(model,window) {
     var selection = window.getSelection().getRangeAt(0);
     var range = {
