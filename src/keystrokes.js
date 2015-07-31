@@ -201,8 +201,8 @@ var actions_map = {
         //find a parent still in the tree
         while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
 
-        var com_dom = Dom.findDomForModel(com_mod,dom_root);
-        Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
+        var com_dom = Dom.findDomForModel(com_mod, editor);
+        Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
 
         var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
         setCursorAtModel(nmod.node, nmod.offset);
@@ -232,8 +232,8 @@ var actions_map = {
         Dom.applyChanges(changes,model);
         fireEvent('change',{});
         while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
-        var com_dom = Dom.findDomForModel(com_mod,dom_root);
-        Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
+        var com_dom = Dom.findDomForModel(com_mod,editor);
+        Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
         var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
         setCursorAtModel(nmod.node, nmod.offset);
     },
@@ -244,6 +244,7 @@ var actions_map = {
         stopKeyboardEvent(e);
         console.log("links not implemented");
     },
+    /*
     "insert-emoji": function(e) {
         stopKeyboardEvent(e);
         saved_info = dom.saveSelection(model);
@@ -251,6 +252,7 @@ var actions_map = {
         $("#popup").removeClass("hidden");
         $("#popup").offset({left:xy.x,top:xy.y});
     }
+    */
 };
 
 actions_map[exports.UPDATE_CURRENT_STYLE] = updateCurrentStyle;

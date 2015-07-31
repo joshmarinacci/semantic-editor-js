@@ -870,8 +870,6 @@ exports.makeClearStyleTextRange = function(range, model, style) {
 
 
     var it = model.getIterator(range.start.mod);
-    var block_mod = range.start.mod.getParent();
-    console.log("the block is",block_mod.id);
     var tomove = {};
 
     while(it.hasNext()) {
