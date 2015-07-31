@@ -31,7 +31,7 @@ exports.makeRangeFromSelection = function(model,window) {
     range.collapsed = selection.collapsed;
     range.documentOffset =
         range.start.offset +
-        Dom.modelToDocumentOffset(model.getRoot(), range.start.mod).offset;
+        Model.modelToDocumentOffset(model.getRoot(), range.start.mod).offset;
     return range;
 };
 
@@ -45,7 +45,7 @@ exports.styleSelection = function(e,style) {
     exports.markAsChanged();
     var com_dom = Dom.findDomForModel(com_mod,editor);
     Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
-    var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
+    var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
     exports.setCursorAtModel(nmod.node, nmod.offset);
 };
 
@@ -66,7 +66,7 @@ exports.changeBlockStyle = function(style) {
     var dom_b = Dom.findDomForModel(par,editor);
     Dom.rebuildDomFromModel(par,dom_b, editor, document);
     exports.markAsChanged();
-    var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
+    var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
     exports.setCursorAtModel(nmod.node, nmod.offset);
 };
 
@@ -193,7 +193,7 @@ var actions_map = {
         var com_dom = Dom.findDomForModel(com_mod, editor);
         Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
 
-        var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
+        var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
         exports.setCursorAtModel(nmod.node, nmod.offset);
     },
     "delete-forward":function(e) {
@@ -222,7 +222,7 @@ var actions_map = {
         while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
         var com_dom = Dom.findDomForModel(com_mod,editor);
         Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
-        var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
+        var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
         exports.setCursorAtModel(nmod.node, nmod.offset);
     },
     "style-inline-code":function(e){

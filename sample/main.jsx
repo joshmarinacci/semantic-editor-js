@@ -1,6 +1,7 @@
 var React = require('react');
 
-var doc = require('../src/model');
+var Model = require('../src/model');
+var doc = Model;
 var dom = require('../src/dom');
 var Dom = dom;
 var keystrokes = require('../src/keystrokes');
@@ -343,7 +344,7 @@ var MainView = React.createClass({
             Keystrokes.fireEvent('change',{});
             var com_dom = Dom.findDomForModel(com_mod,editor);
             Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
-            var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
+            var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
             Keystrokes.setCursorAtModel(nmod.node, nmod.offset);
         };
 
