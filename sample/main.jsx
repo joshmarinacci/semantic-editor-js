@@ -71,6 +71,16 @@ function deleteEmptyText(root) {
     }
 }
 
+function deleteEmptySpans(root) {
+    if(root.childCount() > 0) {
+        root.content.forEach(deleteEmptySpans);
+    } else {
+        if(root.type == doc.SPAN) {
+            root.deleteFromParent();
+        }
+    }
+}
+
 function deleteEmptyBlocks(root) {
     if(root.childCount() > 0) {
         root.content.forEach(deleteEmptyBlocks);
@@ -141,6 +151,14 @@ var CleanupDropdown = React.createClass({
         keystrokes.markAsChanged();
         this.setState({open:false})
     },
+    removeEmptySpans: function() {
+        var model = PostDataStore.getModel();
+        deleteEmptySpans(model.getRoot());
+        var editor = PostDataStore.getEditor();
+        dom.syncDom(editor,model);
+        keystrokes.markAsChanged();
+        this.setState({open:false})
+    },
     removePlainSpans: function() {
         var model = PostDataStore.getModel();
         convertPlainSpans(model.getRoot());
@@ -157,6 +175,23 @@ var CleanupDropdown = React.createClass({
         keystrokes.markAsChanged();
         this.setState({open:false})
     },
+    raiseBlocks: function() {
+        var model = PostDataStore.getModel();
+        var editor = PostDataStore.getEditor();
+        var toraise = [];
+        model.getRoot().content.forEach(function(par) {
+            par.content.forEach(function(ch) {
+                if(ch.type == Model.BLOCK) {
+                    console.log("need to raise it up");
+                    toraise.push(ch);
+                }
+            });
+        });
+        console.log("need to raise up", toraise.length);
+        dom.syncDom(editor,model);
+        keystrokes.markAsChanged();
+        this.setState({open:false});
+    },
     render: function() {
         var openClass = utils.toClass(["btn-group"],{ open:this.state.open });
         var buttonClass = utils.toClass(["btn","btn-default","dropdown-toggle"]);
@@ -166,9 +201,11 @@ var CleanupDropdown = React.createClass({
             </button>
             <ul className="dropdown-menu">
                 <li><a href='#' onClick={this.removeEmptyBlocks}>remove empty blocks</a></li>
+                <li><a href='#' onClick={this.removeEmptySpans}>remove empty spans</a></li>
                 <li><a href='#' onClick={this.removeEmptyText}>remove empty text</a></li>
                 <li><a href='#' onClick={this.removePlainSpans}>remove plain spans</a></li>
                 <li><a href='#' onClick={this.mergeAdjacentText}>merge adjacent text</a></li>
+                <li><a href='#' onClick={this.raiseBlocks}>raise blocks</a></li>
             </ul>
         </div>
     }

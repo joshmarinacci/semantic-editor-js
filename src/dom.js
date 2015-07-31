@@ -586,6 +586,9 @@ function genModelFromDom(node,model) {
         if(node.nodeName.toLowerCase() == 'div') {
             nd = model.makeBlock();
         }
+        if(node.nodeName.toLowerCase() == 'br') {
+            nd = model.makeBlock();
+        }
         if(nd == null) {
             console.log("can't convert dom node", node.nodeName);
             throw new Error("cant convert dom node");
