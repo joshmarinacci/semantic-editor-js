@@ -27,59 +27,6 @@ exports.setRawHtml = function(editor, html) {
     editor.innerHTML = html;
 };
 
-function syncDomChildren(mod,dom) {
-    mod.content.forEach(function(mod_ch){
-        var dom_ch = syncDom(mod_ch);
-        if(dom_ch != null) dom.appendChild(dom_ch);
-    });
-}
-
-function syncDom(mod,edi) {
-    if(mod.type == doc.TEXT) {
-        return document.createTextNode(mod.text);
-    }
-    if(mod.type == doc.ROOT) {
-        mod.content.forEach(function(mod_ch){
-            var dom_ch = syncDom(mod_ch);
-            edi.appendChild(dom_ch);
-        });
-    }
-    if(mod.type == doc.SPAN) {
-        var dom = document.createElement('span');
-        if(mod.meta) {
-            if (mod.meta.elementName == 'A' || mod.style == 'link') {
-                dom = document.createElement('a');
-                if (mod.meta.href) {
-                    dom.setAttribute("href", mod.meta.href);
-                    dom.setAttribute("class","with-tooltip");
-                    //dom.innerHTML = "<b class='link-tooltip' domtype='skip'>"+mod.meta.href+"</b>";
-                }
-            }
-            if( mod.style == 'image') {
-                dom = document.createElement('img');
-                dom.setAttribute('src',mod.meta.src);
-            }
-        }
-        dom.id = mod.id;
-        dom.classList.add(mod.style);
-        syncDomChildren(mod,dom);
-        return dom;
-    }
-    if(mod.type == doc.BLOCK) {
-        var dom = document.createElement('div');
-        dom.id = mod.id;
-        dom.classList.add(mod.style);
-        syncDomChildren(mod,dom);
-        return dom;
-    }
-    return null;
-}
-
-exports.syncDom = function(editor,model) {
-    clearChildren(editor);
-    syncDom(model.getRoot(),editor);
-};
-
 exports.saveSelection = function (model) {
     var sel = window.getSelection();
     var range = sel.getRangeAt(0);
@@ -246,6 +193,11 @@ exports.modelToDom = function(mod,dom, doc) {
         if( mod.style == 'image') {
             block = document.createElement('img');
             block.setAttribute('src',mod.meta.src);
+        }
+        if(mod.style == 'link' && mod.meta && mod.meta.href ) {
+            block = document.createElement('a');
+            block.setAttribute('href',mod.meta.href);
+            block.setAttribute("class","with-tooltip");
         }
 
         block.id = mod.id;
@@ -619,7 +571,16 @@ exports.makeDeleteTextRange = function(range,model) {
     return changes;
 };
 
+exports.syncDom = function(editor,model) {
+    exports.rebuildDomFromModel(model.getRoot(), editor, editor, editor.ownerDocument);
+};
+
+
 exports.rebuildDomFromModel = function(mod,dom, dom_root,doc) {
+    if(typeof doc == 'undefined') {
+        console.log(new Error().stack);
+        throw new Error("undefined doc");
+    }
     if(mod.type == Model.TEXT) {
         dom.nodeValue = mod.text;
     } else {
