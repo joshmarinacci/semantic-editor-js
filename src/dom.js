@@ -213,21 +213,10 @@ function domIndexOf(dom_child) {
     return Array.prototype.indexOf.call(dom_child.parentNode.childNodes,dom_child);
 }
 
-function findModelForId(model,id) {
-    if(model.id == id) return model;
-    if(model.getRoot) return findModelForId(model.getRoot(),id);
-    if(model.type != Model.TEXT) {
-        for(var i=0; i<model.content.length; i++) {
-            var found = findModelForId(model.content[i],id);
-            if(found != null) return found;
-        }
-    }
-    return null;
-}
 
 exports.findModelForDom = function(model,domch) {
     if(domch.nodeType == ELEMENT_NODE) {
-        return findModelForId(model,domch.id);
+        return model.findNodeById(domch.id);
     }
     if(domch.nodeType == TEXT_NODE) {
         var parent_mod = exports.findModelForDom(model,domch.parentNode);
@@ -574,7 +563,6 @@ exports.makeDeleteTextRange = function(range,model) {
 exports.syncDom = function(editor,model) {
     exports.rebuildDomFromModel(model.getRoot(), editor, editor, editor.ownerDocument);
 };
-
 
 exports.rebuildDomFromModel = function(mod,dom, dom_root,doc) {
     if(typeof doc == 'undefined') {

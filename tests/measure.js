@@ -38,4 +38,5 @@ function countFile(path) {
 //1554 after adding selection restoration and link code
 //1543 switch to document offset calcs. more deleting dead code
 //1544
-
+//1507 removed duplicate dom generation code
+//1502 duplicate node syncing code

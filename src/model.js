@@ -325,13 +325,20 @@ function DModel() {
         return this.styles;
     };
 
-    this.findNodeById = function(id) {
-        var it = this.getIterator(this.getRoot());
-        while(it.hasNext()) {
-            var node = it.next();
-            if(node.id == id) return node;
+    function findModelForId(model,id) {
+        if(model.id == id) return model;
+        if(model.getRoot) return findModelForId(model.getRoot(),id);
+        if(model.type != exports.TEXT) {
+            for(var i=0; i<model.content.length; i++) {
+                var found = findModelForId(model.content[i],id);
+                if(found != null) return found;
+            }
         }
         return null;
+    }
+
+    this.findNodeById = function(id) {
+        return findModelForId(this,id);
     };
 
     this.splitBlockAt = function(node,offset) {
