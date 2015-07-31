@@ -205,39 +205,6 @@ exports.textNodeToSelectionPosition = function(node,offset) {
     }
 };
 
-exports.setSelectionFromPosition = function(pos) {
-    if(!pos.id && pos.node != null) {
-        pos.id = pos.node;
-    }
-    if(!pos.id || pos.id == "") {
-        console.log("WARNING. bad id");
-        return;
-    }
-    var range = document.createRange();
-    var node = document.getElementById(pos.id);
-    pos.path.forEach(function(index){
-        node = node.childNodes[index];
-    });
-    console.log("target node is", node);
-    if(node.nodeType !== TEXT_NODE) {
-        console.log('we have a problem. not at a text node. go down more.', node.childNodes.length);
-        for(var i=0; i<node.childNodes.length; i++) {
-            var ch = node.childNodes[i];
-            console.log("child = ",ch);
-            if(ch.nodeType == TEXT_NODE) {
-                console.log("found a text child");
-            }
-        }
-    }
-    console.log("target offset is",pos.offset);
-
-    range.setStart(node, pos.offset);
-    range.collapse(true);
-    var wsel = window.getSelection();
-    wsel.removeAllRanges();
-    wsel.addRange(range);
-};
-
 exports.getCaretClientPosition = function() {
     var x = 0, y = 0;
     var sel = window.getSelection();
@@ -319,6 +286,7 @@ exports.findModelForDom = function(model,domch) {
 };
 
 exports.findDomForModel = function(modch, dom_root) {
+    if(!dom_root) throw new Error("dom root is null");
     if(modch == null) throw new Error("model node is null");
     if(modch.type == Model.BLOCK || modch.type == Model.SPAN) {
         return dom_root.ownerDocument.getElementById(modch.id);
@@ -660,7 +628,6 @@ exports.rebuildDomFromModel = function(mod,dom, dom_root,doc) {
             dom.appendChild(exports.modelToDom(modch,dom_root,doc));
         });
     }
-    console.log("cant handle ",mod.type);
 };
 
 exports.makeStyleTextRange = function(range, model, style) {

@@ -47,37 +47,29 @@ exports.styleSelection = function(e,style) {
     var com_dom = Dom.findDomForModel(com_mod,editor);
     Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
     var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    setCursorAtModel(nmod.node, nmod.offset);
+    exports.setCursorAtModel(nmod.node, nmod.offset);
 };
 
-function setCursorAtModel(mod,offset) {
+exports.setCursorAtModel = function(mod,offset) {
     var dom = Dom.findDomForModel(mod,editor);
     var range = document.createRange();
     range.setStart(dom,offset);
     var sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
-}
+};
 
-exports.setCursorAtModel = setCursorAtModel;
-function setSelectionAtModel(smod, soff, emod, eoff) {
-    var sdom = Dom.findDomForModel(smod,editor);
-    var rng = document.createRange();
-    rng.setStart(sdom, soff);
-    var sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(rng);
-}
-
-function changeBlockStyle(style) {
-    var info = Dom.saveSelection(model);
-    var mod_b = info.startpos.node.findBlockParent();
+exports.changeBlockStyle = function(style) {
+    var range = makeRangeFromSelection(model, window);
+    var mod_b = range.start.mod.findBlockParent();
     mod_b.style = style;
-    Dom.syncDom(editor,model);
-    Dom.setSelectionFromPosition(info.startpos);
-}
-
-exports.changeBlockStyle = changeBlockStyle;
+    var par = mod_b.getParent();
+    var dom_b = Dom.findDomForModel(par,editor);
+    Dom.rebuildDomFromModel(par,dom_b, editor, document);
+    fireEvent('change',{});
+    var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
+    exports.setCursorAtModel(nmod.node, nmod.offset);
+};
 
 var browser_keymap = {
     8:"backspace",
@@ -164,7 +156,7 @@ exports.splitLine = function(e) {
     Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
     var new_mod = Model.pathToNode(path,model.getRoot());
     var new_text = model.getNextTextNode(new_mod);
-    setCursorAtModel(new_text,0);
+    exports.setCursorAtModel(new_text,0);
 };
 
 var actions_map = {
@@ -207,7 +199,7 @@ var actions_map = {
         Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
 
         var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
-        setCursorAtModel(nmod.node, nmod.offset);
+        exports.setCursorAtModel(nmod.node, nmod.offset);
     },
     "delete-forward":function(e) {
         stopKeyboardEvent(e);
@@ -237,7 +229,7 @@ var actions_map = {
         var com_dom = Dom.findDomForModel(com_mod,editor);
         Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
         var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
-        setCursorAtModel(nmod.node, nmod.offset);
+        exports.setCursorAtModel(nmod.node, nmod.offset);
     },
     "style-inline-code":function(e){
         exports.styleSelection(e,'inline-code');
