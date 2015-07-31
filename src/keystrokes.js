@@ -46,7 +46,7 @@ exports.styleSelection = function(e,style) {
     var com_dom = Dom.findDomForModel(com_mod,editor);
     Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
     var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    Dom.setCursorAtModel(nmod.node, nmod.offset);
+    Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
 };
 
 exports.changeBlockStyle = function(style) {
@@ -58,7 +58,7 @@ exports.changeBlockStyle = function(style) {
     Dom.rebuildDomFromModel(par,dom_b, editor, document);
     exports.markAsChanged();
     var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    Dom.setCursorAtModel(nmod.node, nmod.offset);
+    Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
 };
 
 var browser_keymap = {
@@ -143,7 +143,7 @@ exports.splitLine = function(e) {
     Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
     var new_mod = Model.pathToNode(path,model.getRoot());
     var new_text = model.getNextTextNode(new_mod);
-    Dom.setCursorAtModel(new_text,0);
+    Dom.setCursorAtModel(new_text,0, editor);
 };
 
 var actions_map = {
@@ -185,7 +185,7 @@ var actions_map = {
         Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
 
         var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-        Dom.setCursorAtModel(nmod.node, nmod.offset);
+        Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
     },
     "delete-forward":function(e) {
         exports.stopKeyboardEvent(e);
@@ -214,7 +214,7 @@ var actions_map = {
         var com_dom = Dom.findDomForModel(com_mod,editor);
         Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
         var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-        Dom.setCursorAtModel(nmod.node, nmod.offset);
+        Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
     },
     "style-inline-code":function(e){
         exports.styleSelection(e,'inline-code');

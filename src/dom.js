@@ -877,8 +877,8 @@ exports.setCursorAtDom = function(dom, offset) {
     sel.addRange(range);
 };
 
-exports.setCursorAtModel = function(mod,offset) {
-    var dom = Dom.findDomForModel(mod,editor);
+exports.setCursorAtModel = function(mod,offset, editor) {
+    var dom = exports.findDomForModel(mod,editor);
     var range = document.createRange();
     range.setStart(dom,offset);
     var sel = window.getSelection();
