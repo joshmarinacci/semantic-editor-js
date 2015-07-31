@@ -23,26 +23,6 @@ function setupModel() {
 }
 setupModel();
 
-function dumpModel(root,tab) {
-    console.log(tab+root.type+"  "+root.id);
-    if(!root.isEmpty()) {
-        if(root.content) root.content.forEach(function(node) {
-            dumpModel(node,tab+"  ");
-        });
-        if(root.type == 'text') console.log(tab+' ---  ' + root.text);
-    }
-}
-
-function dumpStringAscii(str) {
-    console.log("dumping string",str);
-    for(var i=0; i<str.length; i++) {
-        console.log(str[i], str.charCodeAt(i));
-    }
-}
-
-
-
-
 var BlockDropdown = React.createClass({
     getInitialState: function() {
         return {
@@ -89,6 +69,7 @@ function deleteEmptyText(root) {
         root.deleteFromParent();
     }
 }
+
 function deleteEmptyBlocks(root) {
     if(root.childCount() > 0) {
         root.content.forEach(deleteEmptyBlocks);
@@ -191,7 +172,6 @@ var CleanupDropdown = React.createClass({
         </div>
     }
 })
-
 
 var Toolbar = React.createClass({
     getInitialState: function() {

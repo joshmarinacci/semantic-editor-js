@@ -22,7 +22,6 @@ function clearChildren(root) {
     while (root.firstChild) root.removeChild(root.firstChild);
 }
 
-
 exports.setRawHtml = function(editor, html) {
     clearChildren(editor);
     editor.innerHTML = html;
@@ -34,6 +33,7 @@ function syncDomChildren(mod,dom) {
         if(dom_ch != null) dom.appendChild(dom_ch);
     });
 }
+
 function syncDom(mod,edi) {
     if(mod.type == doc.TEXT) {
         return document.createTextNode(mod.text);
@@ -74,6 +74,7 @@ function syncDom(mod,edi) {
     }
     return null;
 }
+
 exports.syncDom = function(editor,model) {
     clearChildren(editor);
     syncDom(model.getRoot(),editor);
@@ -253,7 +254,6 @@ exports.getCaretClientPosition = function() {
     return { x: x, y: y };
 };
 
-
 exports.modelToDom = function(mod,dom, doc) {
     if(mod.getRoot) return exports.modelToDom(mod.getRoot(),dom,doc);
     if(mod.type == Model.ROOT) {
@@ -289,7 +289,6 @@ exports.modelToDom = function(mod,dom, doc) {
         return block;
     }
 }
-
 
 function domIndexOf(dom_child) {
     return Array.prototype.indexOf.call(dom_child.parentNode.childNodes,dom_child);
@@ -480,7 +479,8 @@ function isLastTextNode(node) {
     }
     return false;
 }
-function applyChanges(changes, model) {
+
+exports.applyChanges = function(changes, model) {
     changes.forEach(function(chg) {
         //for text change, just copy string to the model
         if(chg.type == 'text-change') {
@@ -541,7 +541,6 @@ function applyChanges(changes, model) {
         console.log("don't know how to handle change type",chg.type);
     });
 }
-exports.applyChanges = applyChanges;
 
 function getParentPath(mod) {
     if(mod == null) return;
@@ -562,29 +561,21 @@ exports.findCommonParent = function(a,b) {
     return found;
 };
 
-
-function print(dom,tab) {
+exports.print = function(dom,tab) {
     if(!tab) tab = "";
     if(dom.nodeType == ELEMENT_NODE) {
         console.log(tab + dom.nodeName + "#"+dom.id);
         dom.childNodes.forEach(function(domch){
-            print(domch,tab+"  ");
+            exports.print(domch,tab+"  ");
         })
     }
-    if(dom.nodeType == TEXT_NODE) {
-        console.log(tab + dom.nodeType + ' ' + dom.nodeValue);
-    }
+    if(dom.nodeType == TEXT_NODE) console.log(tab + dom.nodeType + ' ' + dom.nodeValue);
 }
-
-exports.print = print;
-
-
 
 function mergeParentBlocksIfNeeded(nodeA, nodeB) {
     var startBlock = nodeA.findBlockParent();
     var endBlock   = nodeB.findBlockParent();
     if(startBlock.id != endBlock.id)  {
-        console.log('we need to merge parent blocks');
         return mergeBlocksBackwards(startBlock,endBlock);
     }
     return [];
@@ -598,19 +589,16 @@ function mergeBlocksBackwards(start,end) {
             mod:start,
             target:node
         });
-        //start.append(node);
     });
     changes.push({
         type:'delete',
         mod:end
-    })
+    });
     return changes;
-//    end.deleteFromParent();
 }
 
 exports.makeDeleteTextRange = function(range,model) {
     var changes = [];
-    console.log("deleting from",range.start.mod.id, range.start.offset, 'to', range.end.mod.id, range.end.offset);
     if(range.start.mod == range.end.mod) {
         //console.log("in the same mod", range.start.offset, range.end.offset);
         var txt = range.start.mod.text;
@@ -631,7 +619,6 @@ exports.makeDeleteTextRange = function(range,model) {
 
     var ch = range.start.mod;
     if(ch == range.end.mod) {
-        //console.log("start and end in the same node");
         return changes;
     }
     var it = model.getIterator(range.start.mod);
@@ -640,7 +627,6 @@ exports.makeDeleteTextRange = function(range,model) {
         prev = ch;
         ch = it.next();
         if(ch == range.end.mod) {
-            //console.log("changing and done");
             var txt = range.end.mod.text;
             if(txt == null || typeof txt == 'undefined') txt = "";
             changes.push({
@@ -652,7 +638,6 @@ exports.makeDeleteTextRange = function(range,model) {
             break;
         }
         if(ch.type == Model.TEXT) {
-            //console.log('deleting');
             changes.push({
                 type:'delete',
                 mod: ch
@@ -666,37 +651,17 @@ exports.makeDeleteTextRange = function(range,model) {
     return changes;
 };
 
-
 exports.rebuildDomFromModel = function(mod,dom, dom_root,doc) {
     if(mod.type == Model.TEXT) {
         dom.nodeValue = mod.text;
-        return;
-    }
-    if(mod.type == Model.BLOCK) {
+    } else {
         clearChildren(dom);
         mod.content.forEach(function(modch){
             dom.appendChild(exports.modelToDom(modch,dom_root,doc));
         });
-        return;
     }
-    if(mod.type == Model.SPAN) {
-        clearChildren(dom);
-        mod.content.forEach(function(modch){
-            dom.appendChild(exports.modelToDom(modch,dom_root,doc));
-        });
-        return;
-    }
-    if(mod.type == Model.ROOT) {
-        clearChildren(dom);
-        mod.content.forEach(function(modch){
-            dom.appendChild(exports.modelToDom(modch,dom_root,doc));
-        });
-        return;
-    }
-
     console.log("cant handle ",mod.type);
 };
-
 
 exports.makeStyleTextRange = function(range, model, style) {
     var changes = [];
