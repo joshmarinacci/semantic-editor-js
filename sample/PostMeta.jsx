@@ -103,7 +103,7 @@ var PostMeta = React.createClass({
             var format = this.props.post.format;
         }
         var timestamp = moment.unix(this.state.timestamp).format("dddd, YYYY MMM DD - hh:mm A");
-        if(this.props.post) {
+        if(this.props.post && this.props.post.tags) {
             var tags = this.props.post.tags.join(" - ");
         } else {
             var tags = "";

@@ -3,6 +3,7 @@
  */
 var moment = require('moment');
 var utils = require('./utils');
+var Model = require('../src/model');
 
 var std_styles = {
     block:{
@@ -97,8 +98,8 @@ var PostDataStore = {
     deletePost:function(post) {
         var self = this;
         console.log("deleting post",post.title,post.id);
-        utils.postJSON("/delete?id="+post.id,{},function(post) {
-            console.log("got the result of deleting",post);
+        utils.postJSON("/delete?id="+post.id,{},function(res) {
+            console.log("got the result of deleting",res);
             for(var i=0; i<self.posts.length; i++) {
                 var oldpost = self.posts[i];
                 if(oldpost.id == post.id) {
@@ -124,15 +125,18 @@ var PostDataStore = {
             slug:'no_slug_set',
             timestamp: moment().unix(),
             format : 'jsem',
-            tags : []
+            tags : [],
+            status:'draft',
+            id: 'id_'+Math.floor(Math.random()*100*1000*1000)
         };
-        this.model = doc.makeModel();
+        this.model = Model.makeModel();
         var blk = this.model.makeBlock();
         var txt = this.model.makeText("new post here");
         blk.append(txt);
         this.model.append(blk);
         var data = this.model.toJSON();
         this.updateContent(post,data);
+        this.posts.unshift(post);
         this.fire('posts');
         this.selectById(post.id);
     },
