@@ -262,31 +262,6 @@ actions_map[exports.UPDATE_CURRENT_STYLE] = updateCurrentStyle;
 exports.actions_map = actions_map;
 
 exports.handleEvent = function(e) {
-    /*
-    if(e.keyCode == 13) { //enter key
-        stopKeyboardEvent(e);
-        var info = dom.saveSelection(model);
-        var block = info.startpos.node.findBlockParent();
-        if(block.style == 'block-code') {
-            model.insertText(info.startpos.node,info.startpos.offset,"\n");
-            dom.syncDom(editor,model);
-            info.startpos.offset++;
-            dom.setSelectionFromPosition(info.startpos);
-        } else {
-            var parts = splitBlock();
-            dom.syncDom(editor,model);
-            var block2 = parts[1].findBlockParent();
-            dom.setSelectionFromPosition({
-                id:block2.id,
-                path:[0],
-                offset:0,
-            });
-            fireEvent('change',{});
-        }
-        return true;
-    }
-    */
-
     if(browser_keymap[e.keyCode]) {
         var keyname = browser_keymap[e.keyCode];
         if(e.metaKey && e.shiftKey) {
@@ -338,7 +313,6 @@ exports.setModel = function(mod) {
 exports.setEditor = function(ed) {
     editor = ed;
 };
-
 
 exports.markAsChanged = function() {
     fireEvent('change',{});
