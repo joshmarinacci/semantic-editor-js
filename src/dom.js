@@ -79,7 +79,6 @@ exports.syncDom = function(editor,model) {
     syncDom(model.getRoot(),editor);
 };
 
-
 exports.saveSelection = function (model) {
     var sel = window.getSelection();
     var range = sel.getRangeAt(0);
@@ -106,7 +105,6 @@ exports.saveSelection = function (model) {
 
     return ret;
 };
-
 
 function genModelFromDom(node) {
     if(node.nodeType == TEXT_NODE) {
@@ -168,7 +166,6 @@ exports.findParentBlockDom = function(elem) {
     return null;
 };
 
-
 function findParentNonTextNode(dom) {
     var node = dom;
     var path = [];
@@ -189,7 +186,6 @@ function findParentNonTextNode(dom) {
         dom_node:dom
     }
 }
-
 
 exports.findModelFromPosition = function(pos,model) {
     var node = model.findNodeById(pos.id);
@@ -241,7 +237,6 @@ exports.setSelectionFromPosition = function(pos) {
     wsel.addRange(range);
 };
 
-
 exports.getCaretClientPosition = function() {
     var x = 0, y = 0;
     var sel = window.getSelection();
@@ -259,11 +254,11 @@ exports.getCaretClientPosition = function() {
 };
 
 
-function modelToDom(mod,dom, doc) {
-    if(mod.getRoot) return modelToDom(mod.getRoot(),dom,doc);
+exports.modelToDom = function(mod,dom, doc) {
+    if(mod.getRoot) return exports.modelToDom(mod.getRoot(),dom,doc);
     if(mod.type == Model.ROOT) {
         mod.content.forEach(function(modch){
-            dom.appendChild(modelToDom(modch,dom,doc));
+            dom.appendChild(exports.modelToDom(modch,dom,doc));
         });
         return dom;
     }
@@ -275,7 +270,7 @@ function modelToDom(mod,dom, doc) {
         block.id = mod.id;
         block.classList.add(mod.style);
         mod.content.forEach(function(modch){
-            block.appendChild(modelToDom(modch,dom,doc));
+            block.appendChild(exports.modelToDom(modch,dom,doc));
         });
         return block;
     }
@@ -289,13 +284,11 @@ function modelToDom(mod,dom, doc) {
         block.id = mod.id;
         block.classList.add(mod.style);
         mod.content.map(function(modch){
-            block.appendChild(modelToDom(modch,dom,doc));
+            block.appendChild(exports.modelToDom(modch,dom,doc));
         });
         return block;
     }
 }
-
-exports.modelToDom = modelToDom;
 
 
 function domIndexOf(dom_child) {
@@ -314,19 +307,17 @@ function findModelForId(model,id) {
     return null;
 }
 
-function findModelForDom(model,domch) {
+exports.findModelForDom = function(model,domch) {
     if(domch.nodeType == ELEMENT_NODE) {
         return findModelForId(model,domch.id);
     }
     if(domch.nodeType == TEXT_NODE) {
-        var parent_mod = findModelForDom(model,domch.parentNode);
+        var parent_mod = exports.findModelForDom(model,domch.parentNode);
         var n = domIndexOf(domch);
         return parent_mod.child(n);
     }
     console.log("UNKNOWN DOM NODE TYPE",domch.nodeType,TEXT_NODE);
-}
-
-exports.findModelForDom = findModelForDom;
+};
 
 exports.findDomForModel = function(modch, dom_root) {
     if(modch == null) throw new Error("model node is null");
@@ -352,7 +343,7 @@ function calculateChangeRange(model,dom,sel) {
     var change = {};
     //is there a previous sibling?
     var domch = sel.start_node;
-    var modch = findModelForDom(model,domch);
+    var modch = exports.findModelForDom(model,domch);
     if(modch == null) {
         throw new Error("cannot find model for dom", domch);
     }
@@ -684,21 +675,21 @@ exports.rebuildDomFromModel = function(mod,dom, dom_root,doc) {
     if(mod.type == Model.BLOCK) {
         clearChildren(dom);
         mod.content.forEach(function(modch){
-            dom.appendChild(modelToDom(modch,dom_root,doc));
+            dom.appendChild(exports.modelToDom(modch,dom_root,doc));
         });
         return;
     }
     if(mod.type == Model.SPAN) {
         clearChildren(dom);
         mod.content.forEach(function(modch){
-            dom.appendChild(modelToDom(modch,dom_root,doc));
+            dom.appendChild(exports.modelToDom(modch,dom_root,doc));
         });
         return;
     }
     if(mod.type == Model.ROOT) {
         clearChildren(dom);
         mod.content.forEach(function(modch){
-            dom.appendChild(modelToDom(modch,dom_root,doc));
+            dom.appendChild(exports.modelToDom(modch,dom_root,doc));
         });
         return;
     }
