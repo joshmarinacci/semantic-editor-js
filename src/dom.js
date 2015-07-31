@@ -220,6 +220,7 @@ exports.findModelForDom = function(model,domch) {
     }
     if(domch.nodeType == TEXT_NODE) {
         var parent_mod = exports.findModelForDom(model,domch.parentNode);
+        if(parent_mod == null) return null;
         var n = domIndexOf(domch);
         return parent_mod.child(n);
     }
@@ -247,13 +248,21 @@ function isText(node) {
     return false;
 }
 
-function calculateChangeRange(model,dom,sel) {
+exports.calculateChangeRange = function(model,dom,sel) {
     var change = {};
     //is there a previous sibling?
     var domch = sel.start_node;
-    var modch = exports.findModelForDom(model,domch);
+    var modch = exports.findModelForDom(model,sel.start_node);
     if(modch == null) {
-        throw new Error("cannot find model for dom", domch);
+        console.log("can't find hte modifed node. could be something that was pasted");
+        var prev = prevDom(sel.start_node);
+        console.log("prev is",prev);
+        if(prev !== null) {
+            modch = exports.findModelForDom(model,prev);
+        }
+    }
+    if(modch == null) {
+        throw new Error("cannot find model for dom", dom);
     }
     var n = domIndexOf(domch);
     if(n == 0) {
@@ -315,8 +324,6 @@ function calculateChangeRange(model,dom,sel) {
 
 }
 
-exports.calculateChangeRange = calculateChangeRange;
-
 function sameParentId(mod,dom) {
     if(mod.getParent().id == dom.parentNode.id) return true;
     return false;
@@ -330,6 +337,9 @@ function nextDom(dom) {
 }
 function prevDom(dom) {
     var n = domIndexOf(dom);
+    if(n == 0) {
+        return prevDom(dom.parentNode);
+    }
     if(n > 0) {
         return dom.parentNode.childNodes[n-1];
     }
