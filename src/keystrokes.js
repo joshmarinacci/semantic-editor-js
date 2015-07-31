@@ -36,6 +36,8 @@ function makeRangeFromSelection(model,window) {
     return range;
 }
 
+exports.makeRangeFromSelection = makeRangeFromSelection;
+
 exports.styleSelection = function(e,style) {
     stopKeyboardEvent(e);
     var range = makeRangeFromSelection(model,window);
@@ -58,6 +60,7 @@ function setCursorAtModel(mod,offset) {
     sel.addRange(range);
 }
 
+exports.setCursorAtModel = setCursorAtModel;
 function setSelectionAtModel(smod, soff, emod, eoff) {
     var sdom = Dom.findDomForModel(smod,editor);
     var rng = document.createRange();
@@ -104,8 +107,10 @@ var key_to_actions = {
     "cmd-shift-c":"style-inline-code",
     "cmd-shift-a":"style-inline-link",
     "cmd-shift-e":"insert-emoji",
-    "enter":"split-line"
+    "enter":"split-line",
 };
+
+exports.key_to_actions = key_to_actions;
 
 function stopKeyboardEvent(e) {
     if(e && e.preventDefault) {
@@ -344,3 +349,4 @@ exports.on = function(type, listener) {
 function fireEvent(type, data) {
     if(listeners[type]) listeners[type].forEach(function(l){  l(data);  });
 }
+exports.fireEvent = fireEvent;

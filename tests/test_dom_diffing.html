@@ -142,6 +142,22 @@ Keystrokes.actions_map['style-inline-link'] = function(e) {
     }
 };
 
+Keystrokes.key_to_actions["cmd-shift-b"] = "clear-styles";
+Keystrokes.actions_map['clear-styles'] = function(e) {
+    Keystrokes.stopKeyboardEvent(e);
+    console.log("clearing the styles");
+    var range = Keystrokes.makeRangeFromSelection(model,window);
+    var changes = Dom.makeClearStyleTextRange(range,model);
+
+    var com_mod = range.start.mod.getParent();
+    Dom.applyChanges(changes,model);
+    Keystrokes.fireEvent('change',{});
+    var com_dom = Dom.findDomForModel(com_mod,dom_root);
+    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
+    var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
+    Keystrokes.setCursorAtModel(nmod.node, nmod.offset);
+};
+
 renderModelTree(model, document.getElementById("model-tree"));
 
 function renderModelTree(model,dom) {

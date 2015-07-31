@@ -692,6 +692,26 @@ test("make span around another, on the span",function(t){
     t.end();
 });
 
+
+test("clear styles from selection",function(t){
+    var model = makeTextSpanText();
+    Model.print(model);
+    var dom_root = makeDom(model);
+    var block = model.getRoot().child(0);
+    t.equal(block.childCount(),3);
+    t.equal(block.child(1).childCount(),1);
+    var range = makeRange(block.child(0),1,block.child(2),1, dom_root);
+    console.log("range = ", range.start.mod.id, range.start.offset, range.end.mod.id, range.end.offset);
+    var changes = Dom.makeClearStyleTextRange(range,model);
+    Dom.applyChanges(changes,model);
+    Model.print(model);
+
+    t.equal(block.childCount(),5);
+    t.end();
+});
+
+return;
+
 test("make span around another, start on the span",function(t){
     var model = makeTextSpanText();
     Model.print(model);

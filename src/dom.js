@@ -815,6 +815,128 @@ exports.makeSplitChange = function(range,model) {
     return changes;
 };
 
+exports.makeClearStyleTextRange = function(range, model, style) {
+    var changes = [];
+    if(range.start.mod == range.end.mod) {
+        //console.log("in the same mod", range.start.offset, range.end.offset);
+        var txt = range.start.mod.text;
+        //start
+        changes.push({
+            type:'text-change',
+            mod: range.start.mod,
+            text: txt.substring(0,range.start.offset)
+        });
+        //end
+        changes.push({
+            type:'insert-after',
+            mod: range.start.mod,
+            insert: model.makeText(txt.substring(range.end.offset))
+        });
+
+        var span = model.makeSpan();
+        span.style = 'body';
+        span.append(model.makeText(txt.substring(range.start.offset,range.end.offset)));
+        changes.push({
+            type:'insert-after',
+            mod: range.start.mod,
+            insert: span
+        });
+        return changes;
+    }
+
+
+    //assume everything is inside the same block
+    //make a span
+    //split first text
+    //before
+    var txt1 = range.start.mod.text;
+    changes.push({
+        type:"text-change",
+        mod: range.start.mod,
+        text: txt1.substring(0,range.start.offset)
+    });
+
+    var prev = range.start.mod;
+    var next = model.makeText(txt1.substring(range.start.offset));
+
+    //put second half of first text inside
+    //add the span
+    changes.push({
+        type:'insert-after',
+        mod: range.start.mod,
+        insert: next
+    });
+    prev = next;
+
+
+    var it = model.getIterator(range.start.mod);
+    var block_mod = range.start.mod.getParent();
+    console.log("the block is",block_mod.id);
+    var tomove = {};
+
+    while(it.hasNext()) {
+        var ch = it.next();
+        if(ch == range.end.mod) {
+            //console.log("reached the end");
+            //console.log('we can move');
+            //only move nodes that don't have parents in the list
+            //and that aren't the end point
+
+            for(var id in tomove) {
+                if(id == range.end.mod.getParent().id) continue;
+                var pid = tomove[id].getParent().id;
+                if(typeof tomove[pid] !== 'undefined'){
+                    //console.log("parent already present. don't move it");
+                    //continue;
+                }
+                if(tomove[id].type == Model.SPAN) {
+                    continue;
+                }
+                console.log('moving', id, 'after',prev.id);
+                changes.push({
+                    type:'delete',
+                    mod:tomove[id]
+                });
+                changes.push({
+                    type:'insert-after',
+                    mod:prev,
+                    insert: tomove[id]
+                });
+                prev = tomove[id];
+            }
+
+            //split the stop point in half, put half inside, leave the rest
+            var etxt = range.end.mod.text;
+
+            next = model.makeText(etxt.substring(0,range.end.offset));
+            changes.push({
+                type:'insert-after',
+                mod:prev,
+                insert: next
+            });
+            prev = next;
+            changes.push({
+                type:'text-change',
+                mod: range.end.mod,
+                text: etxt.substring(range.end.offset)
+            });
+
+            break;
+        }
+        tomove[ch.id] = ch;
+    }
+    return changes;
+};
+
+exports.makeSplitChange = function(range,model) {
+    var changes = [];
+    changes.push({
+        type:'split',
+        mod:range.start.mod,
+        offset:range.start.offset
+    });
+    return changes;
+};
 
 exports.modelToDocumentOffset = function(node,target) {
     if(node == target) return {found:true,offset:0};
