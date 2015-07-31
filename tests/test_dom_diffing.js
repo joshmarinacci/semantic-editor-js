@@ -727,7 +727,21 @@ test("clear styles from selection 2",function(t){
     t.end();
 });
 
-return;
+
+test("handle pasted span", function(t) {
+    var model = makeTextSpanText();
+    Model.print(model);
+    var dom_root = makeDom(model);
+    var span = dom_root.ownerDocument.createElement("span");
+    var txt = dom_root.ownerDocument.createTextNode("foo");
+    var par = dom_root.childNodes[0];
+    span.appendChild(txt);
+    par.insertBefore(span,par.childNodes[1]);
+    Dom.print(dom_root);
+
+    t.equals(model.getRoot().child(0).child(1).text,"foo");
+    t.end();
+});
 
 test("make span around another, start on the span",function(t){
     var model = makeTextSpanText();
