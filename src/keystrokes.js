@@ -1,11 +1,10 @@
 /**
  * Created by josh on 7/18/15.
  */
-var dom = require('./dom');
-var Dom = dom;
-var doc = require('./model');
+var Dom = require('./dom');
+var Model = require('./model');
 var editor;
-var Model = doc;
+
 
 exports.populateKeyDocs = function(elem) {
     for(var stroke in key_to_actions) {
@@ -71,11 +70,11 @@ function setSelectionAtModel(smod, soff, emod, eoff) {
 }
 
 function changeBlockStyle(style) {
-    var info = dom.saveSelection(model);
+    var info = Dom.saveSelection(model);
     var mod_b = info.startpos.node.findBlockParent();
     mod_b.style = style;
-    dom.syncDom(editor,model);
-    dom.setSelectionFromPosition(info.startpos);
+    Dom.syncDom(editor,model);
+    Dom.setSelectionFromPosition(info.startpos);
 }
 
 exports.changeBlockStyle = changeBlockStyle;
@@ -124,7 +123,7 @@ exports.UPDATE_CURRENT_STYLE = 'update-current-style';
 
 function updateCurrentStyle() {
     setTimeout(function() {
-        var info = dom.saveSelection(model);
+        var info = Dom.saveSelection(model);
         var node = info.startpos.node;
         var styleInfo = {
             type:node.type,
