@@ -1,7 +1,8 @@
 var React = require('react');
 var PostDataStore = require('./PostDataStore');
 var doc = require('../src/model');
-var dom = require('../src/dom');
+var Dom = require('../src/dom');
+var dom = Dom;
 var keystrokes = require('../src/keystrokes');
 var MarkdownParser = require('./markdown_parser');
 var Model = doc;
@@ -247,18 +248,35 @@ var PostEditor = React.createClass({
     componentWillUpdate: function() {
         return false;
     },
+    handleInput:function(e) {
+        var editor = React.findDOMNode(this.refs.editor);
+        var model = PostDataStore.getModel();
+        var wrange = window.getSelection().getRangeAt(0);
+        var range = Dom.calculateChangeRange(model, editor, {
+            start_node: wrange.startContainer,
+            start_offset: wrange.startOffset
+        });
+        var changes = Dom.calculateChangeList(range);
+
+        Dom.applyChanges(changes,model);
+        var com_mod = Dom.findCommonParent(range.start.mod, range.end.mod);
+        var com_dom = Dom.findDomForModel(com_mod, editor);
+        Dom.rebuildDomFromModel(com_mod,com_dom, editor, editor.ownerDocument);
+        this.updateTree();
+    },
+    updateTree: function() {
+        var tree_root = document.getElementById("modeltree");
+        var model = PostDataStore.getModel();
+        renderTree(tree_root,model);
+    },
     componentDidMount:function() {
         var editor = React.findDOMNode(this.refs.editor);
         var model = PostDataStore.getModel();
         keystrokes.setEditor(editor);
         keystrokes.setModel(model);
         dom.syncDom(editor,model);
-        editor.addEventListener("input", keystrokes.handleBrowserInputEvent, false);
-        keystrokes.on('change',function(){
-            var tree_root = document.getElementById("modeltree");
-            var model = PostDataStore.getModel();
-            renderTree(tree_root,model);
-        });
+        editor.addEventListener("input", this.handleInput);
+        keystrokes.on('change',this.updateTree);
         PostDataStore.setEditor(editor);
     },
     componentWillReceiveProps: function(props) {
@@ -270,7 +288,7 @@ var PostEditor = React.createClass({
                 fixImages(model.getRoot());
                 PostDataStore.setModel(model);
                 var tree_root = document.getElementById("modeltree");
-                renderTree(tree_root,model);
+                this.updateTree();
                 keystrokes.setModel(model);
                 dom.syncDom(editor,model);
                 return;
@@ -287,7 +305,7 @@ var PostEditor = React.createClass({
                 PostDataStore.setModel(model);
                 console.log("the new model is",model);
                 var tree_root = document.getElementById("modeltree");
-                renderTree(tree_root,model);
+                this.updateTree();
                 keystrokes.setModel(model);
                 dom.syncDom(editor,model);
                 return;
@@ -299,7 +317,7 @@ var PostEditor = React.createClass({
                 console.log("the node model is",model);
                 PostDataStore.setModel(model);
                 var tree_root = document.getElementById("modeltree");
-                renderTree(tree_root,model);
+                this.updateTree();
                 keystrokes.setModel(model);
                 dom.syncDom(editor,model);
                 return;
@@ -311,7 +329,7 @@ var PostEditor = React.createClass({
                 PostDataStore.setModel(model);
                 console.log("the new model is",model);
                 var tree_root = document.getElementById("modeltree");
-                renderTree(tree_root,model);
+                this.updateTree();
                 keystrokes.setModel(model);
                 dom.syncDom(editor,model);
                 return;
