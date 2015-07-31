@@ -46,16 +46,7 @@ exports.styleSelection = function(e,style) {
     var com_dom = Dom.findDomForModel(com_mod,editor);
     Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
     var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    exports.setCursorAtModel(nmod.node, nmod.offset);
-};
-
-exports.setCursorAtModel = function(mod,offset) {
-    var dom = Dom.findDomForModel(mod,editor);
-    var range = document.createRange();
-    range.setStart(dom,offset);
-    var sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
+    Dom.setCursorAtModel(nmod.node, nmod.offset);
 };
 
 exports.changeBlockStyle = function(style) {
@@ -67,7 +58,7 @@ exports.changeBlockStyle = function(style) {
     Dom.rebuildDomFromModel(par,dom_b, editor, document);
     exports.markAsChanged();
     var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    exports.setCursorAtModel(nmod.node, nmod.offset);
+    Dom.setCursorAtModel(nmod.node, nmod.offset);
 };
 
 var browser_keymap = {
@@ -152,7 +143,7 @@ exports.splitLine = function(e) {
     Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
     var new_mod = Model.pathToNode(path,model.getRoot());
     var new_text = model.getNextTextNode(new_mod);
-    exports.setCursorAtModel(new_text,0);
+    Dom.setCursorAtModel(new_text,0);
 };
 
 var actions_map = {
@@ -194,7 +185,7 @@ var actions_map = {
         Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
 
         var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-        exports.setCursorAtModel(nmod.node, nmod.offset);
+        Dom.setCursorAtModel(nmod.node, nmod.offset);
     },
     "delete-forward":function(e) {
         exports.stopKeyboardEvent(e);
@@ -223,7 +214,7 @@ var actions_map = {
         var com_dom = Dom.findDomForModel(com_mod,editor);
         Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
         var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-        exports.setCursorAtModel(nmod.node, nmod.offset);
+        Dom.setCursorAtModel(nmod.node, nmod.offset);
     },
     "style-inline-code":function(e){
         exports.styleSelection(e,'inline-code');

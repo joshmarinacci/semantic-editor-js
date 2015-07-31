@@ -338,6 +338,7 @@ function DModel() {
     }
 
     this.findNodeById = function(id) {
+        if(typeof id == 'undefined') throw new Error('cant look for an undefined id');
         return findModelForId(this,id);
     };
 

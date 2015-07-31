@@ -252,16 +252,17 @@ var PostEditor = React.createClass({
         var editor = React.findDOMNode(this.refs.editor);
         var model = PostDataStore.getModel();
         var wrange = window.getSelection().getRangeAt(0);
-        var range = Dom.calculateChangeRange(model, editor, {
-            start_node: wrange.startContainer,
-            start_offset: wrange.startOffset
-        });
-        var changes = Dom.calculateChangeList(range);
-
-        Dom.applyChanges(changes,model);
-        var com_mod = Dom.findCommonParent(range.start.mod, range.end.mod);
-        var com_dom = Dom.findDomForModel(com_mod, editor);
+        var doff = wrange.startOffset + Dom.domToDocumentOffset(editor,wrange.startContainer).offset;
+        var pasted_container = wrange.startContainer;
+        var dp1 = Dom.findDomParentWithId(pasted_container);
+        var mp1 = Dom.findModelForDom(model,dp1);
+        var new_mod = Dom.rebuildModelFromDom(dp1,model);
+        model.swapNode(mp1,new_mod);
+        var com_mod = new_mod;
+        var com_dom = dp1;
         Dom.rebuildDomFromModel(com_mod,com_dom, editor, editor.ownerDocument);
+        var offd = Dom.documentOffsetToDom(editor,doff);
+        Dom.setCursorAtDom(offd.node, offd.offset);
         this.updateTree();
     },
     updateTree: function() {

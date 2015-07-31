@@ -345,7 +345,7 @@ var MainView = React.createClass({
             var com_dom = Dom.findDomForModel(com_mod,editor);
             Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
             var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-            Keystrokes.setCursorAtModel(nmod.node, nmod.offset);
+            Dom.setCursorAtModel(nmod.node, nmod.offset);
         };
 
 

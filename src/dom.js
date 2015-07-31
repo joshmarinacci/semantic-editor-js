@@ -54,39 +54,6 @@ exports.saveSelection = function (model) {
     return ret;
 };
 
-function genModelFromDom(node) {
-    if(node.nodeType == TEXT_NODE) {
-        return {
-            id:doc.genId(),
-            type:'text',
-            content: node.nodeValue
-        }
-    }
-    if(node.nodeType == Node.ELEMENT_NODE) {
-        var content = [];
-        for(var i=0; i<node.childNodes.length; i++) {
-            content.push(genModelFromDom(node.childNodes[i]));
-        }
-        var style = 'bold';
-        var type = 'inline';
-        if(Array.prototype.indexOf.call(node.classList,'italic') >= 0) {
-            type = 'inline';
-            style = 'italic';
-        }
-        if(Array.prototype.indexOf.call(node.classList,'header') >= 0) {
-            style = 'header';
-            type = 'block';
-        }
-        return {
-            id:doc.genId(),
-            type:type,
-            style:style,
-            content:content
-        }
-    }
-    console.log("ERROR. UNSUPPORTED NODE TYPE",node.nodeType,node);
-}
-
 var u = {
     incount: 0,
     genTab: function() {
@@ -248,7 +215,7 @@ function isText(node) {
     return false;
 }
 
-exports.calculateChangeRange = function(model,dom,sel) {
+exports.calculateChangeRange = function(model,dom_root,sel) {
     var change = {};
     //is there a previous sibling?
     var domch = sel.start_node;
@@ -262,7 +229,7 @@ exports.calculateChangeRange = function(model,dom,sel) {
         }
     }
     if(modch == null) {
-        throw new Error("cannot find model for dom", dom);
+        throw new Error("cannot find model for dom", dom_root);
     }
     var n = domIndexOf(domch);
     if(n == 0) {
@@ -586,8 +553,50 @@ exports.rebuildDomFromModel = function(mod,dom, dom_root,doc) {
         mod.content.forEach(function(modch){
             dom.appendChild(exports.modelToDom(modch,dom_root,doc));
         });
+        dom.id = mod.id;
     }
 };
+
+exports.rebuildModelFromDom = function(dom, model) {
+    return genModelFromDom(dom,model);
+};
+
+function genModelFromDom(node,model) {
+    if(node.nodeType == TEXT_NODE) {
+        return model.makeText(node.nodeValue);
+    }
+    if(node.nodeType == ELEMENT_NODE) {
+        var nd = null;
+        var style = 'bold';
+        if(node.nodeName.toLowerCase() == 'span') {
+            nd = model.makeSpan();
+        }
+        if(node.nodeName == 'A') {
+            nd = model.makeSpan();
+            nd.style = 'link';
+        }
+        if(node.nodeName == 'B') {
+            nd = model.makeSpan();
+            nd.style = 'bold';
+        }
+        if(node.nodeName == 'I') {
+            nd = model.makeSpan();
+            nd.style = 'italic';
+        }
+        if(node.nodeName.toLowerCase() == 'div') {
+            nd = model.makeBlock();
+        }
+        if(nd == null) {
+            console.log("can't convert dom node", node.nodeName);
+            throw new Error("cant convert dom node");
+        }
+        for(var i=0; i<node.childNodes.length; i++) {
+            nd.append(genModelFromDom(node.childNodes[i],model));
+        }
+        return nd;
+    }
+    console.log("ERROR. UNSUPPORTED NODE TYPE",node.nodeType,node);
+}
 
 exports.makeStyleTextRange = function(range, model, style) {
     var changes = [];
@@ -817,3 +826,63 @@ exports.makeSplitChange = function(range,model) {
     });
     return changes;
 };
+
+exports.findDomParentWithId = function(con) {
+    if(!con) return null;
+    if(con.id) return con;
+    return exports.findDomParentWithId(con.parentNode);
+};
+
+exports.domToDocumentOffset = function(node, target) {
+    if (node == target) return {found: true, offset: 0};
+    if (node.nodeType == TEXT_NODE) {
+        return { found: false, offset: node.nodeValue.length };
+    } else {
+        var total = 0;
+        var found = false;
+        for(var i=0; i<node.childNodes.length; i++) {
+            var res = exports.domToDocumentOffset(node.childNodes[i],target);
+            total += res.offset;
+            if(res.found === true) {
+                found = true;
+                break;
+            }
+        }
+        return { found:found, offset:total };
+    }
+};
+
+exports.documentOffsetToDom = function(root, off) {
+    if(root.nodeType == TEXT_NODE) {
+        if(off <= root.nodeValue.length) {
+            return {found:true, offset:off, node:root};
+        }
+        return { found:false, offset:off-root.nodeValue.length };
+    } else {
+        var toff = off;
+        for(var i=0; i<root.childNodes.length; i++) {
+            var res = exports.documentOffsetToDom(root.childNodes[i],toff);
+            if(res.found===true) return res;
+            toff = res.offset;
+        }
+        return {found:false, offset: toff};
+    }
+};
+
+exports.setCursorAtDom = function(dom, offset) {
+    var range = document.createRange();
+    range.setStart(dom,offset);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+};
+
+exports.setCursorAtModel = function(mod,offset) {
+    var dom = Dom.findDomForModel(mod,editor);
+    var range = document.createRange();
+    range.setStart(dom,offset);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+};
+

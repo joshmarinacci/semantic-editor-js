@@ -739,7 +739,31 @@ test("handle pasted span", function(t) {
     par.insertBefore(span,par.childNodes[1]);
     Dom.print(dom_root);
 
-    t.equals(model.getRoot().child(0).child(1).text,"foo");
+    var dp1 = Dom.findDomParentWithId(txt)
+    var mp1 = Dom.findModelForDom(model,dp1);
+
+    var insert_off = 3;
+    var insert_dom = txt;
+    var doff = insert_off + Dom.domToDocumentOffset(dom_root,txt).offset;
+    t.equals(doff,6);
+
+    var new_mod = Dom.rebuildModelFromDom(dp1,model);
+    model.swapNode(mp1,new_mod);
+    Model.print(model);
+    t.equals(model.getRoot().child(0).child(0).text,'abc');
+    t.equals(model.getRoot().child(0).child(1).child(0).text,'foo');
+    t.equals(model.getRoot().child(0).child(2).child(0).text,'def');
+    t.equals(model.getRoot().child(0).child(3).text,'ghi');
+
+    Dom.rebuildDomFromModel(new_mod, dp1, dom_root, dom_root.ownerDocument);
+    Dom.print(dom_root);
+    t.equals(dom_root.childNodes[0].id,new_mod.id);
+
+    //measure offset in dom space
+    //set it back in dom space
+    var offd = Dom.documentOffsetToDom(dom_root,doff);
+    var dd = dom_root.childNodes[0].childNodes[1].childNodes[0];
+    t.equals(offd.node,dd);
     t.end();
 });
 
