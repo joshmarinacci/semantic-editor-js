@@ -14,7 +14,7 @@ console.log('total is',total);
 function countFile(path) {
 
     var file = fs.readFileSync(path).toString();
-    console.log('chars = ', file.length);
+    //console.log('chars = ', file.length);
     var lines = file.split('\n');
     console.log('lines = ', lines.length);
 
@@ -37,5 +37,5 @@ function countFile(path) {
 //1367 july 28th, 2015
 //1554 after adding selection restoration and link code
 //1543 switch to document offset calcs. more deleting dead code
-
+//1544
 

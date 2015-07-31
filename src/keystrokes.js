@@ -14,7 +14,7 @@ exports.populateKeyDocs = function(elem) {
     }
 };
 
-function makeRangeFromSelection(model,window) {
+exports.makeRangeFromSelection = function(model,window) {
     var selection = window.getSelection().getRangeAt(0);
     var range = {
         start: {
@@ -33,17 +33,16 @@ function makeRangeFromSelection(model,window) {
         range.start.offset +
         Dom.modelToDocumentOffset(model.getRoot(), range.start.mod).offset;
     return range;
-}
+};
 
-exports.makeRangeFromSelection = makeRangeFromSelection;
 
 exports.styleSelection = function(e,style) {
-    stopKeyboardEvent(e);
-    var range = makeRangeFromSelection(model,window);
+    exports.stopKeyboardEvent(e);
+    var range = exports.makeRangeFromSelection(model,window);
     var changes = Dom.makeStyleTextRange(range,model,style);
     var com_mod = range.start.mod.getParent();
     Dom.applyChanges(changes,model);
-    fireEvent('change',{});
+    exports.markAsChanged();
     var com_dom = Dom.findDomForModel(com_mod,editor);
     Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
     var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
@@ -60,13 +59,13 @@ exports.setCursorAtModel = function(mod,offset) {
 };
 
 exports.changeBlockStyle = function(style) {
-    var range = makeRangeFromSelection(model, window);
+    var range = exports.makeRangeFromSelection(model, window);
     var mod_b = range.start.mod.findBlockParent();
     mod_b.style = style;
     var par = mod_b.getParent();
     var dom_b = Dom.findDomForModel(par,editor);
     Dom.rebuildDomFromModel(par,dom_b, editor, document);
-    fireEvent('change',{});
+    exports.markAsChanged();
     var nmod = Dom.documentOffsetToModel(model.getRoot(),range.documentOffset);
     exports.setCursorAtModel(nmod.node, nmod.offset);
 };
@@ -106,14 +105,13 @@ var key_to_actions = {
 
 exports.key_to_actions = key_to_actions;
 
-function stopKeyboardEvent(e) {
+exports.stopKeyboardEvent = function(e) {
     if(e && e.preventDefault) {
         e.preventDefault();
         e.stopPropagation();
     }
-}
+};
 
-exports.stopKeyboardEvent = stopKeyboardEvent;
 exports.UPDATE_CURRENT_STYLE = 'update-current-style';
 
 function updateCurrentStyle() {
@@ -143,16 +141,14 @@ function updateCurrentStyle() {
 }
 
 exports.splitLine = function(e) {
-    stopKeyboardEvent(e);
-    var range = makeRangeFromSelection(model,window);
+    exports.stopKeyboardEvent(e);
+    var range = exports.makeRangeFromSelection(model,window);
     var path = Model.nodeToPath(range.start.mod);
     var com_mod = range.start.mod.findBlockParent().getParent();
-    console.log("com_mod = ", com_mod);
     var changes = Dom.makeSplitChange(range,model);
     Dom.applyChanges(changes,model);
-    fireEvent('change',{});
+    exports.markAsChanged();
     var com_dom = Dom.findDomForModel(com_mod,editor);
-    console.log("com dom = ", editor.id);
     Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
     var new_mod = Model.pathToNode(path,model.getRoot());
     var new_text = model.getNextTextNode(new_mod);
@@ -170,15 +166,14 @@ var actions_map = {
         exports.splitLine(e);
     },
     "delete-backward":function(e) {
-        stopKeyboardEvent(e);
-        var range = makeRangeFromSelection(model, window);
+        exports.stopKeyboardEvent(e);
+        var range = exports.makeRangeFromSelection(model, window);
         if(range.collapsed) {
             range.documentOffset--;
             range.start.offset--;
             if(range.start.offset < 0) {
                 var prevtext = model.getPreviousTextNode(range.start.mod);
                 if(prevtext == null) {
-                    console.log("at the start of the doc. can't go backwards anymore");
                     range.start.offset = 0;
                 } else {
                     range.start.mod = prevtext;
@@ -190,7 +185,7 @@ var actions_map = {
         var changes = Dom.makeDeleteTextRange(range,model);
         var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
         Dom.applyChanges(changes,model);
-        fireEvent('change',{});
+        exports.markAsChanged();
 
         //find a parent still in the tree
         while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
@@ -202,8 +197,8 @@ var actions_map = {
         exports.setCursorAtModel(nmod.node, nmod.offset);
     },
     "delete-forward":function(e) {
-        stopKeyboardEvent(e);
-        var range = makeRangeFromSelection(model, window);
+        exports.stopKeyboardEvent(e);
+        var range = exports.makeRangeFromSelection(model, window);
         if(range.collapsed) {
             if(range.end.mod.type !== Model.TEXT) {
                 console.log('something weird happened. bailing');
@@ -213,7 +208,6 @@ var actions_map = {
             if(range.end.offset > range.end.mod.text.length) {
                 var nexttext = model.getNextTextNode(range.end.mod);
                 if(nexttext == null) {
-                    console.log("at the end of the doc. cant go forward anymore");
                     range.end.offset = range.end.mod.text.length;
                 } else {
                     range.end.mod = nexttext;
@@ -224,7 +218,7 @@ var actions_map = {
         var changes = Dom.makeDeleteTextRange(range,model);
         var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
         Dom.applyChanges(changes,model);
-        fireEvent('change',{});
+        exports.markAsChanged();
         while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
         var com_dom = Dom.findDomForModel(com_mod,editor);
         Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
@@ -235,7 +229,7 @@ var actions_map = {
         exports.styleSelection(e,'inline-code');
     },
     "style-inline-link":function(e) {
-        stopKeyboardEvent(e);
+        exports.stopKeyboardEvent(e);
         console.log("links not implemented");
     },
     /*
