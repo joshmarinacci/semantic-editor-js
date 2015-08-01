@@ -344,7 +344,15 @@ var PostEditor = React.createClass({
         keystrokes.handleEvent(e);
     },
     render: function() {
-        return <div ref="editor" id="post-editor" className="semantic-view grow scroll" contentEditable={true} spellCheck={false}
+        var clss = "semantic-view grow scroll";
+        if(this.props.zen) {
+            clss+= " zen";
+        }
+        return <div
+                ref="editor"
+                id="post-editor"
+                className={clss}
+                contentEditable={true} spellCheck={false}
                     onKeyDown={this.keydown}
             ></div>
     }
@@ -366,8 +374,3 @@ function fixImages(root) {
     }
 }
 
-/*
- Found an image http://localhost/images/69312_IMG_3195.JPG
- http://joshondesign.com/wp-content/images/69312_IMG_3195.JPG
-
- */

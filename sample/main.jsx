@@ -240,6 +240,9 @@ var Toolbar = React.createClass({
     doDeletePost: function() {
         PostDataStore.deletePost(PostDataStore.getSelected());
     },
+    toggleZen: function() {
+        this.props.onZen();
+    },
     render: function() {
         return <div className='grow' id="toolbar">
             <BlockDropdown styles={this.state.styles.block} type="block"/>
@@ -248,6 +251,7 @@ var Toolbar = React.createClass({
             <button className="btn btn-default" onClick={this.setModelToPost}>Save</button>
             <button className="btn btn-default" onClick={this.doNewPost}>New</button>
             <button className="btn btn-default" onClick={this.doDeletePost}>Delete</button>
+            <button className="btn btn-default" onClick={this.toggleZen}>Zen</button>
         </div>
     }
 });
@@ -354,7 +358,8 @@ var MainView = React.createClass({
     getInitialState: function() {
         return {
             posts: PostDataStore.getPosts(),
-            selected: PostDataStore.getPosts()[0]
+            selected: PostDataStore.getPosts()[0],
+            zen:true
         }
     },
     componentDidMount: function() {
@@ -392,19 +397,24 @@ var MainView = React.createClass({
 
 
     },
+    toggleZen: function() {
+        this.setState({
+            zen:!this.state.zen
+        })
+    },
     render: function() {
         return (
             <div>
                 <LinkModal/>
                 <div id="main-content" className='container-fluid vbox grow'>
                     <div className='hbox'>
-                        <PostMeta   post={this.state.selected}/>
-                        <Toolbar    post={this.state.selected}/>
+                        <PostMeta   post={this.state.selected}  zen={this.state.zen}/>
+                        <Toolbar    post={this.state.selected} onZen={this.toggleZen}/>
                     </div>
                     <div className='hbox grow'>
-                        <PostList posts={this.state.posts}/>
-                        <PostEditor post={this.state.selected}/>
-                        <div id="modeltree" className="scroll">
+                        <PostList posts={this.state.posts} zen={this.state.zen}/>
+                        <PostEditor post={this.state.selected}  zen={this.state.zen}/>
+                        <div id="modeltree" className="scroll" style={{display:this.state.zen?"none":"block"}}>
                             tree goes here
                         </div>
                     </div>

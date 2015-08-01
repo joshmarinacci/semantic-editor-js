@@ -22,7 +22,12 @@ var PostList = React.createClass({
         var posts = this.props.posts.map(function(post){
             return <PostItem key={post.id} post={post}/>
         });
-        return <ul className='scroll' id="post-list">{posts}</ul>
+        return (
+            <ul className='scroll'
+                   id="post-list"
+                   style={{display:this.props.zen?'none':'block'}}
+            >{posts}</ul>
+        )
     }
 });
 

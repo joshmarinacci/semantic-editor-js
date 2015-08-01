@@ -108,7 +108,9 @@ var PostMeta = React.createClass({
         } else {
             var tags = "";
         }
-        return <div id="post-meta">
+        return <div id="post-meta"
+                style={{display:this.props.zen?'none':'block'}}
+            >
             <form className='form-horizontal'>
                 <div className='form-group'>
                     <label className='col-sm-2 control-label'>slug</label>
