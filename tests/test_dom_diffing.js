@@ -53,6 +53,16 @@ var VirtualDoc = {
                 _list:{},
                 add:function(ch) {
                     this._list[ch] = ch;
+                },
+                contains: function(cn) {
+                    return this._list[cn];
+                },
+                toString: function() {
+                    var str = "";
+                    for(var n in this._list) {
+                        str += "."+this._list[n];
+                    }
+                    return str;
                 }
             },
             get id() {
@@ -792,6 +802,22 @@ test("link back and forth conversion", function(t) {
     var link2 = mroot2.child(0).child(1);
     t.equal(link2.style, 'link');
     t.equal(link2.meta.href, url);
+    t.end();
+});
+
+test("header back and forth conversion", function(t) {
+    var model = makeTextSpanText();
+    var header1 = model.getRoot().child(0)
+    header1.style = 'header';
+    var dom_root = makeDom(model);
+
+    t.equal(header1.style, 'header');
+    Dom.syncDom(dom_root, model);
+    Dom.print(dom_root);
+    var mroot2 = Dom.rebuildModelFromDom(dom_root, model);
+    Model.print(mroot2);
+    var header2 = mroot2.child(0);
+    t.equal(header2.style, 'header');
     t.end();
 });
 return;

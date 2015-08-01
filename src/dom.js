@@ -156,22 +156,22 @@ exports.modelToDom = function(mod,dom, document) {
         return block;
     }
     if(mod.type == Model.SPAN) {
-        var block = document.createElement('span');
+        var span = document.createElement('span');
         if( mod.style == 'image') {
-            block = document.createElement('img');
-            block.setAttribute('src',mod.meta.src);
+            span = document.createElement('img');
+            span.setAttribute('src',mod.meta.src);
         }
         if(mod.style == 'link' && mod.meta && mod.meta.href ) {
-            block = document.createElement('a');
-            block.setAttribute('href',mod.meta.href);
+            span = document.createElement('a');
+            span.setAttribute('href',mod.meta.href);
         }
 
-        block.id = mod.id;
-        block.classList.add(mod.style);
+        span.id = mod.id;
+        span.classList.add(mod.style);
         mod.content.map(function(modch){
-            block.appendChild(exports.modelToDom(modch,dom,document));
+            span.appendChild(exports.modelToDom(modch,dom,document));
         });
-        return block;
+        return span;
     }
 };
 
@@ -449,7 +449,7 @@ exports.findCommonParent = function(a,b) {
 exports.print = function(dom,tab) {
     if(!tab) tab = "";
     if(dom.nodeType == ELEMENT_NODE) {
-        console.log(tab + dom.nodeName + "#"+dom.id);
+        console.log(tab + dom.nodeName + "#"+dom.id + " " + dom.classList);
         dom.childNodes.forEach(function(domch){
             exports.print(domch,tab+"  ");
         })
@@ -596,6 +596,9 @@ function genModelFromDom(node,model) {
         }
         if(node.nodeName.toLowerCase() == 'div') {
             nd = model.makeBlock();
+            if(node.classList.contains('header')) {
+                nd.style = 'header';
+            }
         }
         if(node.nodeName.toLowerCase() == 'br') {
             nd = model.makeBlock();
