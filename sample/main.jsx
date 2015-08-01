@@ -300,6 +300,10 @@ var LinkModal = React.createClass({
             mod.meta = {}
         }
         mod.meta.href = this.state.targetHref;
+        //must propagate this back to the dom
+        var editor = PostDataStore.getEditor();
+        var com_dom = Dom.findDomForModel(mod, editor);
+        Dom.rebuildDomFromModel(mod.getParent(),com_dom.parentElement, editor, editor.ownerDocument);
         this.close();
     },
     updateHref: function() {

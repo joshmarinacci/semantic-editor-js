@@ -36,6 +36,7 @@ var VirtualDoc = {
             nodeName: name,
             nodeType:Dom.Node.ELEMENT_NODE,
             childNodes:[],
+            atts:{},
             child: function(i) {
                 return this.childNodes[i];
             },
@@ -72,6 +73,12 @@ var VirtualDoc = {
                 this.childNodes.splice(n,1);
                 this.ownerDocument._change_count++;
                 return ch;
+            },
+            setAttribute: function(name,value) {
+                this.atts[name] = value;
+            },
+            getAttribute: function(name) {
+                return this.atts[name];
             }
         }
     },
@@ -766,6 +773,28 @@ test("handle pasted span", function(t) {
     t.equals(offd.node,dd);
     t.end();
 });
+
+test("link back and forth conversion", function(t) {
+    var url = 'http://joshondesign.com/';
+    var model = makeTextSpanText();
+    var link = model.getRoot().child(0).child(1);
+    link.style = 'link';
+    link.meta = { href:url };
+    Model.print(model);
+    var dom_root = makeDom(model);
+
+
+    t.equal(link.style, 'link');
+    t.equal(link.meta.href, url);
+    Dom.syncDom(dom_root, model);
+    var mroot2 = Dom.rebuildModelFromDom(dom_root, model);
+    Model.print(mroot2);
+    var link2 = mroot2.child(0).child(1);
+    t.equal(link2.style, 'link');
+    t.equal(link2.meta.href, url);
+    t.end();
+});
+return;
 
 test("make span around another, start on the span",function(t){
     var model = makeTextSpanText();

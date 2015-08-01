@@ -135,28 +135,28 @@ exports.getCaretClientPosition = function() {
     return { x: x, y: y };
 };
 
-exports.modelToDom = function(mod,dom, doc) {
-    if(mod.getRoot) return exports.modelToDom(mod.getRoot(),dom,doc);
+exports.modelToDom = function(mod,dom, document) {
+    if(mod.getRoot) return exports.modelToDom(mod.getRoot(),dom,document);
     if(mod.type == Model.ROOT) {
         mod.content.forEach(function(modch){
-            dom.appendChild(exports.modelToDom(modch,dom,doc));
+            dom.appendChild(exports.modelToDom(modch,dom,document));
         });
         return dom;
     }
     if(mod.type == Model.TEXT) {
-        return doc.createTextNode(mod.text);
+        return document.createTextNode(mod.text);
     }
     if(mod.type == Model.BLOCK) {
-        var block = doc.createElement('div');
+        var block = document.createElement('div');
         block.id = mod.id;
         block.classList.add(mod.style);
         mod.content.forEach(function(modch){
-            block.appendChild(exports.modelToDom(modch,dom,doc));
+            block.appendChild(exports.modelToDom(modch,dom,document));
         });
         return block;
     }
     if(mod.type == Model.SPAN) {
-        var block = doc.createElement('span');
+        var block = document.createElement('span');
         if( mod.style == 'image') {
             block = document.createElement('img');
             block.setAttribute('src',mod.meta.src);
@@ -164,17 +164,16 @@ exports.modelToDom = function(mod,dom, doc) {
         if(mod.style == 'link' && mod.meta && mod.meta.href ) {
             block = document.createElement('a');
             block.setAttribute('href',mod.meta.href);
-            block.setAttribute("class","with-tooltip");
         }
 
         block.id = mod.id;
         block.classList.add(mod.style);
         mod.content.map(function(modch){
-            block.appendChild(exports.modelToDom(modch,dom,doc));
+            block.appendChild(exports.modelToDom(modch,dom,document));
         });
         return block;
     }
-}
+};
 
 function domIndexOf(dom_child) {
     return Array.prototype.indexOf.call(dom_child.parentNode.childNodes,dom_child);
@@ -570,16 +569,28 @@ function genModelFromDom(node,model) {
         var style = 'bold';
         if(node.nodeName.toLowerCase() == 'span') {
             nd = model.makeSpan();
+            if(node.className == 'link') {
+                nd.style = 'link';
+                nd.meta = {
+                    href: node.getAttribute('href')
+                }
+            }
+            if(node.className == 'italic') {
+                nd.style = 'italic'
+            }
         }
-        if(node.nodeName == 'A') {
+        if(node.nodeName.toLowerCase() == 'a') {
             nd = model.makeSpan();
             nd.style = 'link';
+            nd.meta = {
+                href: node.getAttribute('href')
+            }
         }
-        if(node.nodeName == 'B') {
+        if(node.nodeName.toLowerCase() == 'b') {
             nd = model.makeSpan();
             nd.style = 'bold';
         }
-        if(node.nodeName == 'I') {
+        if(node.nodeName.toLowerCase() == 'i') {
             nd = model.makeSpan();
             nd.style = 'italic';
         }
