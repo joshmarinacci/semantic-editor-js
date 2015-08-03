@@ -302,6 +302,25 @@ exports.handleInput = function(e) {
     exports.markAsChanged();
     //renderModelTree(model,document.getElementById("model-tree"));
 };
+/*
+ handleInput:function(e) {
+ var editor = React.findDOMNode(this.refs.editor);
+ var model = PostDataStore.getModel();
+ var wrange = window.getSelection().getRangeAt(0);
+ var doff = wrange.startOffset + Dom.domToDocumentOffset(editor,wrange.startContainer).offset;
+ var pasted_container = wrange.startContainer;
+ var dp1 = Dom.findDomParentWithId(pasted_container);
+ var mp1 = Dom.findModelForDom(model,dp1);
+ var new_mod = Dom.rebuildModelFromDom(dp1,model);
+ model.swapNode(mp1,new_mod);
+ var com_mod = new_mod;
+ var com_dom = dp1;
+ Dom.rebuildDomFromModel(com_mod,com_dom, editor, editor.ownerDocument);
+ var offd = Dom.documentOffsetToDom(editor,doff);
+ Dom.setCursorAtDom(offd.node, offd.offset);
+ this.updateTree();
+ },
+ */
 
 exports.setModel = function(mod) {
     model = mod;

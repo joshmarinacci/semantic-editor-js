@@ -324,6 +324,7 @@ Editor.prototype.setDomRoot = function(dom_root) {
     Keystrokes.setEditor(this._dom_root);
     this._dom_root.addEventListener("input", Keystrokes.handleInput);
     this._dom_root.addEventListener("keydown", this._handleKeydown.bind(this));
+    this.syncDom();
 };
 
 Editor.prototype._handleKeydown = function(evt) {

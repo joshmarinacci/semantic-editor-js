@@ -5,7 +5,6 @@ var Dom = require('../src/dom');
 var Keystrokes = require('../src/keystrokes');
 var MarkdownParser = require('./markdown_parser');
 
-
 var u = {
     incount: 0,
     genTab: function() {
@@ -24,7 +23,6 @@ var u = {
         this.incount--;
     }
 };
-
 
 var dom_table = {
     'p':{
@@ -239,29 +237,9 @@ function renderTreeChild(mnode) {
     return ul;
 }
 
-
-
-
 var PostEditor = React.createClass({
     componentWillUpdate: function() {
         return false;
-    },
-    handleInput:function(e) {
-        var editor = React.findDOMNode(this.refs.editor);
-        var model = PostDataStore.getModel();
-        var wrange = window.getSelection().getRangeAt(0);
-        var doff = wrange.startOffset + Dom.domToDocumentOffset(editor,wrange.startContainer).offset;
-        var pasted_container = wrange.startContainer;
-        var dp1 = Dom.findDomParentWithId(pasted_container);
-        var mp1 = Dom.findModelForDom(model,dp1);
-        var new_mod = Dom.rebuildModelFromDom(dp1,model);
-        model.swapNode(mp1,new_mod);
-        var com_mod = new_mod;
-        var com_dom = dp1;
-        Dom.rebuildDomFromModel(com_mod,com_dom, editor, editor.ownerDocument);
-        var offd = Dom.documentOffsetToDom(editor,doff);
-        Dom.setCursorAtDom(offd.node, offd.offset);
-        this.updateTree();
     },
     updateTree: function() {
         var tree_root = document.getElementById("modeltree");
@@ -269,14 +247,9 @@ var PostEditor = React.createClass({
         renderTree(tree_root,model);
     },
     componentDidMount:function() {
-        var dom_root = React.findDOMNode(this.refs.editor);
         var editor = PostDataStore.getRealEditor();
-        editor.setDomRoot(dom_root);
-        var model = PostDataStore.getModel();
-        Dom.syncDom(dom_root,model);
-        dom_root.addEventListener("input", this.handleInput);
+        editor.setDomRoot(React.findDOMNode(this.refs.editor));
         editor.on('change',this.updateTree);
-        PostDataStore.setEditor(dom_root);
     },
     componentWillReceiveProps: function(props) {
         if (typeof props.post == 'undefined') return;
