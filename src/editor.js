@@ -387,7 +387,6 @@ Editor.prototype.getStyleAtPosition = function(pos) {
 Editor.prototype._simulateKeyboardEvent = function(evt) {
     var act = Keystrokes.findActionByEvent(evt, code_key_map,
         this._key_action_map, actions_map);
-    console.log("the action is", act);
     if(act) act(evt,this);
 }
 
