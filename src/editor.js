@@ -354,6 +354,7 @@ Editor.prototype.getModel = function() {
 Editor.prototype.setModel = function(model) {
     this._model = model;
     Keystrokes.setModel(model);
+    this.syncDom();
 };
 
 /*
@@ -411,8 +412,14 @@ Editor.prototype.addKeyBinding = function(name, keydef) {
     this._key_action_map[keydef] = name;
 };
 
+Editor.prototype.addAction = function(name, action) {
+    actions_map[name] = action;
+};
+
 Editor.prototype.syncDom = function() {
-    Dom.syncDom(this._dom_root,this._model);
+    if(this._dom_root && this._model) {
+        Dom.syncDom(this._dom_root, this._model);
+    }
 };
 
 Editor.prototype.makeModelPosition = function(mod,off) {

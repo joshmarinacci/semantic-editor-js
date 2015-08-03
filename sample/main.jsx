@@ -1,6 +1,8 @@
 var React = require('react');
 
 var Editor = require('../src/editor');
+var Model = require('../src/model');
+var Dom   = require('../src/dom');
 var Keystrokes = require('../src/keystrokes');
 var moment = require('moment');
 var PostDataStore = require('./PostDataStore');
@@ -62,7 +64,7 @@ function deleteEmptyText(root) {
     if(root.childCount() > 0) {
         root.content.forEach(deleteEmptyText);
     }
-    if(root.type == doc.TEXT && root.text.trim().length == 0) {
+    if(root.type == Model.TEXT && root.text.trim().length == 0) {
         root.deleteFromParent();
     }
 }
@@ -71,7 +73,7 @@ function deleteEmptySpans(root) {
     if(root.childCount() > 0) {
         root.content.forEach(deleteEmptySpans);
     } else {
-        if(root.type == doc.SPAN) {
+        if(root.type == Model.SPAN) {
             root.deleteFromParent();
         }
     }
@@ -81,7 +83,7 @@ function deleteEmptyBlocks(root) {
     if(root.childCount() > 0) {
         root.content.forEach(deleteEmptyBlocks);
     } else {
-        if(root.type == doc.BLOCK) {
+        if(root.type == Model.BLOCK) {
             root.deleteFromParent();
         }
     }
@@ -89,7 +91,7 @@ function deleteEmptyBlocks(root) {
 
 function convertPlainSpans(root) {
     var model = PostDataStore.getModel();
-    if(root.type == doc.SPAN && root.style == 'plain') {
+    if(root.type == Model.SPAN && root.style == 'plain') {
         if(root.childCount() == 1) {
             model.swapNode(root,root.child(0));
             return;
@@ -102,14 +104,14 @@ function convertPlainSpans(root) {
 }
 
 function mergeAdjacentText(root) {
-    if(root.type == doc.TEXT) return;
+    if(root.type == Model.TEXT) return;
     if(root.childCount() <= 1) return;
 
     var child = root.child(0);
     var i=1;
     while(i<root.childCount()) {
         var chnext = root.child(i);
-        if(child.type == doc.TEXT && chnext.type == doc.TEXT) {
+        if(child.type == Model.TEXT && chnext.type == Model.TEXT) {
             child.text = child.text + chnext.text;
             chnext.deleteFromParent();
         } else {
@@ -134,57 +136,53 @@ var CleanupDropdown = React.createClass({
     removeEmptyBlocks: function() {
         var model = PostDataStore.getModel();
         deleteEmptyBlocks(model.getRoot());
-        var editor = PostDataStore.getEditor();
-        dom.syncDom(editor,model);
+        PostDataStore.getRealEditor().syncDom();
         Keystrokes.markAsChanged();
         this.setState({open:false})
     },
     removeEmptyText: function() {
         var model = PostDataStore.getModel();
         deleteEmptyText(model.getRoot());
-        var editor = PostDataStore.getEditor();
-        dom.syncDom(editor,model);
+        PostDataStore.getRealEditor().syncDom();
         Keystrokes.markAsChanged();
         this.setState({open:false})
     },
     removeEmptySpans: function() {
         var model = PostDataStore.getModel();
         deleteEmptySpans(model.getRoot());
-        var editor = PostDataStore.getEditor();
-        dom.syncDom(editor,model);
+        PostDataStore.getRealEditor().syncDom();
         Keystrokes.markAsChanged();
         this.setState({open:false})
     },
     removePlainSpans: function() {
         var model = PostDataStore.getModel();
         convertPlainSpans(model.getRoot());
-        var editor = PostDataStore.getEditor();
-        dom.syncDom(editor,model);
+        PostDataStore.getRealEditor().syncDom();
         Keystrokes.markAsChanged();
         this.setState({open:false})
     },
     mergeAdjacentText: function() {
         var model = PostDataStore.getModel();
         mergeAdjacentText(model.getRoot());
-        var editor = PostDataStore.getEditor();
-        dom.syncDom(editor,model);
+        PostDataStore.getRealEditor().syncDom();
         Keystrokes.markAsChanged();
         this.setState({open:false})
     },
     raiseBlocks: function() {
         var model = PostDataStore.getModel();
-        var editor = PostDataStore.getEditor();
-        var toraise = [];
+        var toRaise = [];
         model.getRoot().content.forEach(function(par) {
             par.content.forEach(function(ch) {
                 if(ch.type == Model.BLOCK) {
                     console.log("need to raise it up");
-                    toraise.push(ch);
+                    toRaise.push(ch);
                 }
             });
         });
-        console.log("need to raise up", toraise.length);
-        dom.syncDom(editor,model);
+        console.log("need to raise up", toRaise.length);
+        PostDataStore.getRealEditor().syncDom();
+        Keystrokes.markAsChanged();
+        this.setState({open:false})
         Keystrokes.markAsChanged();
         this.setState({open:false});
     },
@@ -263,8 +261,8 @@ var LinkModal = React.createClass({
         var self = this;
         var editor = PostDataStore.getRealEditor();
         editor.addKeyBinding("style-inline-link",'cmd-shift-a');
-        /*
-        Keystrokes.actions_map['style-inline-link'] = function(e) {
+        editor.addAction("style-inline-link",function(e) {
+            console.log('styling an inline link');
             Keystrokes.stopKeyboardEvent(e);
             var sel = window.getSelection();
             var range = sel.getRangeAt(0);
@@ -288,8 +286,7 @@ var LinkModal = React.createClass({
                 console.log("doing my own link");
                 Keystrokes.styleSelection(e,'link');
             }
-        };
-        */
+        });
     },
     close: function() {
         this.setState({
@@ -299,18 +296,17 @@ var LinkModal = React.createClass({
         });
     },
     saveLink: function() {
-        /*
         var mod = this.state.targetModel;
         if(!mod.meta) {
             mod.meta = {}
         }
         mod.meta.href = this.state.targetHref;
         //must propagate this back to the dom
-        var editor = PostDataStore.getEditor();
-        var com_dom = Dom.findDomForModel(mod, editor);
-        Dom.rebuildDomFromModel(mod.getParent(),com_dom.parentElement, editor, editor.ownerDocument);
+        //var editor = PostDataStore.getEditor();
+        //var com_dom = Dom.findDomForModel(mod, editor);
+        //Dom.rebuildDomFromModel(mod.getParent(),com_dom.parentElement, editor, editor.ownerDocument);
+        PostDataStore.getRealEditor().syncDom();
         this.close();
-        */
     },
     updateHref: function() {
         this.setState({
