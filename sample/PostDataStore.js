@@ -4,6 +4,7 @@
 var moment = require('moment');
 var utils = require('./utils');
 var Model = require('../src/model');
+var Editor = require('../src/editor');
 
 var std_styles = {
     block:{
@@ -28,7 +29,6 @@ var PostDataStore = {
     selected:null,
     posts: [],
     listeners:{},
-    model:null,
     setPosts: function(posts) {
         this.posts = posts;
         this.fire('posts');
@@ -37,11 +37,11 @@ var PostDataStore = {
         return this.posts;
     },
     getModel: function() {
-        return this.model;
+        return this._real_editor.getModel();
     },
     setModel: function(model) {
         model.setStyles(std_styles);
-        this.model = model;
+        this._real_editor.setModel(model);
     },
     selectById:function(id) {
         var self = this;
@@ -111,14 +111,12 @@ var PostDataStore = {
             self.selectById(self.posts[0].id);
         });
     },
-
     loadPosts: function() {
         var self = this;
         utils.getJSON('/posts',function(resp){
             self.setPosts(resp);
         });
     },
-
     makeNewPost: function() {
         var post = {
             title:'no title set',
@@ -129,26 +127,28 @@ var PostDataStore = {
             status:'draft',
             id: 'id_'+Math.floor(Math.random()*100*1000*1000)
         };
-        this.model = Model.makeModel();
-        var blk = this.model.makeBlock();
-        var txt = this.model.makeText("new post here");
+        var model = Model.makeModel();
+        var blk = model.makeBlock();
+        var txt = model.makeText("new post here");
         blk.append(txt);
-        this.model.append(blk);
-        var data = this.model.toJSON();
+        model.append(blk);
+        var data = model.toJSON();
+        this._real_editor.setModel(model);
         this.updateContent(post,data);
         this.posts.unshift(post);
         this.fire('posts');
         this.selectById(post.id);
     },
-
     setEditor: function(ed) {
         this.editor = ed;
     },
-
     getEditor: function() {
         return this.editor;
+    },
+    _real_editor: Editor.makeEditor(),
+    getRealEditor: function() {
+        return this._real_editor;
     }
 };
-
 
 module.exports = PostDataStore;

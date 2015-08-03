@@ -1,11 +1,7 @@
 var React = require('react');
 
-var Model = require('../src/model');
-var doc = Model;
-var dom = require('../src/dom');
-var Dom = dom;
-var keystrokes = require('../src/keystrokes');
-var Keystrokes = keystrokes;
+var Editor = require('../src/editor');
+var Keystrokes = require('../src/keystrokes');
 var moment = require('moment');
 var PostDataStore = require('./PostDataStore');
 var PostEditor = require('./PostEditor.jsx');
@@ -15,7 +11,7 @@ var utils = require('./utils');
 
 
 function setupModel() {
-    var model = doc.makeModel();
+    var model = Editor.makeModel();
     var block1 = model.makeBlock();
     var text1 = model.makeText("This is an empty post. please create a new one.");
     block1.append(text1);
@@ -38,10 +34,10 @@ var BlockDropdown = React.createClass({
     selectedStyle: function(name,e) {
         var model = PostDataStore.getModel();
         if(this.props.type == 'block') {
-            keystrokes.changeBlockStyle(model.getStyles().block[name]);
+            Keystrokes.changeBlockStyle(model.getStyles().block[name]);
         }
         if(this.props.type == 'inline') {
-            keystrokes.styleSelection(null,model.getStyles().inline[name]);
+            Keystrokes.styleSelection(null,model.getStyles().inline[name]);
         }
         this.setState({open:false})
     },
@@ -140,7 +136,7 @@ var CleanupDropdown = React.createClass({
         deleteEmptyBlocks(model.getRoot());
         var editor = PostDataStore.getEditor();
         dom.syncDom(editor,model);
-        keystrokes.markAsChanged();
+        Keystrokes.markAsChanged();
         this.setState({open:false})
     },
     removeEmptyText: function() {
@@ -148,7 +144,7 @@ var CleanupDropdown = React.createClass({
         deleteEmptyText(model.getRoot());
         var editor = PostDataStore.getEditor();
         dom.syncDom(editor,model);
-        keystrokes.markAsChanged();
+        Keystrokes.markAsChanged();
         this.setState({open:false})
     },
     removeEmptySpans: function() {
@@ -156,7 +152,7 @@ var CleanupDropdown = React.createClass({
         deleteEmptySpans(model.getRoot());
         var editor = PostDataStore.getEditor();
         dom.syncDom(editor,model);
-        keystrokes.markAsChanged();
+        Keystrokes.markAsChanged();
         this.setState({open:false})
     },
     removePlainSpans: function() {
@@ -164,7 +160,7 @@ var CleanupDropdown = React.createClass({
         convertPlainSpans(model.getRoot());
         var editor = PostDataStore.getEditor();
         dom.syncDom(editor,model);
-        keystrokes.markAsChanged();
+        Keystrokes.markAsChanged();
         this.setState({open:false})
     },
     mergeAdjacentText: function() {
@@ -172,7 +168,7 @@ var CleanupDropdown = React.createClass({
         mergeAdjacentText(model.getRoot());
         var editor = PostDataStore.getEditor();
         dom.syncDom(editor,model);
-        keystrokes.markAsChanged();
+        Keystrokes.markAsChanged();
         this.setState({open:false})
     },
     raiseBlocks: function() {
@@ -189,7 +185,7 @@ var CleanupDropdown = React.createClass({
         });
         console.log("need to raise up", toraise.length);
         dom.syncDom(editor,model);
-        keystrokes.markAsChanged();
+        Keystrokes.markAsChanged();
         this.setState({open:false});
     },
     render: function() {
@@ -265,6 +261,9 @@ var LinkModal = React.createClass({
     },
     componentDidMount: function() {
         var self = this;
+        var editor = PostDataStore.getRealEditor();
+        editor.addKeyBinding("style-inline-link",'cmd-shift-a');
+        /*
         Keystrokes.actions_map['style-inline-link'] = function(e) {
             Keystrokes.stopKeyboardEvent(e);
             var sel = window.getSelection();
@@ -290,6 +289,7 @@ var LinkModal = React.createClass({
                 Keystrokes.styleSelection(e,'link');
             }
         };
+        */
     },
     close: function() {
         this.setState({
@@ -299,6 +299,7 @@ var LinkModal = React.createClass({
         });
     },
     saveLink: function() {
+        /*
         var mod = this.state.targetModel;
         if(!mod.meta) {
             mod.meta = {}
@@ -309,6 +310,7 @@ var LinkModal = React.createClass({
         var com_dom = Dom.findDomForModel(mod, editor);
         Dom.rebuildDomFromModel(mod.getParent(),com_dom.parentElement, editor, editor.ownerDocument);
         this.close();
+        */
     },
     updateHref: function() {
         this.setState({
@@ -375,6 +377,7 @@ var MainView = React.createClass({
             })
         });
 
+        /*
         Keystrokes.key_to_actions["cmd-shift-b"] = "clear-styles";
         Keystrokes.actions_map['clear-styles'] = function(e) {
             var editor = PostDataStore.getEditor();
@@ -393,6 +396,7 @@ var MainView = React.createClass({
             var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
             Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
         };
+        */
 
 
 

@@ -1,11 +1,9 @@
 var React = require('react');
 var PostDataStore = require('./PostDataStore');
-var doc = require('../src/model');
+var Model = require('../src/model');
 var Dom = require('../src/dom');
-var dom = Dom;
-var keystrokes = require('../src/keystrokes');
+var Keystrokes = require('../src/keystrokes');
 var MarkdownParser = require('./markdown_parser');
-var Model = doc;
 
 
 var u = {
@@ -30,87 +28,87 @@ var u = {
 
 var dom_table = {
     'p':{
-        type:doc.BLOCK,
+        type:Model.BLOCK,
         style:'body'
     },
     'ul':{
-        type:doc.BLOCK,
+        type:Model.BLOCK,
         style:'unordered-list'
     },
     'ol':{
-        type:doc.BLOCK,
+        type:Model.BLOCK,
         style:'ordered-list'
     },
     'li':{
-        type:doc.BLOCK,
+        type:Model.BLOCK,
         style:'list-item'
     },
 
     'h4':{
-        type:doc.BLOCK,
+        type:Model.BLOCK,
         style:'subheader'
     },
     'h3':{
-        type:doc.BLOCK,
+        type:Model.BLOCK,
         style:'subheader'
     },
     'h2':{
-        type:doc.BLOCK,
+        type:Model.BLOCK,
         style:'header'
     },
     'h1':{
-        type:doc.BLOCK,
+        type:Model.BLOCK,
         style:'header'
     },
     'div': {
-        type:doc.BLOCK,
+        type:Model.BLOCK,
         style:'body'
     },
     'pre': {
-        type:doc.BLOCK,
+        type:Model.BLOCK,
         style:'block-code'
     },
     'blockquote':{
-        type:doc.BLOCK,
+        type:Model.BLOCK,
         style:'block-quote'
     },
 
 
     '#text': {
-        type:doc.TEXT,
+        type:Model.TEXT,
         style:'none'
     },
 
     'em': {
-        type:doc.SPAN,
+        type:Model.SPAN,
         style:'italic'
     },
     'span': {
-        type:doc.SPAN,
+        type:Model.SPAN,
         style:'plain'
     },
     'strong': {
-        type:doc.SPAN,
+        type:Model.SPAN,
         style:'bold'
     },
     'b': {
-        type:doc.SPAN,
+        type:Model.SPAN,
         style:'bold'
     },
     'i': {
-        type: doc.SPAN,
+        type: Model.SPAN,
         style:'italic'
     },
     'a': {
-        type:doc.SPAN,
+        type:Model.SPAN,
         style:'link'
     },
     'strike': {
-        type: doc.SPAN,
+        type: Model.SPAN,
         style:'delete'
     },
     'del': {
-        type:doc.SPAN,
+        type:Model.SPAN,
         style:'delete'
     },
     '#comment': {
@@ -118,11 +116,11 @@ var dom_table = {
         style:'none'
     },
     'img': {
-        type:doc.SPAN,
+        type:Model.SPAN,
         style:'image'
     },
     'code': {
-        type:doc.SPAN,
+        type:Model.SPAN,
         style:'inline-code'
     }
 }
@@ -146,7 +144,7 @@ function domToModel(dom,model,options) {
         //u.p("skipping",dom);
         return null;
     }
-    if(def.type == doc.BLOCK){
+    if(def.type == Model.BLOCK){
         var out = model.makeBlock();
         for(var i=0; i<dom.childNodes.length; i++) {
             var node = dom.childNodes[i];
@@ -158,7 +156,7 @@ function domToModel(dom,model,options) {
         out.style = def.style;
         return out;
     }
-    if(def.type == doc.SPAN) {
+    if(def.type == Model.SPAN) {
         var out = model.makeSpan();
         for(var i=0; i<dom.childNodes.length; i++) {
             var node = dom.childNodes[i];
@@ -180,7 +178,7 @@ function domToModel(dom,model,options) {
         }
         return out;
     }
-    if(def.type == doc.TEXT) {
+    if(def.type == Model.TEXT) {
         return model.makeText(dom.nodeValue);
     }
 }
@@ -189,7 +187,7 @@ domToNewModel = function(dom_root, options) {
         style_to_element_map: {}
     };
 
-    var model = doc.makeModel();
+    var model = Model.makeModel();
     for(var i=0; i<dom_root.childNodes.length; i++) {
         var dom_node = dom_root.childNodes[i];
         u.indent();
@@ -199,7 +197,7 @@ domToNewModel = function(dom_root, options) {
             continue;
         }
         //move text and span children into a block. can't be top-level
-        if(ch.type == doc.TEXT || ch.type == doc.SPAN) {
+        if(ch.type == Model.TEXT || ch.type == Model.SPAN) {
             var blk = model.makeBlock();
             blk.style = 'body';
             blk.append(ch);
@@ -229,7 +227,7 @@ function renderTreeChild(mnode) {
         var child = mnode.child(i);
         var text = child.type + " " + child.id + " " + child.style;
         li.appendChild(document.createTextNode(text));
-        if(child.type == doc.TEXT) {
+        if(child.type == Model.TEXT) {
             li.appendChild(document.createTextNode(': "'+child.text+'"'));
         }
         if(child.childCount() > 0) {
@@ -271,77 +269,59 @@ var PostEditor = React.createClass({
         renderTree(tree_root,model);
     },
     componentDidMount:function() {
-        var editor = React.findDOMNode(this.refs.editor);
+        var dom_root = React.findDOMNode(this.refs.editor);
+        var editor = PostDataStore.getRealEditor();
+        editor.setDomRoot(dom_root);
         var model = PostDataStore.getModel();
-        keystrokes.setEditor(editor);
-        keystrokes.setModel(model);
-        dom.syncDom(editor,model);
-        editor.addEventListener("input", this.handleInput);
-        keystrokes.on('change',this.updateTree);
-        PostDataStore.setEditor(editor);
+        Dom.syncDom(dom_root,model);
+        dom_root.addEventListener("input", this.handleInput);
+        editor.on('change',this.updateTree);
+        PostDataStore.setEditor(dom_root);
     },
     componentWillReceiveProps: function(props) {
         if (typeof props.post == 'undefined') return;
-        var editor = React.findDOMNode(this.refs.editor);
+        var domRoot = React.findDOMNode(this.refs.editor);
         try {
             if(props.post.format == 'jsem') {
-                var model = doc.fromJSON(props.post.raw);
+                var model = Model.fromJSON(props.post.raw);
                 fixImages(model.getRoot());
                 PostDataStore.setModel(model);
-                var tree_root = document.getElementById("modeltree");
                 this.updateTree();
-                keystrokes.setModel(model);
-                dom.syncDom(editor,model);
                 return;
             }
             if(props.post.format == 'semantic') {
                 console.log("doing semantic");
-                dom.setRawHtml(editor,props.post.raw);
+                Dom.setRawHtml(domRoot,props.post.raw);
                 var options = {
                     style_to_element_map:{
                         'blocktype_header':'h3'
                     }
                 }
-                var model = domToNewModel(editor,options);
+                var model = domToNewModel(domRoot,options);
                 PostDataStore.setModel(model);
-                console.log("the new model is",model);
-                var tree_root = document.getElementById("modeltree");
                 this.updateTree();
-                keystrokes.setModel(model);
-                dom.syncDom(editor,model);
                 return;
             }
             if(props.post.format == 'markdown') {
                 console.log("doing markdown yet");
                 console.log(props.post);
                 var model = MarkdownParser.parse(props.post.raw);
-                console.log("the node model is",model);
                 PostDataStore.setModel(model);
-                var tree_root = document.getElementById("modeltree");
                 this.updateTree();
-                keystrokes.setModel(model);
-                dom.syncDom(editor,model);
                 return;
             }
             if(typeof props.post.format == 'undefined') {
                 console.log("no format, must be old");
-                dom.setRawHtml(editor,props.post.content);
-                var model = domToNewModel(editor);
+                Dom.setRawHtml(domRoot,props.post.content);
+                var model = domToNewModel(domRoot);
                 PostDataStore.setModel(model);
-                console.log("the new model is",model);
-                var tree_root = document.getElementById("modeltree");
                 this.updateTree();
-                keystrokes.setModel(model);
-                dom.syncDom(editor,model);
                 return;
             }
         } catch (e) {
             console.log("error converting dataToModel");
             console.log(e);
         }
-    },
-    keydown: function(e) {
-        keystrokes.handleEvent(e);
     },
     render: function() {
         var clss = "semantic-view grow scroll";
@@ -353,7 +333,6 @@ var PostEditor = React.createClass({
                 id="post-editor"
                 className={clss}
                 contentEditable={true} spellCheck={false}
-                    onKeyDown={this.keydown}
             ></div>
     }
 });

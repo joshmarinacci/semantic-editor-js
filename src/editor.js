@@ -306,20 +306,25 @@ var key_action_map = {
 
 function Editor(domRoot) {
     this._model = Model.makeModel();
-    this._dom_root = domRoot;
-    this._document = domRoot.ownerDocument;
+    if(domRoot) {
+        this.setDomRoot(domRoot);
+    }
     this._key_action_map = Object.create(key_action_map);
 
-    Keystrokes.setEditor(this._dom_root);
     Keystrokes.setModel(this._model);
-    this._dom_root.addEventListener("input", Keystrokes.handleInput);
-    this._dom_root.addEventListener("keydown", this._handleKeydown.bind(this));
     this._listeners = {};
     var self = this;
     Keystrokes.on("change", function() {
         self._fireEvent('change',self);
     });
 }
+
+Editor.prototype.setDomRoot = function(dom_root) {
+    this._dom_root = dom_root;
+    Keystrokes.setEditor(this._dom_root);
+    this._dom_root.addEventListener("input", Keystrokes.handleInput);
+    this._dom_root.addEventListener("keydown", this._handleKeydown.bind(this));
+};
 
 Editor.prototype._handleKeydown = function(evt) {
     var act = Keystrokes.findActionByEvent(evt, code_key_map,
@@ -346,11 +351,10 @@ Editor.prototype.getModel = function() {
     return this._model;
 };
 
-/*
 Editor.prototype.setModel = function(model) {
     this._model = model;
+    Keystrokes.setModel(model);
 };
-*/
 
 /*
 Editor.prototype.toHTML = function() {
@@ -446,6 +450,10 @@ exports.makeEditor = function(domRoot) {
     return new Editor(domRoot);
 };
 
+
+exports.makeModel = function() {
+    return Model.makeModel();
+}
 /*
 
 get a list of block styles
