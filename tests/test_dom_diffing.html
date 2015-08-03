@@ -27,105 +27,31 @@
 </body>
 <script src="../bundle.js"></script>
 <script type='text/javascript'>
+var Editor = require('editor');
 var Model = require('model');
-var Dom = require('dom');
-var Keystrokes = require('keystrokes');
 
-function setupSpanTest() {
-    var model = Model.makeModel();
-    var block1 = model.makeBlock();
-    var text1  = model.makeText("abc");
-    block1.append(text1);
-    var span = model.makeSpan();
-    span.style = 'bold';
-    var text2 = model.makeText('X');
-    span.append(text2);
-    block1.append(span);
-    var text3 = model.makeText('ghi');
-    block1.append(text3);
-    model.getRoot().append(block1);
-    return model;
-}
-function setupModel() {
-    var model = Model.makeModel();
-    var block0 = model.makeBlock();
-    block0.append(model.makeText("ABC"));
-    model.getRoot().append(block0);
-    var block = model.makeBlock();
-    model.getRoot().append(block);
-    var span = model.makeSpan();
-    span.style = 'italic';
-    block.append(model.makeText("xxx"));
-    span.append(model.makeText("def"));
-    block.append(span);
-    block.append(model.makeText("ghi"));
+var editor = Editor.makeEditor(document.getElementById('editor'));
+var model = editor.getModel();
+var block1 = model.makeBlock();
+var text1  = model.makeText("abc");
+block1.append(text1);
+var span = model.makeSpan();
+span.style = 'bold';
+var text2 = model.makeText('X');
+span.append(text2);
+block1.append(span);
+var text3 = model.makeText('ghi');
+block1.append(text3);
+model.getRoot().append(block1);
 
-    var ul = model.makeBlock();
-    ul.style = 'unordered-list';
-    var li1 = model.makeBlock();
-    li1.style = 'list-item';
-    li1.append(model.makeText("list item 1"));
-    ul.append(li1);
-    var li2 = model.makeBlock();
-    li2.style = 'list-item';
-    li2.append(model.makeText("list item 2"));
-    ul.append(li2);
-    model.getRoot().append(ul);
+editor.syncDom();
+renderModelTree(editor.getModel(),document.getElementById("model-tree"));
 
-    var img = model.makeSpan();
-    img.style = 'image';
-    img.meta = {
-        src: './earth.jpg'
-    };
-    var block3 = model.makeBlock();
-    block3.append(img);
-    model.getRoot().append(block3);
-    return model;
-}
-//var model = setupModel();
-var model = setupSpanTest();
-
-var dom_root = document.getElementById("editor");
-dom_root.id = model.getRoot().id;
-Dom.modelToDom(model,dom_root,document);
-Keystrokes.setModel(model);
-Keystrokes.setEditor(dom_root);
-
-dom_root.addEventListener("input", function(e){
-    var sel = window.getSelection();
-    var range = sel.getRangeAt(0);
-    var start_dom = range.startContainer;
-    var start_off = range.startOffset;
-    var ssel = {
-        start_node:start_dom,
-        start_offset:start_off
-    };
-    var range = Dom.calculateChangeRange(model,dom_root,ssel);
-    var changes = Dom.calculateChangeList(range);
-
-    Dom.applyChanges(changes,model);
-    var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
-    var com_dom = Dom.findDomForModel(com_mod,dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
-    renderModelTree(model,document.getElementById("model-tree"));
+editor.on("change", function(ed) {
+    renderModelTree(ed.getModel(), document.getElementById("model-tree"));
 });
 
-function stop(e) {
-    if(e.preventDefault) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-}
-
-
-dom_root.addEventListener("keydown", function(e) {
-    Keystrokes.handleEvent(e);
-});
-
-Keystrokes.on("change",function(){
-    renderModelTree(model,document.getElementById("model-tree"));
-});
-
+/*
 Keystrokes.actions_map['style-inline-link'] = function(e) {
     Keystrokes.stopKeyboardEvent(e);
 
@@ -157,8 +83,7 @@ Keystrokes.actions_map['clear-styles'] = function(e) {
     var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
     Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
 };
-
-renderModelTree(model, document.getElementById("model-tree"));
+*/
 
 function renderModelTree(model,dom) {
     if(model.getRoot) {

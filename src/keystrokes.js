@@ -61,6 +61,23 @@ exports.changeBlockStyle = function(style) {
     Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
 };
 
+exports.splitLine = function(e) {
+    exports.stopKeyboardEvent(e);
+    var range = exports.makeRangeFromSelection(model,window);
+    var path = Model.nodeToPath(range.start.mod);
+    var com_mod = range.start.mod.findBlockParent().getParent();
+    var changes = Dom.makeSplitChange(range,model);
+    Dom.applyChanges(changes,model);
+    exports.markAsChanged();
+    var com_dom = Dom.findDomForModel(com_mod,editor);
+    Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
+    var new_mod = Model.pathToNode(path,model.getRoot());
+    var new_text = model.getNextTextNode(new_mod);
+    Dom.setCursorAtModel(new_text,0, editor);
+};
+
+
+
 var browser_keymap = {
     8:"backspace",
     13:"enter",
@@ -91,7 +108,7 @@ var key_to_actions = {
     "cmd-shift-c":"style-inline-code",
     "cmd-shift-a":"style-inline-link",
     "cmd-shift-e":"insert-emoji",
-    "enter":"split-line",
+    "enter":"split-line"
 };
 
 exports.key_to_actions = key_to_actions;
@@ -131,20 +148,6 @@ function updateCurrentStyle() {
     },10);
 }
 
-exports.splitLine = function(e) {
-    exports.stopKeyboardEvent(e);
-    var range = exports.makeRangeFromSelection(model,window);
-    var path = Model.nodeToPath(range.start.mod);
-    var com_mod = range.start.mod.findBlockParent().getParent();
-    var changes = Dom.makeSplitChange(range,model);
-    Dom.applyChanges(changes,model);
-    exports.markAsChanged();
-    var com_dom = Dom.findDomForModel(com_mod,editor);
-    Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
-    var new_mod = Model.pathToNode(path,model.getRoot());
-    var new_text = model.getNextTextNode(new_mod);
-    Dom.setCursorAtModel(new_text,0, editor);
-};
 
 var actions_map = {
     "style-bold": function(e) {
@@ -238,6 +241,48 @@ actions_map[exports.UPDATE_CURRENT_STYLE] = updateCurrentStyle;
 
 exports.actions_map = actions_map;
 
+exports.findActionByEvent = function(e, browser_keymap, key_to_actions, actions_map) {
+    if(browser_keymap[e.keyCode]) {
+        var keyname = browser_keymap[e.keyCode];
+        console.log("matched the keycode",e.keyCode, keyname)
+        if(e.metaKey && e.shiftKey) {
+            var name = "cmd-shift-"+keyname;
+            console.log("matched meta and shift",name);
+            if(key_to_actions[name]) {
+                var action = key_to_actions[name];
+                if(actions_map[action]) {
+                    return actions_map[action];
+                }
+            }
+        }
+        if(e.metaKey) {
+            var name = "cmd-"+keyname;
+            if(key_to_actions[name]) {
+                var action = key_to_actions[name];
+                if(actions_map[action]) {
+                    return actions_map[action];
+                }
+            }
+        }
+        if(e.ctrlKey) {
+            var name = "ctrl-"+keyname;
+            if(key_to_actions[name]) {
+                var action = key_to_actions[name];
+                if(actions_map[action]) {
+                    return actions_map[action];
+                }
+            }
+        }
+        var name = ""+keyname;
+        if(key_to_actions[name]) {
+            var action = key_to_actions[name];
+            if(actions_map[action]) {
+                return actions_map[action];
+            }
+        }
+    }
+    return null;
+};
 exports.handleEvent = function(e) {
     if(browser_keymap[e.keyCode]) {
         var keyname = browser_keymap[e.keyCode];
@@ -281,6 +326,27 @@ exports.handleEvent = function(e) {
         }
     }
     return false;
+};
+
+exports.handleInput = function(e) {
+    var sel = window.getSelection();
+    var range = sel.getRangeAt(0);
+    var start_dom = range.startContainer;
+    var start_off = range.startOffset;
+    var ssel = {
+        start_node: start_dom,
+        start_offset: start_off
+    };
+    var dom_root = editor;
+    var range = Dom.calculateChangeRange(model, dom_root, ssel);
+    var changes = Dom.calculateChangeList(range);
+
+    Dom.applyChanges(changes, model);
+    var com_mod = Dom.findCommonParent(range.start.mod, range.end.mod);
+    var com_dom = Dom.findDomForModel(com_mod, dom_root);
+    Dom.rebuildDomFromModel(com_mod, com_dom, dom_root, document);
+    exports.markAsChanged();
+    //renderModelTree(model,document.getElementById("model-tree"));
 };
 
 exports.setModel = function(mod) {

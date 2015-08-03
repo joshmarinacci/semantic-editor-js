@@ -8,19 +8,42 @@ var Dom   = require('./dom');
 var Keystrokes = require('./keystrokes');
 
 /*
-need a consistent mapping between dom nodes and model nodes.  this means we need some sort of map to describe how one goes to the other and reverse. this mapping should include what the developer defined as valid styles, and also heuristics to map unexpected things (say, stuff that was pasted or imported in) back into the system correctly.  so perhaps a list of styles for blocks and spans.  indicate special attributes like links and images. each style name has a css class used to represent it (which is also used in the editor for semantic styling later).  optionally the editor can generate the :after{content} css for each registered style.  the developer should be able to start with a prefab set of styles and add to it or delete from it.  there is a second backup map which maps other html elements to the registered styles.  when converting, if something isn’t in either of the two sets, then it’s mapped into a plain span with any text inside. assuming there is any text. else it’s ignored.
+need a consistent mapping between dom nodes and model nodes.
+this means we need some sort of map to describe how one goes
+to the other and reverse. this mapping should include what
+the developer defined as valid styles, and also heuristics to
+map unexpected things (say, stuff that was pasted or imported
+in) back into the system correctly.  so perhaps a list of
+styles for blocks and spans.  indicate special attributes like
+links and images. each style name has a css class used to represent
+it (which is also used in the editor for semantic styling later).
 
-    this single set of mappings, with the backup map, should be used globally throughout the editor.  this means we should have a central editor class that everything is registered to.  the mappings are then passed into the dom/keystroke classes as needed.
+optionally the editor can generate the :after{content} css for
+each registered style.
 
-    this obviously needs tons of unit tests.
+the developer should be able to start with a prefab set of styles
+and add to it or delete from it.  there is a second backup map
+which maps other html elements to the registered styles.  when
+converting, if something isn’t in either of the two sets, then
+it’s mapped into a plain span with any text inside. assuming
+there is any text. else it’s ignored.
 
-    it also needs a way to preserve metadata across rebuilds
+this single set of mappings, with the backup map, should be used
+globally throughout the editor.  this means we should have a
+central editor class that everything is registered to.  the
+mappings are then passed into the dom/keystroke classes as needed.
+
+this obviously needs tons of unit tests.
+
+it also needs a way to preserve metadata across rebuilds
 
 syncing back and forth uses this map
-anything which isn't found does a best effort with the fallback import, and then turns it into a span
-with any embedded text content. attributes will be lost.
+anything which isn't found does a best effort with the fallback
+import, and then turns it into a span with any embedded text
+content. attributes will be lost.
 
-the import mapping is used for importing HTML wholesale, and dealing with arbitrary pasted content
+the import mapping is used for importing HTML wholesale, and
+dealing with arbitrary pasted content
 */
 
 /*
@@ -281,22 +304,164 @@ var code_key_map = {
     70:"f",
     71:"g",
     72:"h",
-    73:"i"
+    73:"i",
+    74:"j",
+    80:'p',
 };
 
-var key_action_map = {
-    "ctrl-d":       "delete-forward-one",
-    "backspace":    "delete-backward-one",
+var key_action_map = [
+    //"ctrl-d":       "delete-forward-one",
+    //"backspace":    "delete-backward-one",
+    //
+    //"cmd-b":        "style-strong",
+    //"cmd-i":        "style-emphasis",
+    //
+    //"cmd-shift-c":  "style-inline-code",
+    //"cmd-shift-a":  "style-inline-link",
+    //"enter":        "split-block"
+];
 
-    "cmd-b":        "style-strong",
-    "cmd-i":        "style-emphasis",
 
-    "cmd-shift-c":  "style-inline-code",
-    "cmd-shift-a":  "style-inline-link",
-    "enter":        "split-block"
+function Editor(domRoot) {
+    this._model = Model.makeModel();
+    this._dom_root = domRoot;
+    this._document = domRoot.ownerDocument;
+    this._key_action_map = Object.create(key_action_map);
+
+    Keystrokes.setEditor(this._dom_root);
+    Keystrokes.setModel(this._model);
+    var self = this;
+    this._dom_root.addEventListener("input", Keystrokes.handleInput);
+    this._dom_root.addEventListener("keydown", function(e) {
+        Keystrokes.handleEvent(e);
+    });
+
+    this._listeners = {};
+
+    Keystrokes.on("change", function() {
+        self._fireEvent('change',self);
+    });
+}
+
+
+Editor.prototype.on = function(name, cb) {
+    if(!this._listeners[name]) {
+        this._listeners[name] = [];
+    }
+    this._listeners[name].push(cb);
+};
+
+Editor.prototype._fireEvent = function(name, payload) {
+    if(this._listeners[name]) {
+        this._listeners[name].forEach(function(l){
+            l(payload);
+        });
+    }
+};
+
+Editor.prototype.getModel = function() {
+    return this._model;
+};
+
+/*
+Editor.prototype.setModel = function(model) {
+    this._model = model;
+};
+*/
+
+/*
+Editor.prototype.toHTML = function() {
+
+};
+
+Editor.prototype.toPlainText = function() {
+
+};
+*/
+
+Editor.prototype.toJSON = function() {
+    return this._model.toJSON();
+};
+
+Editor.prototype.fromJSON = function(json) {
+    this._model = Model.fromJSON(json);
+};
+
+Editor.prototype.getCurrentSelection = function() {
+
+};
+
+Editor.prototype.getStyleAtPosition = function(pos) {
+
+};
+
+Editor.prototype._simulateKeyboardEvent = function(evt) {
+    var act = Keystrokes.findActionByEvent(evt, code_key_map,
+        this._key_action_map, actions_map);
+    console.log("the action is", act);
+    if(act) act(evt,this);
+}
+
+/*
+ * add a new action. Action should be in the form of:
+ * {
+ *   name:"semantic-action-name",
+ *   consume:true|false,
+ *   fun: function(event, selection, editor) {
+ *     do something
+ * }
+ */
+/*
+Editor.prototype.addAction = function(action) {
+
+};
+*/
+/*
+ * add a key binding. Should be something like
+ * addKeyBinding("shift-command-a","insert-poop-emoji")
+ */
+Editor.prototype.addKeyBinding = function(name, keydef) {
+    this._key_action_map[keydef] = name;
+};
+
+Editor.prototype.syncDom = function() {
+    Dom.syncDom(this._dom_root,this._model);
+};
+
+Editor.prototype.makeModelPosition = function(mod,off) {
+    return {
+        mod:mod,
+        off:off
+    }
+};
+
+Editor.prototype.insertPlainText = function(pos, str) {
+    var changes = [];
+    if(pos.mod.type != Model.TEXT) throw new Error("can only insert into a Text node", pos.mod);
+    var txt = pos.mod.text;
+    changes.push({
+        type:'text-change',
+        mod: pos.mod,
+        text: txt.substring(0,pos.off)
+    });
+    changes.push({
+        type:'insert-after',
+        mod: pos.mod,
+        insert: this._model.makeText(txt.substring(pos.off))
+    });
+    changes.push({
+        type:'insert-after',
+        mod: pos.mod,
+        insert: this._model.makeText(str)
+    });
+    Dom.applyChanges(changes,this._model);
+    this.syncDom();
 };
 
 
+exports.makeEditor = function(domRoot) {
+    return new Editor(domRoot);
+};
 
 /*
 
@@ -321,12 +486,9 @@ visitors for:
     optionally determine which paths to go down
 
 
-
-
 add a key-mapping.  this maps a particular key or set of keys to an action by name
 add an action by name
 get a list of all actions and the keys which trigger them
-
 
 */
 
@@ -349,9 +511,5 @@ parts of the program to rendezvous. ex: you could fire an event after you get JS
 doesn't know or care that you saved something, but other event listeners might, so you can fire the save event and
 anything listening for that event can do something. ex: render a 'saved' indicator at the top of the screen and
 flip the dirty indicator to green.
-
-
-
-
 
  */
