@@ -139,12 +139,6 @@ var PostDataStore = {
         this.fire('posts');
         this.selectById(post.id);
     },
-    setEditor: function(ed) {
-        this.editor = ed;
-    },
-    getEditor: function() {
-        return this.editor;
-    },
     _real_editor: Editor.makeEditor(),
     getRealEditor: function() {
         return this._real_editor;
