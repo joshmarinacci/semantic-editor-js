@@ -51,6 +51,7 @@ editor.on("change", function(ed) {
     renderModelTree(ed.getModel(), document.getElementById("model-tree"));
 });
 
+editor.addKeyBinding('delete-forward','cmd-shift-f');
 /*
 Keystrokes.actions_map['style-inline-link'] = function(e) {
     Keystrokes.stopKeyboardEvent(e);

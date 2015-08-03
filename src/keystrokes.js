@@ -35,7 +35,6 @@ exports.makeRangeFromSelection = function(model,window) {
     return range;
 };
 
-
 exports.styleSelection = function(e,style) {
     exports.stopKeyboardEvent(e);
     var range = exports.makeRangeFromSelection(model,window);
@@ -61,58 +60,6 @@ exports.changeBlockStyle = function(style) {
     Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
 };
 
-exports.splitLine = function(e) {
-    exports.stopKeyboardEvent(e);
-    var range = exports.makeRangeFromSelection(model,window);
-    var path = Model.nodeToPath(range.start.mod);
-    var com_mod = range.start.mod.findBlockParent().getParent();
-    var changes = Dom.makeSplitChange(range,model);
-    Dom.applyChanges(changes,model);
-    exports.markAsChanged();
-    var com_dom = Dom.findDomForModel(com_mod,editor);
-    Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
-    var new_mod = Model.pathToNode(path,model.getRoot());
-    var new_text = model.getNextTextNode(new_mod);
-    Dom.setCursorAtModel(new_text,0, editor);
-};
-
-
-
-var browser_keymap = {
-    8:"backspace",
-    13:"enter",
-    37:"arrow-left",
-    39:"arrow-right",
-    38:"arrow-up",
-    40:"arrow-down",
-    65:"a",
-    66:"b",
-    67:"c",
-    68:"d",
-    69:"e",
-    70:"f",
-    71:"g",
-    72:"h",
-    73:"i"
-};
-
-var key_to_actions = {
-    "arrow-left": "update-current-style",
-    "arrow-right": "update-current-style",
-    "arrow-up": "update-current-style",
-    "arrow-down": "update-current-style",
-    "ctrl-d":"delete-forward",
-    "cmd-b":"style-bold",
-    "backspace":"delete-backward",
-    "cmd-i":"style-italic",
-    "cmd-shift-c":"style-inline-code",
-    "cmd-shift-a":"style-inline-link",
-    "cmd-shift-e":"insert-emoji",
-    "enter":"split-line"
-};
-
-exports.key_to_actions = key_to_actions;
-
 exports.stopKeyboardEvent = function(e) {
     if(e && e.preventDefault) {
         e.preventDefault();
@@ -120,8 +67,9 @@ exports.stopKeyboardEvent = function(e) {
     }
 };
 
-exports.UPDATE_CURRENT_STYLE = 'update-current-style';
+//exports.UPDATE_CURRENT_STYLE = 'update-current-style';
 
+/*
 function updateCurrentStyle() {
     setTimeout(function() {
         var info = Dom.saveSelection(model);
@@ -147,107 +95,110 @@ function updateCurrentStyle() {
         fireEvent(exports.UPDATE_CURRENT_STYLE,styleInfo);
     },10);
 }
+*/
 
-
-var actions_map = {
-    "style-bold": function(e) {
-        exports.styleSelection(e,'bold');
-    },
-    "style-italic": function(e) {
-        exports.styleSelection(e,'italic');
-    },
-    "split-line":function(e) {
-        exports.splitLine(e);
-    },
-    "delete-backward":function(e) {
-        exports.stopKeyboardEvent(e);
-        var range = exports.makeRangeFromSelection(model, window);
-        if(range.collapsed) {
-            range.documentOffset--;
-            range.start.offset--;
-            if(range.start.offset < 0) {
-                var prevtext = model.getPreviousTextNode(range.start.mod);
-                if(prevtext == null) {
-                    range.start.offset = 0;
-                } else {
-                    range.start.mod = prevtext;
-                    range.start.offset = prevtext.text.length;
-                }
-            }
-        }
-
-        var changes = Dom.makeDeleteTextRange(range,model);
-        var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
-        Dom.applyChanges(changes,model);
-        exports.markAsChanged();
-
-        //find a parent still in the tree
-        while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
-
-        var com_dom = Dom.findDomForModel(com_mod, editor);
-        Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
-
-        var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-        Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
-    },
-    "delete-forward":function(e) {
-        exports.stopKeyboardEvent(e);
-        var range = exports.makeRangeFromSelection(model, window);
-        if(range.collapsed) {
-            if(range.end.mod.type !== Model.TEXT) {
-                console.log('something weird happened. bailing');
-                return;
-            }
-            range.end.offset++;
-            if(range.end.offset > range.end.mod.text.length) {
-                var nexttext = model.getNextTextNode(range.end.mod);
-                if(nexttext == null) {
-                    range.end.offset = range.end.mod.text.length;
-                } else {
-                    range.end.mod = nexttext;
-                    range.end.offset = 1;
-                }
-            }
-        }
-        var changes = Dom.makeDeleteTextRange(range,model);
-        var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
-        Dom.applyChanges(changes,model);
-        exports.markAsChanged();
-        while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
-        var com_dom = Dom.findDomForModel(com_mod,editor);
-        Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
-        var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-        Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
-    },
-    "style-inline-code":function(e){
-        exports.styleSelection(e,'inline-code');
-    },
-    "style-inline-link":function(e) {
-        exports.stopKeyboardEvent(e);
-        console.log("links not implemented");
-    },
-    /*
-    "insert-emoji": function(e) {
-        stopKeyboardEvent(e);
-        saved_info = dom.saveSelection(model);
-        var xy = dom.getCaretClientPosition();
-        $("#popup").removeClass("hidden");
-        $("#popup").offset({left:xy.x,top:xy.y});
-    }
-    */
+exports.styleBold = function(e) {
+    exports.styleSelection(e,'bold');
 };
 
-actions_map[exports.UPDATE_CURRENT_STYLE] = updateCurrentStyle;
+exports.styleItalic = function(e) {
+    exports.styleSelection(e,'italic');
+};
 
-exports.actions_map = actions_map;
+exports.splitLine = function(e) {
+    exports.stopKeyboardEvent(e);
+    var range = exports.makeRangeFromSelection(model,window);
+    var path = Model.nodeToPath(range.start.mod);
+    var com_mod = range.start.mod.findBlockParent().getParent();
+    var changes = Dom.makeSplitChange(range,model);
+    Dom.applyChanges(changes,model);
+    exports.markAsChanged();
+    var com_dom = Dom.findDomForModel(com_mod,editor);
+    Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
+    var new_mod = Model.pathToNode(path,model.getRoot());
+    var new_text = model.getNextTextNode(new_mod);
+    Dom.setCursorAtModel(new_text,0, editor);
+};
 
+exports.deleteBackwards = function(e) {
+    exports.stopKeyboardEvent(e);
+    var range = exports.makeRangeFromSelection(model, window);
+    if(range.collapsed) {
+        range.documentOffset--;
+        range.start.offset--;
+        if(range.start.offset < 0) {
+            var prevtext = model.getPreviousTextNode(range.start.mod);
+            if(prevtext == null) {
+                range.start.offset = 0;
+            } else {
+                range.start.mod = prevtext;
+                range.start.offset = prevtext.text.length;
+            }
+        }
+    }
+
+    var changes = Dom.makeDeleteTextRange(range,model);
+    var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
+    Dom.applyChanges(changes,model);
+    exports.markAsChanged();
+
+    //find a parent still in the tree
+    while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
+
+    var com_dom = Dom.findDomForModel(com_mod, editor);
+    Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
+
+    var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
+    Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
+};
+
+exports.deleteForwards = function(e) {
+    exports.stopKeyboardEvent(e);
+    var range = exports.makeRangeFromSelection(model, window);
+    if(range.collapsed) {
+        if(range.end.mod.type !== Model.TEXT) {
+            console.log('something weird happened. bailing');
+            return;
+        }
+        range.end.offset++;
+        if(range.end.offset > range.end.mod.text.length) {
+            var nexttext = model.getNextTextNode(range.end.mod);
+            if(nexttext == null) {
+                range.end.offset = range.end.mod.text.length;
+            } else {
+                range.end.mod = nexttext;
+                range.end.offset = 1;
+            }
+        }
+    }
+    var changes = Dom.makeDeleteTextRange(range,model);
+    var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
+    Dom.applyChanges(changes,model);
+    exports.markAsChanged();
+    while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
+    var com_dom = Dom.findDomForModel(com_mod,editor);
+    Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
+    var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
+    Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
+};
+
+exports.styleInlineCode = function(e) {
+    exports.styleSelection(e,'inline-code');
+};
+
+exports.styleInlineLink = function(e) {
+    exports.stopKeyboardEvent(e);
+    console.log("links not implemented");
+};
+
+//actions_map[exports.UPDATE_CURRENT_STYLE] = updateCurrentStyle;
+//exports.actions_map = actions_map;
 exports.findActionByEvent = function(e, browser_keymap, key_to_actions, actions_map) {
     if(browser_keymap[e.keyCode]) {
         var keyname = browser_keymap[e.keyCode];
-        console.log("matched the keycode",e.keyCode, keyname)
+        //console.log("matched the keycode",e.keyCode, keyname)
         if(e.metaKey && e.shiftKey) {
             var name = "cmd-shift-"+keyname;
-            console.log("matched meta and shift",name);
             if(key_to_actions[name]) {
                 var action = key_to_actions[name];
                 if(actions_map[action]) {
@@ -283,6 +234,8 @@ exports.findActionByEvent = function(e, browser_keymap, key_to_actions, actions_
     }
     return null;
 };
+
+/*
 exports.handleEvent = function(e) {
     if(browser_keymap[e.keyCode]) {
         var keyname = browser_keymap[e.keyCode];
@@ -327,6 +280,7 @@ exports.handleEvent = function(e) {
     }
     return false;
 };
+*/
 
 exports.handleInput = function(e) {
     var sel = window.getSelection();

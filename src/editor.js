@@ -251,42 +251,12 @@ or synthesize or proxy events.
 */
 
 var actions_map = {
-    "style-strong": {
-        consume: true,
-        fun: function(event, selection, editor) {
-            editor.styleSelection(event, selection, 'strong');
-        }
-    },
-    "style-emphasis": {
-        consume:true,
-        fun: function(event, selection, editor) {
-            editor.styleSelection(event, selection, 'emphasis');
-        }
-    },
-    "style-inline-code": {
-        consume:true,
-        fun: function(event, selection, editor) {
-            editor.styleSelection(event, selection, 'inline-code');
-        }
-    },
-    "delete-forward": {
-        consume:true,
-        fun: function(event, selection, editor) {
-            editor.deleteSelectionForward(event,selection);
-        }
-    },
-    "delete-backward": {
-        consume:true,
-        fun: function(event, selection, editor) {
-            editor.deleteSelectionBackward(event,selection);
-        }
-    },
-    "split-block": {
-        consume:true,
-        fun: function(event, selection, editor) {
-            editor.splitBlock(event,selection);
-        }
-    }
+    "style-bold": Keystrokes.styleBold,
+    "style-italic": Keystrokes.styleItalic,
+    "style-inline-code": Keystrokes.styleInlineCode,
+    "delete-forward": Keystrokes.deleteForwards,
+    "delete-backward": Keystrokes.deleteBackwards,
+    "split-block": Keystrokes.splitLine
 };
 
 var code_key_map = {
@@ -306,20 +276,32 @@ var code_key_map = {
     72:"h",
     73:"i",
     74:"j",
-    80:'p',
+    75:"k",
+    76:"l",
+    77:"m",
+    78:"n",
+    79:"o",
+    80:"p",
+    81:"r",
+    82:"s",
+    83:"t",
+    84:"u",
+    85:"v",
+    86:"w",
+    87:"x",
+    88:"y",
+    89:"z"
 };
 
-var key_action_map = [
-    //"ctrl-d":       "delete-forward-one",
-    //"backspace":    "delete-backward-one",
-    //
-    //"cmd-b":        "style-strong",
-    //"cmd-i":        "style-emphasis",
-    //
-    //"cmd-shift-c":  "style-inline-code",
-    //"cmd-shift-a":  "style-inline-link",
-    //"enter":        "split-block"
-];
+var key_action_map = {
+    "cmd-b":        "style-bold",
+    "cmd-i":        "style-italic",
+    "ctrl-d":       "delete-forward",
+    "backspace":    "delete-backward",
+    "cmd-shift-c":  "style-inline-code",
+    "cmd-shift-a":  "style-inline-link",
+    "enter":        "split-block"
+};
 
 
 function Editor(domRoot) {
@@ -330,19 +312,20 @@ function Editor(domRoot) {
 
     Keystrokes.setEditor(this._dom_root);
     Keystrokes.setModel(this._model);
-    var self = this;
     this._dom_root.addEventListener("input", Keystrokes.handleInput);
-    this._dom_root.addEventListener("keydown", function(e) {
-        Keystrokes.handleEvent(e);
-    });
-
+    this._dom_root.addEventListener("keydown", this._handleKeydown.bind(this));
     this._listeners = {};
-
+    var self = this;
     Keystrokes.on("change", function() {
         self._fireEvent('change',self);
     });
 }
 
+Editor.prototype._handleKeydown = function(evt) {
+    var act = Keystrokes.findActionByEvent(evt, code_key_map,
+        this._key_action_map, actions_map);
+    if(act) act(evt,this);
+};
 
 Editor.prototype.on = function(name, cb) {
     if(!this._listeners[name]) {
