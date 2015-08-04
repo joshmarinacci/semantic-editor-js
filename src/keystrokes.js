@@ -49,7 +49,7 @@ exports.styleSelection = function(e,editor,style) {
 };
 
 exports.changeBlockStyle = function(style, editor) {
-    var model = editor.getDomRoot();
+    var model = editor.getModel();
     var range = exports.makeRangeFromSelection(model, window);
     var mod_b = range.start.mod.findBlockParent();
     mod_b.style = style;
