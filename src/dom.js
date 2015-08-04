@@ -22,9 +22,9 @@ function clearChildren(root) {
     while (root.firstChild) root.removeChild(root.firstChild);
 }
 
-exports.setRawHtml = function(editor, html) {
-    clearChildren(editor);
-    editor.innerHTML = html;
+exports.setRawHtml = function(dom_root, html) {
+    clearChildren(dom_root);
+    dom_root.innerHTML = html;
 };
 
 exports.saveSelection = function (model) {
@@ -536,8 +536,8 @@ exports.makeDeleteTextRange = function(range,model) {
     return changes;
 };
 
-exports.syncDom = function(editor,model) {
-    exports.rebuildDomFromModel(model.getRoot(), editor, editor, editor.ownerDocument);
+exports.syncDom = function(dom_root,model) {
+    exports.rebuildDomFromModel(model.getRoot(), dom_root, dom_root, dom_root.ownerDocument);
 };
 
 exports.rebuildDomFromModel = function(mod,dom, dom_root,doc) {
@@ -894,8 +894,8 @@ exports.setCursorAtDom = function(dom, offset) {
     sel.addRange(range);
 };
 
-exports.setCursorAtModel = function(mod,offset, editor) {
-    var dom = exports.findDomForModel(mod,editor);
+exports.setCursorAtModel = function(mod,offset, dom_root) {
+    var dom = exports.findDomForModel(mod,dom_root);
     var range = document.createRange();
     range.setStart(dom,offset);
     var sel = window.getSelection();

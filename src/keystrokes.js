@@ -3,8 +3,6 @@
  */
 var Dom = require('./dom');
 var Model = require('./model');
-var editor;
-
 
 exports.populateKeyDocs = function(elem) {
     for(var stroke in key_to_actions) {
@@ -35,29 +33,33 @@ exports.makeRangeFromSelection = function(model,window) {
     return range;
 };
 
-exports.styleSelection = function(e,style) {
+exports.styleSelection = function(e,editor,style) {
+    var model = editor.getModel();
     exports.stopKeyboardEvent(e);
     var range = exports.makeRangeFromSelection(model,window);
     var changes = Dom.makeStyleTextRange(range,model,style);
     var com_mod = range.start.mod.getParent();
     Dom.applyChanges(changes,model);
-    exports.markAsChanged();
-    var com_dom = Dom.findDomForModel(com_mod,editor);
-    Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
+    editor.markAsChanged();
+    var dom_root = editor.getDomRoot();
+    var com_dom = Dom.findDomForModel(com_mod,dom_root);
+    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
     var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
+    Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
 };
 
-exports.changeBlockStyle = function(style) {
+exports.changeBlockStyle = function(style, editor) {
+    var model = editor.getDomRoot();
     var range = exports.makeRangeFromSelection(model, window);
     var mod_b = range.start.mod.findBlockParent();
     mod_b.style = style;
     var par = mod_b.getParent();
-    var dom_b = Dom.findDomForModel(par,editor);
-    Dom.rebuildDomFromModel(par,dom_b, editor, document);
-    exports.markAsChanged();
+    var dom_root = editor.getDomRoot();
+    var dom_b = Dom.findDomForModel(par,dom_root);
+    Dom.rebuildDomFromModel(par,dom_b, dom_root, document);
+    editor.markAsChanged();
     var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
+    Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
 };
 
 exports.stopKeyboardEvent = function(e) {
@@ -97,31 +99,34 @@ function updateCurrentStyle() {
 }
 */
 
-exports.styleBold = function(e) {
-    exports.styleSelection(e,'bold');
+exports.styleBold = function(e,editor) {
+    exports.styleSelection(e,editor,'bold');
 };
 
-exports.styleItalic = function(e) {
-    exports.styleSelection(e,'italic');
+exports.styleItalic = function(e,editor) {
+    exports.styleSelection(e,editor,'italic');
 };
 
-exports.splitLine = function(e) {
+exports.splitLine = function(e, editor) {
     exports.stopKeyboardEvent(e);
+    var model = editor.getModel();
     var range = exports.makeRangeFromSelection(model,window);
     var path = Model.nodeToPath(range.start.mod);
     var com_mod = range.start.mod.findBlockParent().getParent();
     var changes = Dom.makeSplitChange(range,model);
     Dom.applyChanges(changes,model);
-    exports.markAsChanged();
-    var com_dom = Dom.findDomForModel(com_mod,editor);
-    Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
+    editor.markAsChanged();
+    var dom_root = editor.getDomRoot();
+    var com_dom = Dom.findDomForModel(com_mod,dom_root);
+    Dom.rebuildDomFromModel(com_mod,com_dom, dom_root, document);
     var new_mod = Model.pathToNode(path,model.getRoot());
     var new_text = model.getNextTextNode(new_mod);
-    Dom.setCursorAtModel(new_text,0, editor);
+    Dom.setCursorAtModel(new_text,0, dom_root);
 };
 
-exports.deleteBackwards = function(e) {
+exports.deleteBackwards = function(e, editor) {
     exports.stopKeyboardEvent(e);
+    var model = editor.getModel();
     var range = exports.makeRangeFromSelection(model, window);
     if(range.collapsed) {
         range.documentOffset--;
@@ -140,20 +145,22 @@ exports.deleteBackwards = function(e) {
     var changes = Dom.makeDeleteTextRange(range,model);
     var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
     Dom.applyChanges(changes,model);
-    exports.markAsChanged();
+    editor.markAsChanged();
+    var dom_root = editor.getDomRoot();
 
     //find a parent still in the tree
     while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
 
-    var com_dom = Dom.findDomForModel(com_mod, editor);
-    Dom.rebuildDomFromModel(com_mod,com_dom, editor, document);
+    var com_dom = Dom.findDomForModel(com_mod, dom_root);
+    Dom.rebuildDomFromModel(com_mod,com_dom, dom_root, document);
 
     var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
+    Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
 };
 
-exports.deleteForwards = function(e) {
+exports.deleteForwards = function(e, editor) {
     exports.stopKeyboardEvent(e);
+    var model = editor.getModel();
     var range = exports.makeRangeFromSelection(model, window);
     if(range.collapsed) {
         if(range.end.mod.type !== Model.TEXT) {
@@ -171,22 +178,23 @@ exports.deleteForwards = function(e) {
             }
         }
     }
+    var dom_root = editor.getDomRoot();
     var changes = Dom.makeDeleteTextRange(range,model);
     var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
     Dom.applyChanges(changes,model);
-    exports.markAsChanged();
+    editor.markAsChanged();
     while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
-    var com_dom = Dom.findDomForModel(com_mod,editor);
-    Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
+    var com_dom = Dom.findDomForModel(com_mod,dom_root);
+    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
     var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
+    Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
 };
 
-exports.styleInlineCode = function(e) {
-    exports.styleSelection(e,'inline-code');
+exports.styleInlineCode = function(e,editor) {
+    exports.styleSelection(e,editor,'inline-code');
 };
 
-exports.styleInlineLink = function(e) {
+exports.styleInlineLink = function(e,editor) {
     exports.stopKeyboardEvent(e);
     console.log("links not implemented");
 };
@@ -282,65 +290,21 @@ exports.handleEvent = function(e) {
 };
 */
 
-exports.handleInput = function(e) {
-    var sel = window.getSelection();
-    var range = sel.getRangeAt(0);
-    var start_dom = range.startContainer;
-    var start_off = range.startOffset;
-    var ssel = {
-        start_node: start_dom,
-        start_offset: start_off
-    };
-    var dom_root = editor;
-    var range = Dom.calculateChangeRange(model, dom_root, ssel);
-    var changes = Dom.calculateChangeList(range);
 
-    Dom.applyChanges(changes, model);
-    var com_mod = Dom.findCommonParent(range.start.mod, range.end.mod);
-    var com_dom = Dom.findDomForModel(com_mod, dom_root);
-    Dom.rebuildDomFromModel(com_mod, com_dom, dom_root, document);
-    exports.markAsChanged();
-    //renderModelTree(model,document.getElementById("model-tree"));
+exports.handleInput = function(e,editor) {
+    var wrange = window.getSelection().getRangeAt(0);
+    var dom_root = editor.getDomRoot();
+    var model  = editor.getModel();
+    var doff = wrange.startOffset + Dom.domToDocumentOffset(dom_root,wrange.startContainer).offset;
+    var pasted_container = wrange.startContainer;
+    var dp1 = Dom.findDomParentWithId(pasted_container);
+    var mp1 = Dom.findModelForDom(model,dp1);
+    var new_mod = Dom.rebuildModelFromDom(dp1,model);
+    model.swapNode(mp1,new_mod);
+    var com_mod = new_mod;
+    var com_dom = dp1;
+    Dom.rebuildDomFromModel(com_mod,com_dom, dom_root, dom_root.ownerDocument);
+    var offd = Dom.documentOffsetToDom(dom_root,doff);
+    Dom.setCursorAtDom(offd.node, offd.offset);
+    editor.markAsChanged();
 };
-/*
- handleInput:function(e) {
- var editor = React.findDOMNode(this.refs.editor);
- var model = PostDataStore.getModel();
- var wrange = window.getSelection().getRangeAt(0);
- var doff = wrange.startOffset + Dom.domToDocumentOffset(editor,wrange.startContainer).offset;
- var pasted_container = wrange.startContainer;
- var dp1 = Dom.findDomParentWithId(pasted_container);
- var mp1 = Dom.findModelForDom(model,dp1);
- var new_mod = Dom.rebuildModelFromDom(dp1,model);
- model.swapNode(mp1,new_mod);
- var com_mod = new_mod;
- var com_dom = dp1;
- Dom.rebuildDomFromModel(com_mod,com_dom, editor, editor.ownerDocument);
- var offd = Dom.documentOffsetToDom(editor,doff);
- Dom.setCursorAtDom(offd.node, offd.offset);
- this.updateTree();
- },
- */
-
-exports.setModel = function(mod) {
-    model = mod;
-};
-
-exports.setEditor = function(ed) {
-    editor = ed;
-};
-
-exports.markAsChanged = function() {
-    fireEvent('change',{});
-};
-
-var listeners = {};
-exports.on = function(type, listener) {
-    if(!listeners[type]) listeners[type] = [];
-    listeners[type].push(listener);
-};
-
-function fireEvent(type, data) {
-    if(listeners[type]) listeners[type].forEach(function(l){  l(data);  });
-}
-exports.fireEvent = fireEvent;

@@ -310,22 +310,23 @@ function Editor(domRoot) {
         this.setDomRoot(domRoot);
     }
     this._key_action_map = Object.create(key_action_map);
-
-    Keystrokes.setModel(this._model);
     this._listeners = {};
-    var self = this;
-    Keystrokes.on("change", function() {
-        self._fireEvent('change',self);
-    });
 }
 
 Editor.prototype.setDomRoot = function(dom_root) {
     this._dom_root = dom_root;
-    Keystrokes.setEditor(this._dom_root);
-    this._dom_root.addEventListener("input", Keystrokes.handleInput);
+    var self = this;
+    this._dom_root.addEventListener("input", function(e) {
+        Keystrokes.handleInput(e,self);
+    });
     this._dom_root.addEventListener("keydown", this._handleKeydown.bind(this));
     this.syncDom();
 };
+
+Editor.prototype.getDomRoot = function() {
+    return this._dom_root;
+};
+
 
 Editor.prototype._handleKeydown = function(evt) {
     var act = Keystrokes.findActionByEvent(evt, code_key_map,
@@ -348,13 +349,16 @@ Editor.prototype._fireEvent = function(name, payload) {
     }
 };
 
+Editor.prototype.markAsChanged = function() {
+    this._fireEvent('change',{});
+};
+
 Editor.prototype.getModel = function() {
     return this._model;
 };
 
 Editor.prototype.setModel = function(model) {
     this._model = model;
-    Keystrokes.setModel(model);
     this.syncDom();
 };
 
