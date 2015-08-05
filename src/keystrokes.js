@@ -243,54 +243,6 @@ exports.findActionByEvent = function(e, browser_keymap, key_to_actions, actions_
     return null;
 };
 
-/*
-exports.handleEvent = function(e) {
-    if(browser_keymap[e.keyCode]) {
-        var keyname = browser_keymap[e.keyCode];
-        if(e.metaKey && e.shiftKey) {
-            var name = "cmd-shift-"+keyname;
-            if(key_to_actions[name]) {
-                var action = key_to_actions[name];
-                if(actions_map[action]) {
-                    actions_map[action](e);
-                    return true;
-                }
-            }
-        }
-        if(e.metaKey) {
-            var name = "cmd-"+keyname;
-            if(key_to_actions[name]) {
-                var action = key_to_actions[name];
-                if(actions_map[action]) {
-                    actions_map[action](e);
-                    return true;
-                }
-            }
-        }
-        if(e.ctrlKey) {
-            var name = "ctrl-"+keyname;
-            if(key_to_actions[name]) {
-                var action = key_to_actions[name];
-                if(actions_map[action]) {
-                    actions_map[action](e);
-                    return true;
-                }
-            }
-        }
-        var name = ""+keyname;
-        if(key_to_actions[name]) {
-            var action = key_to_actions[name];
-            if(actions_map[action]) {
-                actions_map[action](e);
-                return true;
-            }
-        }
-    }
-    return false;
-};
-*/
-
-
 exports.handleInput = function(e,editor) {
     var wrange = window.getSelection().getRangeAt(0);
     var dom_root = editor.getDomRoot();
@@ -301,9 +253,7 @@ exports.handleInput = function(e,editor) {
     var mp1 = Dom.findModelForDom(model,dp1);
     var new_mod = Dom.rebuildModelFromDom(dp1,model, editor.getImportMapping());
     model.swapNode(mp1,new_mod);
-    var com_mod = new_mod;
-    var com_dom = dp1;
-    Dom.rebuildDomFromModel(com_mod,com_dom, dom_root, dom_root.ownerDocument, editor.getMapping());
+    Dom.rebuildDomFromModel(new_mod,dp1, dom_root, dom_root.ownerDocument, editor.getMapping());
     var offd = Dom.documentOffsetToDom(dom_root,doff);
     Dom.setCursorAtDom(offd.node, offd.offset);
     editor.markAsChanged();
