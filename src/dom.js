@@ -153,7 +153,7 @@ exports.modelToDom = function(mod,dom, document, mapping) {
     }
     if(mod.type == Model.TEXT) return document.createTextNode(mod.text);
     var rule = findMatchingMappingRule(mod.type,mod.style,mapping);
-    if(rule == null && mod.type == 'span') {
+    if(rule == null && mod.type == Model.SPAN) {
         rule = mapping.default_span;
     }
     if(rule !== null) {
