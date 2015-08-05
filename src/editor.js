@@ -55,7 +55,7 @@ dealing with arbitrary pasted content
  generate a drop-down list.
  */
 var import_map = {
-    b: {
+    'b': {
         type:'span',
         style:'strong'
     },
@@ -73,7 +73,24 @@ var import_map = {
     },
     object: {
         skip:true
+    },
+    'div.header': {
+        type:'block',
+        style:'header'
+    },
+    'div.subheader': {
+        type:'block',
+        style:'subheader'
+    },
+    'div': {
+        type:'block',
+        style:'body'
+    },
+    'span': {
+        type:'span',
+        style:'plain'
     }
+
 };
 
 var semantic_map = {

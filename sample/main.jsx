@@ -137,35 +137,35 @@ var CleanupDropdown = React.createClass({
         var model = PostDataStore.getModel();
         deleteEmptyBlocks(model.getRoot());
         PostDataStore.getRealEditor().syncDom();
-        Keystrokes.markAsChanged();
+        PostDataStore.getRealEditor().markAsChanged();
         this.setState({open:false})
     },
     removeEmptyText: function() {
         var model = PostDataStore.getModel();
         deleteEmptyText(model.getRoot());
         PostDataStore.getRealEditor().syncDom();
-        Keystrokes.markAsChanged();
+        PostDataStore.getRealEditor().markAsChanged();
         this.setState({open:false})
     },
     removeEmptySpans: function() {
         var model = PostDataStore.getModel();
         deleteEmptySpans(model.getRoot());
         PostDataStore.getRealEditor().syncDom();
-        Keystrokes.markAsChanged();
+        PostDataStore.getRealEditor().markAsChanged();
         this.setState({open:false})
     },
     removePlainSpans: function() {
         var model = PostDataStore.getModel();
         convertPlainSpans(model.getRoot());
         PostDataStore.getRealEditor().syncDom();
-        Keystrokes.markAsChanged();
+        PostDataStore.getRealEditor().markAsChanged();
         this.setState({open:false})
     },
     mergeAdjacentText: function() {
         var model = PostDataStore.getModel();
         mergeAdjacentText(model.getRoot());
         PostDataStore.getRealEditor().syncDom();
-        Keystrokes.markAsChanged();
+        PostDataStore.getRealEditor().markAsChanged();
         this.setState({open:false})
     },
     raiseBlocks: function() {
@@ -181,10 +181,8 @@ var CleanupDropdown = React.createClass({
         });
         console.log("need to raise up", toRaise.length);
         PostDataStore.getRealEditor().syncDom();
-        Keystrokes.markAsChanged();
+        PostDataStore.getRealEditor().markAsChanged();
         this.setState({open:false})
-        Keystrokes.markAsChanged();
-        this.setState({open:false});
     },
     render: function() {
         var openClass = utils.toClass(["btn-group"],{ open:this.state.open });

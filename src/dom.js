@@ -557,79 +557,29 @@ exports.rebuildModelFromDom = function(dom, model, mapping) {
 };
 
 function genModelFromDom(node,model, mapping) {
-    if(node.nodeType == TEXT_NODE) {
-        return model.makeText(node.nodeValue);
-    }
+    if(node.nodeType == TEXT_NODE) return model.makeText(node.nodeValue);
     if(node.nodeType == ELEMENT_NODE) {
-        var nd = null;
+        var name = node.nodeName.toLowerCase() + '.'+node.className;
+        if(mapping[name]) return genModelFromMapping(mapping[name],name,node,mapping, model);
         var name = node.nodeName.toLowerCase();
-        if(mapping[name]) {
-            console.log("found a mapping",name);
-            var mp = mapping[name];
-            if(mp.skip === true) {
-                console.log("skipping");
-                return null;
-            }
-            if(mp.type == 'span')   nd = model.makeSpan();
-            if(mp.type == 'block')  nd = model.makeBlock();
-            if(nd == null) {
-                console.log("can't convert dom node", node.nodeName);
-                throw new Error("cant convert dom node");
-            }
-            nd.style = mp.style;
-            for(var i=0; i<node.childNodes.length; i++) {
-                nd.append(genModelFromDom(node.childNodes[i],model, mapping));
-            }
-            return nd;
-        }
-
-        var style = 'bold';
-        if(node.nodeName.toLowerCase() == 'span') {
-            nd = model.makeSpan();
-            if(node.className == 'link') {
-                nd.style = 'link';
-                nd.meta = {
-                    href: node.getAttribute('href')
-                }
-            }
-            if(node.className == 'italic') {
-                nd.style = 'italic'
-            }
-        }
-        if(node.nodeName.toLowerCase() == 'a') {
-            nd = model.makeSpan();
-            nd.style = 'link';
-            nd.meta = {
-                href: node.getAttribute('href')
-            }
-        }
-        if(node.nodeName.toLowerCase() == 'b') {
-            nd = model.makeSpan();
-            nd.style = 'bold';
-        }
-        if(node.nodeName.toLowerCase() == 'i') {
-            nd = model.makeSpan();
-            nd.style = 'italic';
-        }
-        if(node.nodeName.toLowerCase() == 'div') {
-            nd = model.makeBlock();
-            if(node.classList.contains('header')) {
-                nd.style = 'header';
-            }
-        }
-        if(node.nodeName.toLowerCase() == 'br') {
-            nd = model.makeBlock();
-        }
-        if(nd == null) {
-            console.log("can't convert dom node", node.nodeName);
-            throw new Error("cant convert dom node");
-        }
-        for(var i=0; i<node.childNodes.length; i++) {
-            nd.append(genModelFromDom(node.childNodes[i],model, mapping));
-        }
-        return nd;
+        if(mapping[name]) return genModelFromMapping(mapping[name],name,node,mapping, model);
     }
-    console.log("ERROR. UNSUPPORTED NODE TYPE",node.nodeType,node);
+    throw new Error("cant convert dom node " + node.nodeType + " " + node.nodeName);
+}
+
+function genModelFromMapping(mp, name, node, mappings, model) {
+    var nd = null;
+    if(mp.skip === true) return null;
+    if(mp.type == 'span')   nd = model.makeSpan();
+    if(mp.type == 'block')  nd = model.makeBlock();
+    if(nd == null) {
+        throw new Error("cant convert dom node" + node.nodeName);
+    }
+    nd.style = mp.style;
+    for(var i=0; i<node.childNodes.length; i++) {
+        nd.append(genModelFromDom(node.childNodes[i],model, mappings));
+    }
+    return nd;
 }
 
 exports.makeStyleTextRange = function(range, model, style) {
