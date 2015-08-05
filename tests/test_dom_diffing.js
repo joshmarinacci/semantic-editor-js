@@ -35,7 +35,6 @@ test("insert character",function(t) {
     };
     sel.start_node.nodeValue = 'abXc';
     sel.start_offset = 3;
-    Dom.print(dom_root);
 
     //calculate the range of the changes
     var range = Dom.calculateChangeRange(model,dom_root,sel);
@@ -72,7 +71,6 @@ test('insert text before span',function(t) {
 
     //generate a dom
     editor.syncDom();
-    Dom.print(dom_root);
 
 
     //modify the dom
@@ -80,7 +78,6 @@ test('insert text before span',function(t) {
         VirtualDoc.createTextNode("XXX"),
         dom_root.childNodes[0].childNodes[0]
     );
-    Dom.print(dom_root);
     //create selection at the change
     var sel = {
         start_node: dom_root.childNodes[0].childNodes[0],
