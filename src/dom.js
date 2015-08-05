@@ -165,7 +165,7 @@ exports.modelToDom = function(mod,dom, document, mapping) {
             elem.appendChild(exports.modelToDom(modch,dom,document, mapping));
         });
         if(rule.isImage === true) elem.setAttribute('src',mod.meta.src);
-        if(rule.isLink === true)  elem.setAttribute('href',mod.meta.href);
+        if(rule.isLink === true && mod.meta && mod.meta.href)  elem.setAttribute('href',mod.meta.href);
         return elem;
     }
     console.log("didn't match a rule!", mod.type, mod.style);
@@ -552,16 +552,37 @@ exports.rebuildDomFromModel = function(mod, dom, dom_root, doc, mapping) {
     }
 };
 
-exports.rebuildModelFromDom = function(dom, model) {
-    return genModelFromDom(dom,model);
+exports.rebuildModelFromDom = function(dom, model, mapping) {
+    return genModelFromDom(dom,model,mapping);
 };
 
-function genModelFromDom(node,model) {
+function genModelFromDom(node,model, mapping) {
     if(node.nodeType == TEXT_NODE) {
         return model.makeText(node.nodeValue);
     }
     if(node.nodeType == ELEMENT_NODE) {
         var nd = null;
+        var name = node.nodeName.toLowerCase();
+        if(mapping[name]) {
+            console.log("found a mapping",name);
+            var mp = mapping[name];
+            if(mp.skip === true) {
+                console.log("skipping");
+                return null;
+            }
+            if(mp.type == 'span')   nd = model.makeSpan();
+            if(mp.type == 'block')  nd = model.makeBlock();
+            if(nd == null) {
+                console.log("can't convert dom node", node.nodeName);
+                throw new Error("cant convert dom node");
+            }
+            nd.style = mp.style;
+            for(var i=0; i<node.childNodes.length; i++) {
+                nd.append(genModelFromDom(node.childNodes[i],model, mapping));
+            }
+            return nd;
+        }
+
         var style = 'bold';
         if(node.nodeName.toLowerCase() == 'span') {
             nd = model.makeSpan();
@@ -604,7 +625,7 @@ function genModelFromDom(node,model) {
             throw new Error("cant convert dom node");
         }
         for(var i=0; i<node.childNodes.length; i++) {
-            nd.append(genModelFromDom(node.childNodes[i],model));
+            nd.append(genModelFromDom(node.childNodes[i],model, mapping));
         }
         return nd;
     }

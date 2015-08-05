@@ -54,10 +54,30 @@ dealing with arbitrary pasted content
  This mapping can also be used to determine the list of block or span styles to, for example,
  generate a drop-down list.
  */
+var import_map = {
+    b: {
+        type:'span',
+        style:'strong'
+    },
+    a: {
+        type:'span',
+        style:'link'
+    },
+    i: {
+        type:'span',
+        style:'emphasis'
+    },
+    br: {
+        type:'block',
+        style:'body'
+    },
+    object: {
+        skip:true
+    }
+};
+
 var semantic_map = {
-
     //blocks
-
     'body': {
         type:'block',
         element:'div',
@@ -483,7 +503,11 @@ Editor.prototype.insertPlainText = function(pos, str) {
 
 Editor.prototype.getMapping = function() {
     return semantic_map;
-}
+};
+
+Editor.prototype.getImportMapping = function() {
+    return import_map;
+};
 
 exports.makeEditor = function(domRoot) {
     return new Editor(domRoot);
@@ -492,7 +516,7 @@ exports.makeEditor = function(domRoot) {
 
 exports.makeModel = function() {
     return Model.makeModel();
-}
+};
 /*
 
 get a list of block styles

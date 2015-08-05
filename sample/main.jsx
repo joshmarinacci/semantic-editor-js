@@ -357,7 +357,7 @@ var MainView = React.createClass({
         return {
             posts: PostDataStore.getPosts(),
             selected: PostDataStore.getPosts()[0],
-            zen:true
+            zen:false
         }
     },
     componentDidMount: function() {

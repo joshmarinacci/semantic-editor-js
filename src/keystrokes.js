@@ -100,11 +100,11 @@ function updateCurrentStyle() {
 */
 
 exports.styleBold = function(e,editor) {
-    exports.styleSelection(e,editor,'bold');
+    exports.styleSelection(e,editor,'strong');
 };
 
 exports.styleItalic = function(e,editor) {
-    exports.styleSelection(e,editor,'italic');
+    exports.styleSelection(e,editor,'emphasis');
 };
 
 exports.splitLine = function(e, editor) {
@@ -299,7 +299,7 @@ exports.handleInput = function(e,editor) {
     var pasted_container = wrange.startContainer;
     var dp1 = Dom.findDomParentWithId(pasted_container);
     var mp1 = Dom.findModelForDom(model,dp1);
-    var new_mod = Dom.rebuildModelFromDom(dp1,model);
+    var new_mod = Dom.rebuildModelFromDom(dp1,model, editor.getImportMapping());
     model.swapNode(mp1,new_mod);
     var com_mod = new_mod;
     var com_dom = dp1;

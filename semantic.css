@@ -76,11 +76,11 @@
 .semantic-view .list-item:after { content: "item"; }
 
 /* inline styles */
-.semantic-view .bold {
+.semantic-view .strong {
     color: red;
     font-weight: bold;
 }
-.semantic-view .italic {
+.semantic-view .emphasis {
     color: green;
     font-weight: normal;
     font-style: italic;
