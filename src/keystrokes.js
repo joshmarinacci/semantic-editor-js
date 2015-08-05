@@ -202,11 +202,14 @@ exports.styleInlineLink = function(e,editor) {
 //actions_map[exports.UPDATE_CURRENT_STYLE] = updateCurrentStyle;
 //exports.actions_map = actions_map;
 exports.findActionByEvent = function(e, browser_keymap, key_to_actions, actions_map) {
+    //console.log("keycode = ", e.keyCode);
     if(browser_keymap[e.keyCode]) {
         var keyname = browser_keymap[e.keyCode];
         //console.log("matched the keycode",e.keyCode, keyname)
         if(e.metaKey && e.shiftKey) {
             var name = "cmd-shift-"+keyname;
+            //console.log("checking",name);
+            //console.log("actions = ", key_to_actions);
             if(key_to_actions[name]) {
                 var action = key_to_actions[name];
                 if(actions_map[action]) {

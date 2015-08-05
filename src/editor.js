@@ -345,15 +345,16 @@ var code_key_map = {
     78:"n",
     79:"o",
     80:"p",
-    81:"r",
-    82:"s",
-    83:"t",
-    84:"u",
-    85:"v",
-    86:"w",
-    87:"x",
-    88:"y",
-    89:"z"
+    81:'q',
+    82:"r",
+    83:"s",
+    84:"t",
+    85:"u",
+    86:"v",
+    87:"w",
+    88:"x",
+    89:"y",
+    90:"z"
 };
 
 var key_action_map = {
@@ -427,6 +428,10 @@ Editor.prototype.setModel = function(model) {
     this.syncDom(this.getMapping());
 };
 
+Editor.prototype.setCursorAtModel = function(mod,off) {
+    Dom.setCursorAtModel(mod,off,this.getDomRoot());
+};
+
 /*
 Editor.prototype.toHTML = function() {
 
@@ -478,7 +483,7 @@ Editor.prototype.addAction = function(action) {
 */
 /*
  * add a key binding. Should be something like
- * addKeyBinding("shift-command-a","insert-poop-emoji")
+ * addKeyBinding("insert-poop-emoji","shift-command-a")
  */
 Editor.prototype.addKeyBinding = function(name, keydef) {
     this._key_action_map[keydef] = name;

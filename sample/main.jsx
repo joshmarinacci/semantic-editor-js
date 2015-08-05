@@ -371,29 +371,19 @@ var MainView = React.createClass({
             })
         });
 
-        /*
-        Keystrokes.key_to_actions["cmd-shift-b"] = "clear-styles";
-        Keystrokes.actions_map['clear-styles'] = function(e) {
-            var editor = PostDataStore.getEditor();
-            var model = PostDataStore.getModel();
+        var editor = PostDataStore.getRealEditor();
+        editor.addAction('clear-styles',function(e,editor) {
+            var model = editor.getModel();
             Keystrokes.stopKeyboardEvent(e);
-            console.log("clearing the styles");
             var range = Keystrokes.makeRangeFromSelection(model,window);
-            console.log("range = ", range.start.mod.id, range.start.offset, range.end.mod.id, range.end.offset);
             var changes = Dom.makeClearStyleTextRange(range,model);
-
-            var com_mod = range.start.mod.getParent().getParent();
             Dom.applyChanges(changes,model);
-            Keystrokes.fireEvent('change',{});
-            var com_dom = Dom.findDomForModel(com_mod,editor);
-            Dom.rebuildDomFromModel(com_mod,com_dom,editor, document);
+            editor.syncDom();
+            editor.markAsChanged();
             var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-            Dom.setCursorAtModel(nmod.node, nmod.offset, editor);
-        };
-        */
-
-
-
+            editor.setCursorAtModel(nmod.node, nmod.offset);
+        });
+        editor.addKeyBinding('clear-styles','cmd-shift-u');
     },
     toggleZen: function() {
         this.setState({
