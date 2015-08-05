@@ -379,7 +379,7 @@ Editor.prototype.setDomRoot = function(dom_root) {
         });
         this._dom_root.addEventListener("keydown", this._handleKeydown.bind(this));
     }
-    this.syncDom(this.getMapping());
+    this.syncDom();
 };
 
 Editor.prototype.getDomRoot = function() {
