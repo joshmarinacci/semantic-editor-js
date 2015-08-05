@@ -135,44 +135,40 @@ exports.getCaretClientPosition = function() {
     return { x: x, y: y };
 };
 
-exports.modelToDom = function(mod,dom, document) {
-    if(mod.getRoot) return exports.modelToDom(mod.getRoot(),dom,document);
+function findMatchingMappingRule(type,style,mapping) {
+    var rule = mapping[style];
+    if(rule && rule.type == type) {
+        return rule;
+    }
+    return null;
+}
+
+exports.modelToDom = function(mod,dom, document, mapping) {
+    if(mod.getRoot) return exports.modelToDom(mod.getRoot(),dom,document, mapping);
     if(mod.type == Model.ROOT) {
         mod.content.forEach(function(modch){
-            dom.appendChild(exports.modelToDom(modch,dom,document));
+            dom.appendChild(exports.modelToDom(modch,dom,document, mapping));
         });
         return dom;
     }
-    if(mod.type == Model.TEXT) {
-        return document.createTextNode(mod.text);
+    if(mod.type == Model.TEXT) return document.createTextNode(mod.text);
+    var rule = findMatchingMappingRule(mod.type,mod.style,mapping);
+    if(rule == null && mod.type == 'span') {
+        rule = mapping.default_span;
     }
-    if(mod.type == Model.BLOCK) {
-        var block = document.createElement('div');
-        block.id = mod.id;
-        block.classList.add(mod.style);
+    if(rule !== null) {
+        if(!rule.element) { console.log("MISSING RULE.ELEMENT");}
+        var elem = document.createElement(rule.element);
+        elem.id = mod.id;
+        elem.classList.add(mod.style);
         mod.content.forEach(function(modch){
-            block.appendChild(exports.modelToDom(modch,dom,document));
+            elem.appendChild(exports.modelToDom(modch,dom,document, mapping));
         });
-        return block;
+        if(rule.isImage === true) elem.setAttribute('src',mod.meta.src);
+        if(rule.isLink === true)  elem.setAttribute('href',mod.meta.href);
+        return elem;
     }
-    if(mod.type == Model.SPAN) {
-        var span = document.createElement('span');
-        if( mod.style == 'image') {
-            span = document.createElement('img');
-            span.setAttribute('src',mod.meta.src);
-        }
-        if(mod.style == 'link' && mod.meta && mod.meta.href ) {
-            span = document.createElement('a');
-            span.setAttribute('href',mod.meta.href);
-        }
-
-        span.id = mod.id;
-        span.classList.add(mod.style);
-        mod.content.map(function(modch){
-            span.appendChild(exports.modelToDom(modch,dom,document));
-        });
-        return span;
-    }
+    console.log("didn't match a rule!", mod.type, mod.style);
 };
 
 function domIndexOf(dom_child) {
@@ -536,11 +532,11 @@ exports.makeDeleteTextRange = function(range,model) {
     return changes;
 };
 
-exports.syncDom = function(dom_root,model) {
-    exports.rebuildDomFromModel(model.getRoot(), dom_root, dom_root, dom_root.ownerDocument);
+exports.syncDom = function(dom_root,model, mapping) {
+    exports.rebuildDomFromModel(model.getRoot(), dom_root, dom_root, dom_root.ownerDocument, mapping);
 };
 
-exports.rebuildDomFromModel = function(mod,dom, dom_root,doc) {
+exports.rebuildDomFromModel = function(mod, dom, dom_root, doc, mapping) {
     if(typeof doc == 'undefined') {
         console.log(new Error().stack);
         throw new Error("undefined doc");
@@ -550,7 +546,7 @@ exports.rebuildDomFromModel = function(mod,dom, dom_root,doc) {
     } else {
         clearChildren(dom);
         mod.content.forEach(function(modch){
-            dom.appendChild(exports.modelToDom(modch,dom_root,doc));
+            dom.appendChild(exports.modelToDom(modch,dom_root,doc,mapping));
         });
         dom.id = mod.id;
     }

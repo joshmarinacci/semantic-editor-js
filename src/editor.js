@@ -60,30 +60,35 @@ var semantic_map = {
 
     'body': {
         type:'block',
+        element:'div',
         import: {
             elements: ['div','p']
         }
     },
     'header': {
         type:'block',
+        element:'div',
         import: {
             elements: ['h1','h2']
         }
     },
     'subheader': {
         type:'block',
+        element:'div',
         import: {
             elements: ['h3','h4','h5','h6']
         }
     },
     'block-code': {
         type:'block',
+        element:'div',
         import: {
             elements: ['pre']
         }
     },
     'block-quote': {
         type:'block',
+        element:'div',
         import: {
             elements: ['block-quote'],
         }
@@ -91,6 +96,7 @@ var semantic_map = {
 
     'ordered-list': {
         type:'block',
+        element:'div',
         import: {
             elements: ['ol']
         },
@@ -100,6 +106,7 @@ var semantic_map = {
     },
     'unordered-list': {
         type:'block',
+        element:'div',
         import: {
             elements: ['ul']
         },
@@ -109,6 +116,7 @@ var semantic_map = {
     },
     'list-item': {
         type:'block',
+        element:'div',
         import: {
             elements: ['li']
         },
@@ -120,8 +128,13 @@ var semantic_map = {
 
     //spans
 
+    'default_span': {
+        type:'span',
+        element:'span'
+    },
     'plain': {
         type:'span',
+        element:'span',
         import: {
             elements:['span']
         },
@@ -131,6 +144,7 @@ var semantic_map = {
     },
     'emphasis': {
         type:'span',
+        element:'span',
         import: {
             elements: ['i','em']
         },
@@ -140,6 +154,7 @@ var semantic_map = {
     },
     'strong': {
         type:'span',
+        element:'span',
         import: {
             elements: ['b','strong'],
         },
@@ -149,6 +164,7 @@ var semantic_map = {
     },
     'link': {
         type:'span',
+        element:'a',
         import: {
             elements:['a']
         },
@@ -159,6 +175,7 @@ var semantic_map = {
     },
     'delete': {
         type:'span',
+        element:'span',
         import: {
             elements: ['strike','delete']
         },
@@ -167,8 +184,10 @@ var semantic_map = {
         }
     },
     'inline-code': {
+        type:'span',
+        element:'span',
         import: {
-            elements:['code'],
+            elements:['code']
         },
         export: {
             elements: ['code']
@@ -178,6 +197,7 @@ var semantic_map = {
     //misc
     'image': {
         type:'span',
+        element:'img',
         import: {
             elements: ['img']
         },
@@ -316,11 +336,13 @@ function Editor(domRoot) {
 Editor.prototype.setDomRoot = function(dom_root) {
     this._dom_root = dom_root;
     var self = this;
-    this._dom_root.addEventListener("input", function(e) {
-        Keystrokes.handleInput(e,self);
-    });
-    this._dom_root.addEventListener("keydown", this._handleKeydown.bind(this));
-    this.syncDom();
+    if(this._dom_root.addEventListener) {
+        this._dom_root.addEventListener("input", function (e) {
+            Keystrokes.handleInput(e, self);
+        });
+        this._dom_root.addEventListener("keydown", this._handleKeydown.bind(this));
+    }
+    this.syncDom(this.getMapping());
 };
 
 Editor.prototype.getDomRoot = function() {
@@ -359,7 +381,7 @@ Editor.prototype.getModel = function() {
 
 Editor.prototype.setModel = function(model) {
     this._model = model;
-    this.syncDom();
+    this.syncDom(this.getMapping());
 };
 
 /*
@@ -394,6 +416,9 @@ Editor.prototype._simulateKeyboardEvent = function(evt) {
     if(act) act(evt,this);
 }
 
+Editor.prototype.toPlainText = function() {
+    return this._model.toPlainText();
+}
 /*
  * add a new action. Action should be in the form of:
  * {
@@ -422,7 +447,7 @@ Editor.prototype.addAction = function(name, action) {
 
 Editor.prototype.syncDom = function() {
     if(this._dom_root && this._model) {
-        Dom.syncDom(this._dom_root, this._model);
+        Dom.syncDom(this._dom_root, this._model, this.getMapping());
     }
 };
 
@@ -453,9 +478,12 @@ Editor.prototype.insertPlainText = function(pos, str) {
         insert: this._model.makeText(str)
     });
     Dom.applyChanges(changes,this._model);
-    this.syncDom();
+    this.syncDom(this.getMapping());
 };
 
+Editor.prototype.getMapping = function() {
+    return semantic_map;
+}
 
 exports.makeEditor = function(domRoot) {
     return new Editor(domRoot);

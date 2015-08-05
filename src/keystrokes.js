@@ -43,7 +43,7 @@ exports.styleSelection = function(e,editor,style) {
     editor.markAsChanged();
     var dom_root = editor.getDomRoot();
     var com_dom = Dom.findDomForModel(com_mod,dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
+    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document, editor.getMapping());
     var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
     Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
 };
@@ -56,7 +56,7 @@ exports.changeBlockStyle = function(style, editor) {
     var par = mod_b.getParent();
     var dom_root = editor.getDomRoot();
     var dom_b = Dom.findDomForModel(par,dom_root);
-    Dom.rebuildDomFromModel(par,dom_b, dom_root, document);
+    Dom.rebuildDomFromModel(par,dom_b, dom_root, document, editor.getMapping());
     editor.markAsChanged();
     var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
     Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
@@ -118,7 +118,7 @@ exports.splitLine = function(e, editor) {
     editor.markAsChanged();
     var dom_root = editor.getDomRoot();
     var com_dom = Dom.findDomForModel(com_mod,dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom, dom_root, document);
+    Dom.rebuildDomFromModel(com_mod,com_dom, dom_root, document, editor.getMapping());
     var new_mod = Model.pathToNode(path,model.getRoot());
     var new_text = model.getNextTextNode(new_mod);
     Dom.setCursorAtModel(new_text,0, dom_root);
@@ -152,7 +152,7 @@ exports.deleteBackwards = function(e, editor) {
     while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
 
     var com_dom = Dom.findDomForModel(com_mod, dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom, dom_root, document);
+    Dom.rebuildDomFromModel(com_mod,com_dom, dom_root, document, editor.getMapping());
 
     var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
     Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
@@ -185,7 +185,7 @@ exports.deleteForwards = function(e, editor) {
     editor.markAsChanged();
     while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
     var com_dom = Dom.findDomForModel(com_mod,dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document);
+    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document, editor.getMapping());
     var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
     Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
 };
@@ -303,7 +303,7 @@ exports.handleInput = function(e,editor) {
     model.swapNode(mp1,new_mod);
     var com_mod = new_mod;
     var com_dom = dp1;
-    Dom.rebuildDomFromModel(com_mod,com_dom, dom_root, dom_root.ownerDocument);
+    Dom.rebuildDomFromModel(com_mod,com_dom, dom_root, dom_root.ownerDocument, editor.getMapping());
     var offd = Dom.documentOffsetToDom(dom_root,doff);
     Dom.setCursorAtDom(offd.node, offd.offset);
     editor.markAsChanged();
