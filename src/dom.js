@@ -576,6 +576,7 @@ function genModelFromMapping(mp, name, node, mappings, model) {
         throw new Error("cant convert dom node" + node.nodeName);
     }
     nd.style = mp.style;
+    if(mp.isLink === true) nd.meta = { href: node.getAttribute("href") };
     for(var i=0; i<node.childNodes.length; i++) {
         nd.append(genModelFromDom(node.childNodes[i],model, mappings));
     }

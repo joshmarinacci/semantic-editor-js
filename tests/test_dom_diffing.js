@@ -148,14 +148,12 @@ test('insert text after span',function(t) {
 
     //generate a dom
     editor.syncDom();
-    Dom.print(dom_root);
 
     //modify the dom
     var ch = dom_root.childNodes[0].childNodes[1];
     ch.nodeValue = ch.nodeValue.substring(0,1)
         +'x'
         +ch.nodeValue.substring(1);
-    Dom.print(dom_root);
     //create selection at the change
     var sel = {
         start_node: ch,
@@ -204,14 +202,12 @@ test("delete text across spans", function(t) {
     block3.append(text3);
     model.append(block3);
 
-    Model.print(model);
 
 
     dom_root.id = model.getRoot().id;
 
     //generate a dom
     editor.syncDom();
-    Dom.print(dom_root);
 
 
     var range = {
@@ -234,7 +230,6 @@ test("delete text across spans", function(t) {
     t.equal(changes.length,5,'change count');
     Dom.applyChanges(changes,model);
 
-    Model.print(model);
 
     t.equal(model.findNodeById("id_3").text,'a');
     t.equal(model.findNodeById("id_4"),null);
@@ -327,21 +322,15 @@ test("selection to bold",function(t) {
     var text1  = model.makeText("abcdefghi");
     block1.append(text1);
     model.getRoot().append(block1);
-    Model.print(model);
     editor.syncDom();
-    Dom.print(dom_root);
 
     var range = makeTextSubsetRange(text1,3,6, dom_root);
     var changes = Dom.makeStyleTextRange(range,model,'bold');
     var com_mod = range.start.mod.getParent();
-    console.log('changes',changes);
     Dom.applyChanges(changes,model);
-    Model.print(model);
     //var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
     var com_dom = Dom.findDomForModel(com_mod,dom_root);
-    console.log("common = ", com_mod.id);
     Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, VirtualDoc, editor.getMapping());
-    Dom.print(dom_root);
     t.end();
 });
 
@@ -455,7 +444,6 @@ test("split block in half w/ text", function(t) {
     model.getRoot().append(block1);
 
     editor.syncDom();
-    Dom.print(dom_root);
 
     var range = {
         start: {
@@ -485,10 +473,8 @@ test("split block in half w/ span and more text", function(t) {
     var text3 = model.makeText("ghi");
     block1.append(text3);
     model.getRoot().append(block1);
-    Model.print(model);
 
     editor.syncDom();
-    Dom.print(dom_root);
 
     var range = {
         start: {
@@ -498,7 +484,6 @@ test("split block in half w/ span and more text", function(t) {
     };
     var changes = Dom.makeSplitChange(range,model);
     Dom.applyChanges(changes,model);
-    Model.print(model);
     t.end();
 });
 
@@ -547,7 +532,6 @@ test("make span around another, on the span",function(t){
     t.equal(block.childCount(),3);
     t.equal(block.child(1).childCount(),1);
     var range = makeRange(block.child(0),1,block.child(1).child(0),1, editor.getDomRoot());
-    console.log("range = ", range.start.mod.id, range.end.mod.id);
     var changes = Dom.makeStyleTextRange(range,model,'bold');
     Dom.applyChanges(changes,model);
     t.equal(block.childCount(),4);
@@ -572,13 +556,15 @@ test("clear styles from selection 2",function(t){
     var editor = makeTextSpanText();
     var model = editor.getModel();
     var block = model.getRoot().child(0);
+    //select inside the span only
     var range = makeRange(
         block.child(1).child(0),0,
         block.child(1).child(0),2,
         editor.getDomRoot());
     var changes = Dom.makeClearStyleTextRange(range,model);
     Dom.applyChanges(changes,model);
-    t.equal(block.childCount(),3);
+    //the span became empty, so it should have been trimmed, leaving only 2 kids
+    t.equal(block.childCount(),2);
     t.end();
 });
 
@@ -631,6 +617,8 @@ test("link back and forth conversion", function(t) {
     t.equal(link.style, 'link');
     t.equal(link.meta.href, url);
     editor.syncDom();
+    var dlink = editor.getDomRoot().childNodes[0].childNodes[1];
+    t.equal(dlink.atts.href,url);
     var mroot2 = Dom.rebuildModelFromDom(editor.getDomRoot(), model, editor.getImportMapping());
     var link2 = mroot2.child(0).child(1);
     t.equal(link2.style, 'link');

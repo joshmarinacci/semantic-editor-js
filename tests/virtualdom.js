@@ -54,6 +54,13 @@ var VirtualDoc = {
                     return str;
                 }
             },
+            get className() {
+                var coll = [];
+                for(var n in this.classList._list) {
+                    coll.push(this.classList._list[n]);
+                }
+                return coll.join(" ");
+            },
             get id() {
                 return this._id;
             },

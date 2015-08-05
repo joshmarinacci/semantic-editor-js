@@ -61,7 +61,8 @@ var import_map = {
     },
     a: {
         type:'span',
-        style:'link'
+        style:'link',
+        isLink:true
     },
     i: {
         type:'span',
@@ -85,6 +86,11 @@ var import_map = {
     'div': {
         type:'block',
         style:'body'
+    },
+    'span.link': {
+        type:'span',
+        style:'link',
+        isLink:true
     },
     'span': {
         type:'span',
