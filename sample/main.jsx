@@ -259,11 +259,12 @@ var LinkModal = React.createClass({
         var self = this;
         var editor = PostDataStore.getRealEditor();
         editor.addKeyBinding("style-inline-link",'cmd-shift-a');
-        editor.addAction("style-inline-link",function(e) {
+        editor.addAction("style-inline-link",function(e, editor) {
             console.log('styling an inline link');
             Keystrokes.stopKeyboardEvent(e);
             var sel = window.getSelection();
             var range = sel.getRangeAt(0);
+            var model = editor.getModel();
             var mod = Dom.findModelForDom(model,range.startContainer).getParent();
             if(mod.style == 'link') {
                 console.log("inside of an existing link");
@@ -282,7 +283,7 @@ var LinkModal = React.createClass({
                 },100);
             } else {
                 console.log("doing my own link");
-                Keystrokes.styleSelection(e,'link');
+                Keystrokes.styleSelection(e,editor,'link');
             }
         });
     },
