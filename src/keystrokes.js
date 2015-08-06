@@ -283,3 +283,11 @@ exports.handleInput = function(e,editor) {
     Dom.setCursorAtDom(offd.node, offd.offset);
     editor.markAsChanged();
 };
+
+exports.undo = function(e,editor) {
+    console.log('undoing');
+};
+
+exports.redo = function(e,editor) {
+    console.log("redoing");
+};

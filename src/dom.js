@@ -416,7 +416,7 @@ exports.applyChanges = function(changes, model) {
             return;
         }
         if(chg.type == 'split') {
-            model.splitBlockAt(chg.mod,chg.offset);
+            chg.results = model.splitBlockAt(chg.mod,chg.offset);
             return;
         }
         console.log("don't know how to handle change type",chg.type);
@@ -686,7 +686,14 @@ exports.makeSplitChange = function(range,model) {
     changes.push({
         type:'split',
         mod:range.start.mod,
-        offset:range.start.offset
+        offset:range.start.offset,
+        undo: function() {
+            //console.log('we must merge backwards', this.results);
+            console.log("merging", this.results[0].id, this.results[1].id);
+            var chngs = mergeParentBlocksIfNeeded(this.results[0],this.results[1]);
+            //console.log("new changes is",chngs);
+            exports.applyChanges(chngs,model);
+        }
     });
     return changes;
 };
@@ -802,15 +809,6 @@ exports.makeClearStyleTextRange = function(range, model, style) {
     return changes;
 };
 
-exports.makeSplitChange = function(range,model) {
-    var changes = [];
-    changes.push({
-        type:'split',
-        mod:range.start.mod,
-        offset:range.start.offset
-    });
-    return changes;
-};
 
 exports.findDomParentWithId = function(con) {
     if(!con) return null;

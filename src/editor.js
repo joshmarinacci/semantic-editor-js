@@ -319,7 +319,9 @@ var actions_map = {
     "style-inline-code": Keystrokes.styleInlineCode,
     "delete-forward": Keystrokes.deleteForwards,
     "delete-backward": Keystrokes.deleteBackwards,
-    "split-block": Keystrokes.splitLine
+    "split-block": Keystrokes.splitLine,
+    "undo":Keystrokes.undo,
+    "redo":Keystrokes.redo
 };
 
 var code_key_map = {
@@ -364,7 +366,9 @@ var key_action_map = {
     "backspace":    "delete-backward",
     "cmd-shift-c":  "style-inline-code",
     "cmd-shift-a":  "style-inline-link",
-    "enter":        "split-block"
+    "enter":        "split-block",
+    "cmd-z":        "undo",
+    "cmd-shift-z":  "redo"
 };
 
 
@@ -375,6 +379,8 @@ function Editor(domRoot) {
     }
     this._key_action_map = Object.create(key_action_map);
     this._listeners = {};
+    this._undostack = [];
+    this._redostack = [];
 }
 
 Editor.prototype.setDomRoot = function(dom_root) {
@@ -535,6 +541,26 @@ Editor.prototype.getMapping = function() {
 
 Editor.prototype.getImportMapping = function() {
     return import_map;
+};
+
+
+
+Editor.prototype.applyChange = function(chg) {
+    this._redostack.length = 0;
+    chg.redoit();
+    this._undostack.push(chg);
+};
+
+Editor.prototype.undoChange = function() {
+    var chg = this._undostack.pop();
+    chg.undoit();
+    this._redostack.push(chg);
+};
+
+Editor.prototype.redoChange = function() {
+    var chg = this._redostack.pop();
+    chg.redoit();
+    this._undostack.push(chg);
 };
 
 exports.makeEditor = function(domRoot) {
