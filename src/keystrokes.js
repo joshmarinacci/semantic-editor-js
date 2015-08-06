@@ -302,7 +302,6 @@ exports.handleInput = function(e,editor) {
 };
 
 exports.undo = function(e,editor) {
-    console.log('undoing');
     exports.stopKeyboardEvent(e);
     editor.undoChange();
     editor.syncDom();
@@ -310,7 +309,6 @@ exports.undo = function(e,editor) {
 };
 
 exports.redo = function(e,editor) {
-    console.log("redoing");
     exports.stopKeyboardEvent(e);
     editor.redoChange();
     editor.syncDom();
@@ -318,8 +316,6 @@ exports.redo = function(e,editor) {
 };
 
 function makeBlockReplaceChnage(req) {
-    console.log("old text is", req.mod.text);
-    console.log("new text is", req.dom.nodeValue);
     var oldblock = req.mod.findBlockParent();
     var newblock = duplicateBlock(oldblock);
     var newtext = newblock.child(req.mod.getIndex());
