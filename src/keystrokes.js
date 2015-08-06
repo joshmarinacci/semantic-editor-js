@@ -111,18 +111,12 @@ exports.splitLine = function(e, editor) {
     exports.stopKeyboardEvent(e);
     var model = editor.getModel();
     var range = exports.makeRangeFromSelection(model,window);
-    var path = Model.nodeToPath(range.start.mod);
-    var com_mod = range.start.mod.findBlockParent().getParent();
-    var changes = Dom.makeSplitChange(range,model);
-    Dom.applyChanges(changes,model);
+    var chg = makeSplitBlockChange(range.start);
+    editor.applyChange(chg);
+    editor.syncDom();
     editor.markAsChanged();
-    var dom_root = editor.getDomRoot();
-    var com_dom = Dom.findDomForModel(com_mod,dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom, dom_root, document, editor.getMapping());
-    var new_mod = Model.pathToNode(path,model.getRoot());
-    var new_text = model.getNextTextNode(new_mod);
-    Dom.setCursorAtModel(new_text,0, dom_root);
 };
+
 
 exports.deleteBackwards = function(e, editor) {
     exports.stopKeyboardEvent(e);
@@ -276,7 +270,7 @@ exports.handleInput = function(e,editor) {
         console.log("the same text node. probably just typing");
         console.log("the old text is", changeRange.start.mod.text);
         console.log("the new text is", changeRange.start.dom.nodeValue);
-        var chg = makeBlockReplaceChnage(changeRange.start);
+        var chg = makeBlockReplaceChange(changeRange.start);
         editor.applyChange(chg);
         editor.syncDom();
         editor.markAsChanged();
@@ -315,13 +309,27 @@ exports.redo = function(e,editor) {
     editor.markAsChanged();
 };
 
-function makeBlockReplaceChnage(req) {
+function makeBlockReplaceChange(req) {
     var oldblock = req.mod.findBlockParent();
     var newblock = duplicateBlock(oldblock);
     var newtext = newblock.child(req.mod.getIndex());
     newtext.text = req.dom.nodeValue;
     return makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock);
 }
+
+function makeSplitBlockChange(start) {
+    //make two new blocks to replace the old one
+    var oldblock = start.mod.findBlockParent();
+    var newtexts = start.mod.model.splitBlockAt(start.mod,start.offset);
+    var newblock1 = newtexts[0].findBlockParent();
+    var newblock2 = newtexts[1].findBlockParent();
+    //do a replace and insert
+    var replace = makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock1);
+    var insert  = makeInsertBlockChange(oldblock.getParent(),oldblock.getIndex()+1,newblock2);
+    return makeComboChange(replace,insert,'split block');
+}
+
+
 
 function makeReplaceBlockChange(parent, index, newNode) {
     var oldNode = parent.content[index];

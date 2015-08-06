@@ -388,7 +388,6 @@ function DModel() {
             var b = this.makeBlock();
             a.style = node.style;
             b.style = node.style;
-            this.swapNode(node,a,b);
             return [a,b];
         }
         console.log("WARNING can't split this node type",node.type);
