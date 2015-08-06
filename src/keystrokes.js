@@ -140,6 +140,8 @@ exports.deleteBackwards = function(e, editor) {
     editor.applyChange(chg);
     editor.syncDom();
     editor.markAsChanged();
+    var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
+    Dom.setCursorAtModel(nmod.node, nmod.offset, editor.getDomRoot());
 };
 
 exports.deleteForwards = function(e, editor) {
@@ -162,16 +164,13 @@ exports.deleteForwards = function(e, editor) {
             }
         }
     }
-    var dom_root = editor.getDomRoot();
-    var changes = Dom.makeDeleteTextRange(range,model);
-    var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
-    Dom.applyChanges(changes,model);
+
+    var chg = makeDeleteTextRangeChange(range,model);
+    editor.applyChange(chg);
+    editor.syncDom();
     editor.markAsChanged();
-    while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
-    var com_dom = Dom.findDomForModel(com_mod,dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document, editor.getMapping());
     var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
+    Dom.setCursorAtModel(nmod.node, nmod.offset, editor.getDomRoot());
 };
 
 exports.styleInlineCode = function(e,editor) {
@@ -252,18 +251,14 @@ exports.handleInput = function(e,editor) {
     var model  = editor.getModel();
 
     var range = exports.makeRangeFromSelection(model,window);
-    console.log('the range is',range);
     var changeRange = Dom.calculateChangeRange(model,dom_root,range.start);
-    console.log("the change is",changeRange);
-
     if(changeRange.start.mod == changeRange.end.mod && changeRange.start.mod.type == Model.TEXT) {
-        console.log("the same text node. probably just typing");
-        console.log("the old text is", changeRange.start.mod.text);
-        console.log("the new text is", changeRange.start.dom.nodeValue);
         var chg = makeBlockReplaceChange(changeRange.start);
         editor.applyChange(chg);
         editor.syncDom();
         editor.markAsChanged();
+        var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
+        Dom.setCursorAtModel(nmod.node, nmod.offset, editor.getDomRoot());
         return;
     }
 
@@ -377,12 +372,10 @@ function makeReplaceBlockChange(parent, index, newNode) {
 function makeInsertBlockChange(parent, index, node) {
     return {
         redoit: function() {
-            console.log("doing insert");
             parent.content.splice(index,0,node);
             node.parent = parent;
         },
         undoit: function() {
-            console.log('undoing insert');
             parent.content.splice(index,1);
         }
     }
@@ -390,11 +383,9 @@ function makeInsertBlockChange(parent, index, node) {
 function makeDeleteBlockChange(parent, index, node) {
     return {
         redoit: function() {
-            console.log("doing delete");
             parent.content.splice(index,1);
         },
         undoit: function() {
-            console.log("undoing delete");
             parent.content.splice(index,0,node);
             node.parent = parent;
         }
@@ -428,12 +419,10 @@ function duplicateBlock(block) {
 function makeComboChange(chg1, chg2, name) {
     return {
         redoit: function() {
-            console.log("doing "+name);
             chg1.redoit();
             chg2.redoit();
         },
         undoit: function() {
-            console.log("undoing "+name);
             chg2.undoit();
             chg1.undoit();
         }

@@ -546,14 +546,12 @@ Editor.prototype.getImportMapping = function() {
 
 
 Editor.prototype.applyChange = function(chg) {
-    console.log('applying a chnage');
     this._redostack.length = 0;
     chg.redoit();
     this._undostack.push(chg);
 };
 
 Editor.prototype.undoChange = function() {
-    console.log('trying an undo');
     if(this._undostack.length < 1) {
         console.log("nothing on the undo stack.")
         return;
@@ -564,7 +562,6 @@ Editor.prototype.undoChange = function() {
 };
 
 Editor.prototype.redoChange = function() {
-    console.log('trying an redo');
     if(this._redostack.length < 1) {
         console.log("nothing on the redo stack");
         return;

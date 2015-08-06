@@ -239,7 +239,6 @@ exports.calculateChangeRange = function(model,dom_root,sel) {
         if(modch.type == Model.TEXT && domch.nodeType == TEXT_NODE) {
             if(modch.text == domch.nodeValue) {
             } else {
-                console.log("both are text");
                 change.start = {
                     dom: domch,
                     mod: modch
