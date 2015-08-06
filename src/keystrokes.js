@@ -246,17 +246,39 @@ exports.findActionByEvent = function(e, browser_keymap, key_to_actions, actions_
     return null;
 };
 
+function cleanChildren(blk) {
+    var i=0;
+    while(i<blk.content.length) {
+        var ch = blk.content[i];
+        if(ch.childCount() > 0) cleanChildren(ch);
+        if(ch.type == Model.TEXT && ch.text.trim() == "") {
+            blk.content.splice(i,1);
+            continue;
+        }
+        if(ch.type != Model.TEXT && ch.childCount() == 0) {
+            blk.content.splice(i,1);
+            continue;
+        }
+        i++;
+    }
+}
 exports.handleInput = function(e,editor) {
     var wrange = window.getSelection().getRangeAt(0);
     var dom_root = editor.getDomRoot();
     var model  = editor.getModel();
     var doff = wrange.startOffset + Dom.domToDocumentOffset(dom_root,wrange.startContainer).offset;
-    var pasted_container = wrange.startContainer;
-    var dp1 = Dom.findDomParentWithId(pasted_container);
-    var mp1 = Dom.findModelForDom(model,dp1);
-    var new_mod = Dom.rebuildModelFromDom(dp1,model, editor.getImportMapping());
-    model.swapNode(mp1,new_mod);
-    Dom.rebuildDomFromModel(new_mod,dp1, dom_root, dom_root.ownerDocument, editor.getMapping());
+    //rebuild the model root and swap it in
+    var model2 = Dom.rebuildModelFromDom(dom_root, model, editor.getImportMapping());
+    model.getRoot().content = model2.content;
+    model.getRoot().content.forEach(function(blk){
+        blk.parent = model.getRoot();
+    });
+
+    //clean up the model because pasting might have messed up some stuff
+    cleanChildren(model.getRoot());
+    editor.syncDom();
+
+    //set the cursor back
     var offd = Dom.documentOffsetToDom(dom_root,doff);
     Dom.setCursorAtDom(offd.node, offd.offset);
     editor.markAsChanged();

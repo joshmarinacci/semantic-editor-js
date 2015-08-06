@@ -446,11 +446,11 @@ exports.print = function(dom,tab) {
     if(!tab) tab = "";
     if(dom.nodeType == ELEMENT_NODE) {
         console.log(tab + dom.nodeName + "#"+dom.id + " " + dom.classList);
-        dom.childNodes.forEach(function(domch){
-            exports.print(domch,tab+"  ");
-        })
+        for(var i=0; i< dom.childNodes.length; i++) {
+            exports.print(dom.childNodes[i],tab+"  ");
+        }
     }
-    if(dom.nodeType == TEXT_NODE) console.log(tab + dom.nodeType + ' ' + dom.nodeValue);
+    if(dom.nodeType == TEXT_NODE) console.log(tab + 'TEXT:' + '"' + dom.nodeValue+'"');
 }
 
 function mergeParentBlocksIfNeeded(nodeA, nodeB) {

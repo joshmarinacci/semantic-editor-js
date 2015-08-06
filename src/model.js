@@ -399,6 +399,7 @@ function DModel() {
         var args = Array.prototype.slice.call(arguments);
         var oldnode = args.shift();
         var rest = args;
+        if(oldnode.type == exports.ROOT) throw new Error("can't swap out the root node");
         var parent = oldnode.parent;
         var index = oldnode.getIndex();
         var cargs = [index,1].concat(rest);

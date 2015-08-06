@@ -637,6 +637,39 @@ test("header back and forth conversion", function(t) {
     t.equal(header2.style, 'header');
     t.end();
 });
+
+
+test("multiline paste", function(t) {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+    var block = model.makeBlock();
+    block.append(model.makeText("This"))
+    model.getRoot().append(block);
+    editor.syncDom();
+    var dom_root = editor.getDomRoot();
+    var span = VirtualDoc.createElement('span');
+    span.appendChild(VirtualDoc.createTextNode('a'));
+    dom_root.childNodes[0].appendChild(span);
+
+    var div1 = VirtualDoc.createElement('div');
+    div1.appendChild(VirtualDoc.createTextNode('b'));
+    dom_root.appendChild(div1);
+
+    //this empty div is probably the problem
+    var div2 = VirtualDoc.createElement('div');
+    dom_root.appendChild(div2);
+
+    var div3 = VirtualDoc.createElement('div');
+    div3.id = 'id_2';
+    div3.classList.add('body');
+    div3.appendChild(VirtualDoc.createTextNode("is an empty post"));
+    dom_root.appendChild(div3);
+
+    Dom.print(dom_root);
+    t.end();
+
+});
 return;
 
 test("make span around another, start on the span",function(t){

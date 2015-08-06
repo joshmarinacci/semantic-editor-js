@@ -61,6 +61,7 @@ var VirtualDoc = {
                 }
                 return coll.join(" ");
             },
+            _id:"",
             get id() {
                 return this._id;
             },
