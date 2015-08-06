@@ -136,20 +136,10 @@ exports.deleteBackwards = function(e, editor) {
         }
     }
 
-    var changes = Dom.makeDeleteTextRange(range,model);
-    var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
-    Dom.applyChanges(changes,model);
+    var chg = makeDeleteTextRangeChange(range,model);
+    editor.applyChange(chg);
+    editor.syncDom();
     editor.markAsChanged();
-    var dom_root = editor.getDomRoot();
-
-    //find a parent still in the tree
-    while(!com_mod.stillInTree()) com_mod = com_mod.getParent();
-
-    var com_dom = Dom.findDomForModel(com_mod, dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom, dom_root, document, editor.getMapping());
-
-    var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
 };
 
 exports.deleteForwards = function(e, editor) {
@@ -327,6 +317,52 @@ function makeSplitBlockChange(start) {
     var replace = makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock1);
     var insert  = makeInsertBlockChange(oldblock.getParent(),oldblock.getIndex()+1,newblock2);
     return makeComboChange(replace,insert,'split block');
+}
+
+//this won't work if there is middle text or spans
+function makeDeleteTextRangeChange(range,model) {
+    var it = model.getIterator(range.start.mod);
+    var ch = range.start.mod;
+    while(it.hasNext()){
+        //start and end text
+        if(ch == range.start.mod && ch == range.end.mod) {
+            var oldblock = range.start.mod.findBlockParent();
+            var newblock = duplicateBlock(oldblock);
+            var oldtext  = range.start.mod;
+            var newtext = newblock.child(oldtext.getIndex());
+            newtext.text  = oldtext.text.substring(0,range.start.offset)
+                + oldtext.text.substring(range.end.offset);
+            return makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock);
+        }
+        //start text
+        if(ch == range.start.mod) {
+            var oldblock = range.start.mod.findBlockParent();
+            var newblock1 = duplicateBlock(oldblock);
+            var oldtext  = range.start.mod;
+            var newtext = newblock1.child(oldtext.getIndex());
+            newtext.text  = oldtext.text.substring(0,range.start.offset);
+            ch = it.next();
+            continue;
+        }
+        //end text
+        if(ch == range.end.mod) {
+            var oldblock2 = ch.findBlockParent();
+            var newblock2 = duplicateBlock(oldblock2);
+            var oldtext2 = ch;
+            var newtext2 = newblock2.child(oldtext2.getIndex());
+            newtext2.text = oldtext2.text.substring(range.end.offset);
+            newblock1.append(newtext2);
+            var replace = makeReplaceBlockChange(oldblock.getParent(), oldblock.getIndex(),newblock1);
+            var delete2 = makeDeleteBlockChange(oldblock2.getParent(),oldblock2.getIndex(),oldblock2);
+            return makeComboChange(replace,delete2);
+        }
+        //middle text
+        if(ch.type == Model.TEXT) {
+            console.log("middle text");
+        }
+        ch = it.next();
+    }
+
 }
 
 
