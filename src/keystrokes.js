@@ -266,6 +266,23 @@ exports.handleInput = function(e,editor) {
     var wrange = window.getSelection().getRangeAt(0);
     var dom_root = editor.getDomRoot();
     var model  = editor.getModel();
+
+    var range = exports.makeRangeFromSelection(model,window);
+    console.log('the range is',range);
+    var changeRange = Dom.calculateChangeRange(model,dom_root,range.start);
+    console.log("the change is",changeRange);
+
+    if(changeRange.start.mod == changeRange.end.mod && changeRange.start.mod.type == Model.TEXT) {
+        console.log("the same text node. probably just typing");
+        console.log("the old text is", changeRange.start.mod.text);
+        console.log("the new text is", changeRange.start.dom.nodeValue);
+        var chg = makeBlockReplaceChnage(changeRange.start);
+        editor.applyChange(chg);
+        editor.syncDom();
+        editor.markAsChanged();
+        return;
+    }
+
     var doff = wrange.startOffset + Dom.domToDocumentOffset(dom_root,wrange.startContainer).offset;
     //rebuild the model root and swap it in
     var model2 = Dom.rebuildModelFromDom(dom_root, model, editor.getImportMapping());
@@ -286,8 +303,99 @@ exports.handleInput = function(e,editor) {
 
 exports.undo = function(e,editor) {
     console.log('undoing');
+    exports.stopKeyboardEvent(e);
+    editor.undoChange();
+    editor.syncDom();
+    editor.markAsChanged();
 };
 
 exports.redo = function(e,editor) {
     console.log("redoing");
+    exports.stopKeyboardEvent(e);
+    editor.redoChange();
+    editor.syncDom();
+    editor.markAsChanged();
 };
+
+function makeBlockReplaceChnage(req) {
+    console.log("old text is", req.mod.text);
+    console.log("new text is", req.dom.nodeValue);
+    var oldblock = req.mod.findBlockParent();
+    var newblock = duplicateBlock(oldblock);
+    var newtext = newblock.child(req.mod.getIndex());
+    newtext.text = req.dom.nodeValue;
+    return makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock);
+}
+
+function makeReplaceBlockChange(parent, index, newNode) {
+    var oldNode = parent.content[index];
+    var del = makeDeleteBlockChange(parent, index, oldNode);
+    var ins = makeInsertBlockChange(parent, index, newNode);
+    return makeComboChange(del,ins,'replace block');
+}
+
+function makeInsertBlockChange(parent, index, node) {
+    return {
+        redoit: function() {
+            console.log("doing insert");
+            parent.content.splice(index,0,node);
+            node.parent = parent;
+        },
+        undoit: function() {
+            console.log('undoing insert');
+            parent.content.splice(index,1);
+        }
+    }
+}
+function makeDeleteBlockChange(parent, index, node) {
+    return {
+        redoit: function() {
+            console.log("doing delete");
+            parent.content.splice(index,1);
+        },
+        undoit: function() {
+            console.log("undoing delete");
+            parent.content.splice(index,0,node);
+            node.parent = parent;
+        }
+    }
+}
+
+function duplicateBlock(block) {
+    if(block == null) throw new Error('null block. cant duplicate');
+    if(block.type == Model.TEXT) {
+        var blk = block.model.makeText(block.text);
+        return blk;
+    }
+    if(block.type == Model.SPAN) {
+        var blk = block.model.makeSpan();
+        blk.style = block.style;
+        block.content.forEach(function(ch){
+            blk.append(duplicateBlock(ch));
+        });
+        return blk;
+    }
+    if(block.type == Model.BLOCK) {
+        var blk = block.model.makeBlock();
+        blk.style = block.style;
+        block.content.forEach(function(ch){
+            blk.append(duplicateBlock(ch));
+        });
+        return blk;
+    }
+    throw new Error('cant duplicate',block);
+}
+function makeComboChange(chg1, chg2, name) {
+    return {
+        redoit: function() {
+            console.log("doing "+name);
+            chg1.redoit();
+            chg2.redoit();
+        },
+        undoit: function() {
+            console.log("undoing "+name);
+            chg2.undoit();
+            chg1.undoit();
+        }
+    }
+}

@@ -213,10 +213,10 @@ function isText(node) {
 exports.calculateChangeRange = function(model,dom_root,sel) {
     var change = {};
     //is there a previous sibling?
-    var domch = sel.start_node;
-    var modch = exports.findModelForDom(model,sel.start_node);
+    var domch = sel.dom;
+    var modch = sel.mod;
     if(modch == null) {
-        console.log("can't find hte modifed node. could be something that was pasted");
+        console.log("can't find the modified node. could be something that was pasted");
         var prev = prevDom(sel.start_node);
         console.log("prev is",prev);
         if(prev !== null) {
@@ -239,6 +239,7 @@ exports.calculateChangeRange = function(model,dom_root,sel) {
         if(modch.type == Model.TEXT && domch.nodeType == TEXT_NODE) {
             if(modch.text == domch.nodeValue) {
             } else {
+                console.log("both are text");
                 change.start = {
                     dom: domch,
                     mod: modch
