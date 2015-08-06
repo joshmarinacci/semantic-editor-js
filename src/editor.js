@@ -549,6 +549,8 @@ Editor.prototype.applyChange = function(chg) {
     this._redostack.length = 0;
     chg.redoit();
     this._undostack.push(chg);
+    this.syncDom();
+    this.markAsChanged();
 };
 
 Editor.prototype.undoChange = function() {
@@ -570,6 +572,14 @@ Editor.prototype.redoChange = function() {
     chg.redoit();
     this._undostack.push(chg);
 };
+
+Editor.prototype.setCursorAtDocumentOffset = function(off) {
+    var nmod = Model.documentOffsetToModel(this.getModel().getRoot(),off);
+    Dom.setCursorAtModel(nmod.node, nmod.offset, this.getDomRoot());
+};
+
+
+
 
 exports.makeEditor = function(domRoot) {
     return new Editor(domRoot);

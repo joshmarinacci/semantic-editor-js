@@ -4,14 +4,6 @@
 var Dom = require('./dom');
 var Model = require('./model');
 
-exports.populateKeyDocs = function(elem) {
-    for(var stroke in key_to_actions) {
-        var li = document.createElement("tr");
-        li.innerHTML = "<tr><td>"+stroke+"</td><td>" + key_to_actions[stroke]+"</td>";
-        elem.appendChild(li);
-    }
-};
-
 exports.makeRangeFromSelection = function(model,window) {
     var selection = window.getSelection().getRangeAt(0);
     var range = {
@@ -69,36 +61,6 @@ exports.stopKeyboardEvent = function(e) {
     }
 };
 
-//exports.UPDATE_CURRENT_STYLE = 'update-current-style';
-
-/*
-function updateCurrentStyle() {
-    setTimeout(function() {
-        var info = Dom.saveSelection(model);
-        var node = info.startpos.node;
-        var styleInfo = {
-            type:node.type,
-            id:node.id,
-            node:node,
-            offset:info.startpos.offset,
-            spanStyles:[],
-            blockStyles:[]
-        };
-        while(true) {
-            node = node.getParent();
-            if(node.getParent() == null) break;
-            if(node.type == 'span') {
-                styleInfo.spanStyles.push(node.style);
-            }
-            if(node.type == 'block') {
-                styleInfo.blockStyles.push(node.style);
-            }
-        }
-        fireEvent(exports.UPDATE_CURRENT_STYLE,styleInfo);
-    },10);
-}
-*/
-
 exports.styleBold = function(e,editor) {
     exports.styleSelection(e,editor,'strong');
 };
@@ -113,8 +75,7 @@ exports.splitLine = function(e, editor) {
     var range = exports.makeRangeFromSelection(model,window);
     var chg = makeSplitBlockChange(range.start);
     editor.applyChange(chg);
-    editor.syncDom();
-    editor.markAsChanged();
+    editor.setCursorAtDocumentOffset(range.documentOffset);
 };
 
 
@@ -138,10 +99,7 @@ exports.deleteBackwards = function(e, editor) {
 
     var chg = makeDeleteTextRangeChange(range,model);
     editor.applyChange(chg);
-    editor.syncDom();
-    editor.markAsChanged();
-    var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    Dom.setCursorAtModel(nmod.node, nmod.offset, editor.getDomRoot());
+    editor.setCursorAtDocumentOffset(range.documentOffset);
 };
 
 exports.deleteForwards = function(e, editor) {
@@ -167,10 +125,7 @@ exports.deleteForwards = function(e, editor) {
 
     var chg = makeDeleteTextRangeChange(range,model);
     editor.applyChange(chg);
-    editor.syncDom();
-    editor.markAsChanged();
-    var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    Dom.setCursorAtModel(nmod.node, nmod.offset, editor.getDomRoot());
+    editor.setCursorAtDocumentOffset(range.documentOffset);
 };
 
 exports.styleInlineCode = function(e,editor) {
@@ -255,10 +210,7 @@ exports.handleInput = function(e,editor) {
     if(changeRange.start.mod == changeRange.end.mod && changeRange.start.mod.type == Model.TEXT) {
         var chg = makeBlockReplaceChange(changeRange.start);
         editor.applyChange(chg);
-        editor.syncDom();
-        editor.markAsChanged();
-        var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-        Dom.setCursorAtModel(nmod.node, nmod.offset, editor.getDomRoot());
+        editor.setCursorAtDocumentOffset(range.documentOffset);
         return;
     }
 
