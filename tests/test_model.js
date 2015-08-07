@@ -2,7 +2,8 @@
  * Created by josh on 7/8/15.
  */
 
-var doc = require('../src/model');
+var Model = require('../src/model');
+var doc = Model;
 var test = require('tape');
 
 test('make one block',function(t){
@@ -87,19 +88,6 @@ test('iterator',function(t) {
     t.end();
 });
 
-function dumpTree(root,indent) {
-    if(!indent) indent = "";
-    if(root.type == doc.TEXT) {
-        console.log(indent+root.id+" "+root.type+" '"+root.text+"'");
-    }else {
-        console.log(indent + root.id+" "+root.type);
-    }
-    if(root.content) {
-        root.content.forEach(function(node) {
-            dumpTree(node,indent + "  ");
-        })
-    }
-}
 
 test("delete text across two blocks w/ text inbetween", function(t) {
     var model = makeSimpleTextBlock("abcdefg");
@@ -181,7 +169,9 @@ test('split in middle text', function(t) {
     block1.append(model.makeText("def"));
     block1.append(model.makeText("ghi"));
 
-    model.splitBlockAt(block1.child(1),1);
+    var newtext = model.splitBlockAt(block1.child(1),1);
+    model.getRoot().content.splice(0,1,newtext[0].findBlockParent());
+    model.getRoot().content.splice(1,0,newtext[1].findBlockParent());
     t.equal(model.toPlainText(),"abcdefghi");
     t.equal(model.getRoot().childCount(),2);
     t.equal(model.getRoot().child(0).childCount(),2);
@@ -321,14 +311,11 @@ test('delete forwards across three blocks', function(t) {
     block3.append(model.makeText("def"));
     model.getRoot().append(block3);
 
-    dumpTree(model.getRoot());
     var start_node = block1.child(0);
     var start_offset = 3;
     var pos = model.deleteTextForwards(start_node,start_offset);
-    dumpTree(model.getRoot());
     t.equal(model.toPlainText(),"abcdef");
     var pos = model.deleteTextForwards(start_node,start_offset);
-    dumpTree(model.getRoot());
     t.equal(model.toPlainText(),"abcef");
     t.equal(model.getRoot().childCount(),1);
     t.end();
@@ -345,11 +332,8 @@ test('delete backwards across blocks', function(t) {
 
     var start_node = block2.child(0);
     var start_offset = 1;
-    dumpTree(model.getRoot());
     var pos = model.deleteTextBackwards(start_node,start_offset);
-    dumpTree(model.getRoot());
     var pos = model.deleteTextBackwards(pos.node,pos.offset);
-    dumpTree(model.getRoot());
     t.equals(model.toPlainText(),"abef");
     t.equals(model.getRoot().childCount(),1);
     t.equals(pos.node,block1.child(0));
@@ -371,11 +355,8 @@ test('delete backwards across short block', function(t) {
 
     var start_node = block2.child(0);
     var start_offset = 1;
-    dumpTree(model.getRoot());
     var pos = model.deleteTextBackwards(start_node,start_offset);
-    dumpTree(model.getRoot());
     var pos = model.deleteTextBackwards(pos.node,pos.offset);
-    dumpTree(model.getRoot());
     t.equals(model.toPlainText(),"abdef");
     t.equals(model.getRoot().childCount(),2);
     t.equals(pos.node,block1.child(0));
@@ -393,13 +374,9 @@ test('delete backwards with empty text node in the middle',function(t) {
     block2.append(model.makeText("T"));
     block2.append(model.makeText("def"));
     model.getRoot().append(block2);
-    dumpTree(model.getRoot());
     var pos = model.deleteTextBackwards(block2.child(1),0);
-    dumpTree(model.getRoot());
     var pos = model.deleteTextBackwards(pos.node,pos.offset);
-    dumpTree(model.getRoot());
     t.equals(model.toPlainText(),"abdef");
-
     t.end();
 });
 
@@ -415,11 +392,9 @@ test('delete backwards, remove empty span', function(t) {
     block1.append(model.makeText("def"));
     model.getRoot().append(block1);
 
-    dumpTree(model.getRoot());
     t.equals(model.toPlainText(),"abcdef");
     t.equals(block1.childCount(),3);
     model.deleteTextBackwards(block1.child(2),0);
-    dumpTree(model.getRoot());
     t.equals(model.toPlainText(),"abdef");
     t.equals(block1.childCount(),2);
 
@@ -436,11 +411,9 @@ test('delete backwards, remove empty span alt', function(t) {
     block1.append(model.makeText("def"));
     model.getRoot().append(block1);
 
-    dumpTree(model.getRoot());
     t.equals(model.toPlainText(),"abcdef");
     t.equals(block1.childCount(),3);
     model.deleteTextBackwards(block1.child(0),3);
-    dumpTree(model.getRoot());
     t.equals(model.toPlainText(),"abdef");
     t.equals(block1.childCount(),2);
 
@@ -453,18 +426,16 @@ test('to json', function(t) {
     var block1 = model.makeBlock();
     block1.append(model.makeText("abc"));
     model.append(block1);
-    dumpTree(model.getRoot());
     var json = model.toJSON();
     console.log(json);
     var model2 = doc.fromJSON(json);
-    dumpTree(model2.getRoot());
     t.equals(model2.toPlainText(),"abc");
     t.end();
 });
 
 
 test('split span with enter key', function(t) {
-    var model = doc.makeModel();
+    var model = Model.makeModel();
     var block = model.makeBlock();
     model.getRoot().append(block);
     var span = model.makeSpan();
@@ -472,10 +443,11 @@ test('split span with enter key', function(t) {
     span.append(text);
     block.append(span);
 
-    dumpTree(model.getRoot());
-    model.splitBlockAt(text,2);
+    var newtexts = model.splitBlockAt(text,2);
+    //split block, then splice them in at the new point
+    model.getRoot().content.splice(0,1,newtexts[0].findBlockParent());
+    model.getRoot().content.splice(1,0,newtexts[1].findBlockParent());
 
-    dumpTree(model.getRoot());
     t.equals(model.toPlainText(),"abcd");
     t.equals(model.getRoot().child(1).child(0).child(0).text.length,2);
     t.end();
@@ -495,9 +467,7 @@ test('back delete into a span', function(t) {
     block2.append(text2);
     model.getRoot().append(block2);
 
-    dumpTree(model.getRoot());
     var pos = model.deleteTextBackwards(text2,0);
-    dumpTree(model.getRoot());
     t.end();
 });
 
@@ -514,10 +484,8 @@ test("nested spans",function(t) {
     model.getRoot().append(block1);
     var text2 = model.makeText("def");
     span1.append(text2);
-    dumpTree(model.getRoot());
 
     var pos = model.deleteTextBackwards(text2,0);
-    dumpTree(model.getRoot());
 
     t.end();
 });

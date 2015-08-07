@@ -79,7 +79,7 @@ test("test custom keystroke", function(t) {
     //simulate the keyboard event:
     ed._simulateKeyboardEvent({metaKey:true,shiftKey:true,keyCode:80}); //this is cmd shift p
     t.equals(ed.toPlainText(),"poopabcdef");
-
+    t.end();
 });
 
 function makeEditorWithLink(a,b,c,h) {
@@ -107,6 +107,7 @@ test("type before a link", function(t) {
     t.equals(std.mod_text_1().getText(),'abXc');
     t.equals(std.mod_link_1().meta.href,'http://poop.com/');
     t.equals(std.dom_text_1().nodeValue,'abXc');
+    t.end();
 });
 
 test("type middle of a link", function(t) {
@@ -122,6 +123,7 @@ test("type middle of a link", function(t) {
     t.equals(std.mod_link_1().child(0).getText(),'deXf');
     t.equals(std.mod_link_1().meta.href,'http://poop.com/');
     t.equals(std.dom_link_1().childNodes[0].nodeValue,'deXf');
+    t.end();
 });
 
 test("type after a link", function(t) {
@@ -137,6 +139,7 @@ test("type after a link", function(t) {
     t.equals(std.mod_text_2().getText(),'abXc');
     t.equals(std.mod_link_2().meta.href,'http://poop.com/');
     t.equals(std.dom_text_2().nodeValue,'abXc');
+    t.end();
 });
 
 test("enter key in middle of link", function(t) {
@@ -160,35 +163,5 @@ test("enter key in middle of link", function(t) {
     t.equals(std.ed.getModel().getRoot().child(1).child(0).child(0).getText(),'f');
     t.equals(std.ed.getModel().getRoot().child(1).child(0).meta.href,'http://poop.com');
     t.equals(std.ed.getModel().getRoot().child(1).child(0).type,'link');
+    t.end();
 });
-
-//Fake typing letters into a link span. Verify span in mod & dom
-// type before a link span. verify span in mod & dom.
-// type after a link span. verify span in mod & dom
-// Fake enter key. Verify both sides
-
-
-//select text inside a link, make it bold. verify both inner and outer spans
-//select exact text of a link, make it bold. verify
-//select text outside of a link. make it bold. verify
-
-//change block style from body to header at the cursor point. verify
-
-// select subset of text. make bold. verify. undo. verify
-// simple doc w/ image. verify image src
-// doc w/ image. insert  text before image. verify.
-// doc w/ image. insert text after image. verify.
-// doc w/ image. position cursor after image. delete backwards. verify
-// delete image. undo. verify.
-// style text bold. verify. bold again. verify bold is gone now. undo. verify bold is back
-// select text. make bold. select overlapping range. make italic. verify all three parts. undo. verify old is back.
-
-// make simple doc. export to HTML. verify as plain text
-// make doc with bold text and image. export as plain text. verify
-// make nested bold/italic/link spans. move cursor with arrow keys. verify cursor position. verify get style
-// make standard editor w/ default config. verify list of block styles
-// make stadnard editor w/ default config. get list of actions w/ keybindings
-// make doc w/ two blocks and nested spans. verify text only traversal
-// make doc w/ two blocks and nested spans. verify full element traversal
-// use a custom css class for a semantic style. sync to dom. verify.
-// use a custom element for html export. do export. verify

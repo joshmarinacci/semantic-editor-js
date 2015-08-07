@@ -19,6 +19,7 @@ function makeStdModel() {
 }
 
 
+/*
 test("insert character",function(t) {
     //make a model
     var editor = makeStdModel();
@@ -55,7 +56,8 @@ test("insert character",function(t) {
 
     t.end();
 });
-
+*/
+/*
 test('insert text before span',function(t) {
     var dom_root = VirtualDoc.createElement("div");
     var editor = Editor.makeEditor(dom_root);
@@ -167,7 +169,7 @@ test('insert text after span',function(t) {
     t.equals(model.getRoot().child(0).child(1).text,'gxhi','text inserted');
     t.end();
 });
-
+*/
 test("delete text across spans", function(t) {
     var dom_root = VirtualDoc.createElement("div");
     var editor = Editor.makeEditor(dom_root);
