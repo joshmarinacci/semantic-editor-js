@@ -485,3 +485,31 @@ test('block style change', function(t) {
     t.equals(editor.getModel().getRoot().child(1).style,'header');
     t.end();
 });
+
+
+test("multi-line delete",function(t) {
+    var editor = makeThreeBlocks();
+    var range = makeRange(editor,2,15);
+    t.equals(editor.getModel().getRoot().childCount(),3);
+    var chg = Keystrokes.makeDeleteTextRangeChange(range,editor.getModel());
+    editor.applyChange(chg);
+    t.equals(editor.getModel().getRoot().childCount(),1);
+    t.equals(editor.getModel().toPlainText(),'abpqr');
+    editor.undoChange();
+    t.equals(editor.getModel().getRoot().childCount(),3);
+    t.equals(editor.getModel().toPlainText(),'abcdefghijklmnopqr');
+    editor.redoChange();
+    t.equals(editor.getModel().getRoot().childCount(),1);
+    t.equals(editor.getModel().toPlainText(),'abpqr');
+    t.end();
+});
+
+
+
+
+
+
+
+
+
+

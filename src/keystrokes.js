@@ -377,6 +377,8 @@ function makeSplitBlockChange(start) {
 function makeDeleteTextRangeChange(range,model) {
     var it = model.getIterator(range.start.mod);
     var ch = range.start.mod;
+    var changes = [];
+    var todelete = {};
     while(it.hasNext()){
         //start and end text
         if(ch == range.start.mod && ch == range.end.mod) {
@@ -395,23 +397,37 @@ function makeDeleteTextRangeChange(range,model) {
             var oldtext  = range.start.mod;
             var newtext = newblock1.child(oldtext.getIndex());
             newtext.text  = oldtext.text.substring(0,range.start.offset);
+            changes.push(makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock1));
             ch = it.next();
             continue;
         }
         //end text
         if(ch == range.end.mod) {
+            //add the todeletes
+            for(var id in todelete) {
+                var blk = todelete[id];
+                changes.push(makeDeleteBlockChange(blk.getParent(),blk.getIndex(),blk));
+            }
+
+
             var oldblock2 = ch.findBlockParent();
             var newblock2 = duplicateBlock(oldblock2);
             var oldtext2 = ch;
             var newtext2 = newblock2.child(oldtext2.getIndex());
             newtext2.text = oldtext2.text.substring(range.end.offset);
             newblock1.append(newtext2);
-            var replace = makeReplaceBlockChange(oldblock.getParent(), oldblock.getIndex(),newblock1);
             var delete2 = makeDeleteBlockChange(oldblock2.getParent(),oldblock2.getIndex(),oldblock2);
-            return makeComboChange(replace,delete2);
+            changes.push(delete2);
+            var chg = changes.shift();
+            while(changes.length > 0) {
+                chg = makeComboChange(chg,changes.shift(),'combo');
+            }
+            return chg;
         }
         //middle text
         if(ch.type == Model.TEXT) {
+            var par = ch.findBlockParent();
+            todelete[par.id] = par;
             console.log("middle text");
         }
         ch = it.next();
@@ -419,13 +435,15 @@ function makeDeleteTextRangeChange(range,model) {
 
 }
 
+exports.makeDeleteTextRangeChange = makeDeleteTextRangeChange;
+
 
 
 function makeReplaceBlockChange(parent, index, newNode) {
     var oldNode = parent.content[index];
     var del = makeDeleteBlockChange(parent, index, oldNode);
     var ins = makeInsertBlockChange(parent, index, newNode);
-    return makeComboChange(del,ins,'replace block');
+    return makeComboChange(del,ins,'replace block ' + newNode.id);
 }
 
 function makeInsertBlockChange(parent, index, node) {
@@ -442,7 +460,7 @@ function makeInsertBlockChange(parent, index, node) {
 function makeDeleteBlockChange(parent, index, node) {
     return {
         redoit: function() {
-            parent.content.splice(index,1);
+            parent.model.findNodeById(node.id).deleteFromParent();
         },
         undoit: function() {
             parent.content.splice(index,0,node);
