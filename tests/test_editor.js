@@ -48,27 +48,20 @@ test("make editor", function(t) {
     t.end();
 });
 
+/*
 test("test custom keystroke", function(t) {
     //make editor
     var dom_root = vdom.createElement('div');
     var ed = Editor.makeEditor(dom_root);
 
     //register custom action
-    ed.addAction({
-        name:"insert-poop",
-        consume:true,
-        fun: function(event, editor) {
-            var pos = editor.getCursorPosition(); //defaults to 0
-            ed.insertPlainText(pos,'poop');
-        }
+    ed.addAction("insert-poop", function(event, editor) {
+        var pos = editor.getCursorPosition(); //defaults to 0
+        ed.insertPlainText(pos,'poop');
     });
 
     //add a keybinding for cmd-shift-p
-    ed.addKeyBinding('insert-poop',{
-        command:true,
-        shift:true,
-        key:'p'
-    });
+    ed.addKeyBinding('insert-poop','cmd-shift-p');
 
     //make a model with a block and some text
     var block = ed.getModel().makeBlock();
@@ -81,6 +74,8 @@ test("test custom keystroke", function(t) {
     t.equals(ed.toPlainText(),"poopabcdef");
     t.end();
 });
+*/
+
 
 function makeEditorWithLink(a,b,c,h) {
     var dom_root = vdom.createElement('div');
@@ -91,12 +86,23 @@ function makeEditorWithLink(a,b,c,h) {
     var t2 = ed.getModel().makeText(b);
     var l1 = ed.getModel().makeSpan();
     l1.style = 'link';
-    l1.meta = { href:"http://poop.com"};
+    l1.meta = { href:h};
+    l1.append(t2);
+    block.append(l1);
+    var t3 = ed.getModel().makeText(c);
+    block.append(t3);
     ed.getModel().getRoot().append(block);
     ed.syncDom();
+    Dom.print(ed.getDomRoot());
     return {
         mod_text_1: function() {
             return t1;
+        },
+        mod_text_2: function() {
+            return t2;
+        },
+        mod_link_1: function() {
+            return l1;
         },
         mod_link_1: function() {
             return l1;
@@ -104,10 +110,16 @@ function makeEditorWithLink(a,b,c,h) {
         dom_text_1: function() {
             return dom_root.childNodes[0].childNodes[0]
         },
+        dom_link_1: function() {
+            return dom_root.childNodes[0].childNodes[1]
+        },
+        dom_text_2: function() {
+            return dom_root.childNodes[0].childNodes[2]
+        },
         ed: ed
     }
 }
-
+/*
 test("type before a link", function(t) {
     var std = makeEditorWithLink('abc','def','ghi','http://poop.com/');
     //var link = std.model.getRoot().child(0).child(1)
@@ -118,48 +130,53 @@ test("type before a link", function(t) {
     std.dom_text_1().nodeValue = 'abXc';
     //std.ed.syncModel();
     std.ed.syncDom();
-    t.equals(std.mod_text_1().getText(),'abXc');
+    t.equals(std.mod_text_1().text,'abXc');
     t.equals(std.mod_link_1().meta.href,'http://poop.com/');
     t.equals(std.dom_text_1().nodeValue,'abXc');
     t.end();
 });
-
+*/
+/*
 test("type middle of a link", function(t) {
     var std = makeEditorWithLink('abc','def','ghi','http://poop.com/');
     //var link = std.model.getRoot().child(0).child(1)
-    t.equals(std.mod_link_1().child(0).getText(),'def');
+    t.equals(std.mod_link_1().child(0).text,'def');
     t.equals(std.mod_link_1().meta.href,'http://poop.com/');
     t.equals(std.dom_link_1().childNodes[0].nodeValue,'def');
     //insert some text
     std.dom_link_1().childNodes[0].nodeValue = 'deXf';
     //std.ed.syncModel();
     std.ed.syncDom();
-    t.equals(std.mod_link_1().child(0).getText(),'deXf');
+    t.equals(std.mod_link_1().child(0).text,'deXf');
     t.equals(std.mod_link_1().meta.href,'http://poop.com/');
     t.equals(std.dom_link_1().childNodes[0].nodeValue,'deXf');
     t.end();
 });
+*/
 
+/*
 test("type after a link", function(t) {
     var std = makeEditorWithLink('abc','def','ghi','http://poop.com/');
     //var link = std.model.getRoot().child(0).child(1)
-    t.equals(std.mod_text_2().getText(),'abc');
+    t.equals(std.mod_text_1().text,'abc');
     t.equals(std.mod_link_1().meta.href,'http://poop.com/');
-    t.equals(std.dom_text_2().nodeValue,'abc');
+    t.equals(std.dom_text_1().nodeValue,'abc');
     //insert some text
-    std.dom_text_2().nodeValue = 'abXc';
-    //std.ed.syncModel();
+    std.dom_text_2().nodeValue = 'ghXi';
+    std.ed.syncModel();
     std.ed.syncDom();
-    t.equals(std.mod_text_2().getText(),'abXc');
-    t.equals(std.mod_link_2().meta.href,'http://poop.com/');
+    t.equals(std.mod_text_2().text,'ghXi');
+    t.equals(std.mod_link_1().meta.href,'http://poop.com/');
     t.equals(std.dom_text_2().nodeValue,'abXc');
     t.end();
 });
+*/
 
+/*
 test("enter key in middle of link", function(t) {
     var std = makeEditorWithLink('abc','def','ghi','http://poop.com/');
     //var link = std.model.getRoot().child(0).child(1)
-    t.equals(std.mod_link_1().child(0).getText(),'def');
+    t.equals(std.mod_link_1().child(0).text,'def');
     t.equals(std.mod_link_1().meta.href,'http://poop.com/');
     t.equals(std.dom_link_1().childNodes[0].nodeValue,'def');
 
@@ -167,15 +184,16 @@ test("enter key in middle of link", function(t) {
     var pos = std.ed.makeModelPosition(std.mod_link_1(),2);
     //std.ed.setCursor(pos);
     //enter key
-    ed._simulateKeyboardEvent({metaKey:false,shiftKey:false,keyCode:13}); //this is enter key
+    std.ed._simulateKeyboardEvent({metaKey:false,shiftKey:false,keyCode:13}); //this is enter key
 
     //verify
-    t.equals(std.mod_link_1().child(0).getText(),'de');
+    t.equals(std.mod_link_1().child(0).text,'de');
     t.equals(std.mod_link_1().meta.href,'http://poop.com/');
     t.equals(std.dom_link_1().childNodes[0].nodeValue,'de');
 
-    t.equals(std.ed.getModel().getRoot().child(1).child(0).child(0).getText(),'f');
+    t.equals(std.ed.getModel().getRoot().child(1).child(0).child(0).text,'f');
     t.equals(std.ed.getModel().getRoot().child(1).child(0).meta.href,'http://poop.com');
     t.equals(std.ed.getModel().getRoot().child(1).child(0).type,'link');
     t.end();
 });
+*/

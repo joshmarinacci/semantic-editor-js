@@ -313,29 +313,6 @@ function makeTextSubsetRange(mod,start,end,dom_root) {
     }
 }
 
-test("selection to bold",function(t) {
-    var dom_root = VirtualDoc.createElement("div");
-    var editor = Editor.makeEditor(dom_root);
-    var model = editor.getModel();
-    var block1 = model.makeBlock();
-    var text1  = model.makeText("abcdefghi");
-    block1.append(text1);
-    model.getRoot().append(block1);
-    editor.syncDom();
-
-    Keystrokes.makeStyleSelectionChange('bold');
-    /*
-    var range = makeTextSubsetRange(text1,3,6, dom_root);
-    var changes = Dom.makeStyleTextRange(range,model,'bold');
-    var com_mod = range.start.mod.getParent();
-    Dom.applyChanges(changes,model);
-    //var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
-    var com_dom = Dom.findDomForModel(com_mod,dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, VirtualDoc, editor.getMapping());
-    */
-    t.end();
-});
-
 function makeTextSpanText() {
     var dom_root = VirtualDoc.createElement("div");
     var editor = Editor.makeEditor(dom_root);
