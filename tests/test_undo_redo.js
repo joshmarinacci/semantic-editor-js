@@ -3,6 +3,7 @@ var Model = require('../src/model');
 var Dom   = require('../src/dom');
 var VirtualDoc = require('./virtualdom');
 var Editor = require('../src/editor');
+var Keystrokes = require('../src/keystrokes');
 
 function makeTextSpanText() {
     var dom_root = VirtualDoc.createElement("div");
@@ -382,4 +383,93 @@ function makeSplitTextChange(otext,offset) {
     var chg2 = makeInsertBlockChange(oblock.getParent(),oblock.getIndex()+1,nblock2);
     return makeComboChange(chg1,chg2,'replace block');
 }
+
+function findDomTextAtOffset(node, off) {
+    //console.log("looking at",node.id,off);
+    if(node.nodeType == Dom.Node.ELEMENT_NODE) {
+        for(var i=0; i<node.childNodes.length; i++) {
+            var ret = findDomTextAtOffset(node.childNodes[i],off);
+            if(ret[0] === true) return ret;
+            off = ret[2];
+        }
+        return [false, null, off];
+    }
+    if(node.nodeType == Dom.Node.TEXT_NODE) {
+        if(node.nodeValue.length > off) {
+            //console.log("found it",off,node.nodeValue.length);
+            return [true,  node, off];
+        } else {
+            //console.log("no found",off,node.nodeValue.length);
+            return [false, node, off-node.nodeValue.length];
+        }
+    }
+}
+
+function makeRange(editor,off1,off2) {
+    //Dom.print(editor.getDomRoot());
+    var s = findDomTextAtOffset(editor.getDomRoot(),off1);
+    var e = findDomTextAtOffset(editor.getDomRoot(),off2);
+    //console.log("id = ",s[1].nodeValue,s[2]);
+    //console.log("id = ",e[1].nodeValue,e[2]);
+    return {
+        start: {
+            dom: s[1],
+            mod: Dom.findModelForDom(editor.getModel(),s[1]),
+            offset:s[2]
+        },
+        end: {
+            dom: e[1],
+            mod: Dom.findModelForDom(editor.getModel(),e[1]),
+            offset:e[2]
+        }
+    }
+}
+
+function makeThreeBlocks() {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+
+    var blk1 = model.makeBlock();
+    blk1.append(model.makeText("abcdef"));
+    model.getRoot().append(blk1);
+
+    var blk2 = model.makeBlock();
+    blk2.append(model.makeText("ghijkl"));
+    model.getRoot().append(blk2);
+
+    var blk3 = model.makeBlock();
+    blk3.append(model.makeText("mnopqr"));
+    model.getRoot().append(blk3);
+    editor.syncDom();
+    return editor;
+}
+
+test("single-line style", function(t) {
+    var editor = makeThreeBlocks();
+    var range = makeRange(editor,2,4);
+    var chg = Keystrokes.makeStyleSelectionChange(range,'bold');
+    editor.applyChange(chg);
+    var blk = editor.getModel().getRoot().child(0);
+    t.equals(blk.child(0).text,'ab');
+    t.equals(blk.child(1).child(0).text,'cd');
+    t.equals(blk.child(2).text,'ef');
+    t.end();
+});
+
+test("multi-line style", function(t) {
+    var editor = makeThreeBlocks();
+    var range = makeRange(editor,2,15);
+    var chg = Keystrokes.makeStyleSelectionChange(range,'bold');
+    editor.applyChange(chg);
+    console.log("---");
+    Model.print(editor.getModel());
+    var blk = editor.getModel().getRoot().child(0);
+    t.equals(blk.child(0).text,'ab');
+    t.equals(blk.child(1).child(0).text,'cdef');
+    var blk2 = editor.getModel().getRoot().child(1);
+    t.equals(blk2.child(0).child(0).text,'ghijkl');
+    t.end();
+});
+
 

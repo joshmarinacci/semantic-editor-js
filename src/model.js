@@ -43,6 +43,21 @@ function DNode(type,text,model) {
         this.parent.content.splice(n,1);
         return this.parent;
     };
+    this.replaceInParent = function(node) {
+        var n = this.parent.content.indexOf(this);
+        this.parent.content.splice(n,1,node);
+        node.parent = this.parent;
+        this.parent = null;
+    };
+    this.clear = function(node) {
+        this.content = [];
+    };
+    this.appendAll = function(arr) {
+        var self = this;
+        arr.forEach(function(ch) {
+            self.append(ch);
+        });
+    };
     this.findBlockParent = function() {
         if(this.type == exports.BLOCK) return this;
         return this.parent.findBlockParent();

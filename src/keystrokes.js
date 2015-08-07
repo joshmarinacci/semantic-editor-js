@@ -4,6 +4,27 @@
 var Dom = require('./dom');
 var Model = require('./model');
 
+/*
+
+
+to style a long selection across N blocks
+split first block in half at span boundary
+mark middle blocks
+split last  block in half
+wrap the sections in spans
+
+
+
+to delete a long selection
+split first block in half at the block boundary
+mark middle blocks
+split last  block in half
+delete excess blocks
+swap in the new stuff
+
+
+*/
+
 exports.makeRangeFromSelection = function(model,window) {
     var selection = window.getSelection().getRangeAt(0);
     var range = {
@@ -54,7 +75,71 @@ function makeStyleSelectionChange(range,style) {
         newblock.insertAfter(newspan,newtext2);
         return makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock);
     }
+
+    var changes = [];
+
+    console.log("starting at",range.start.mod.text);
+    var model = range.start.mod.model;
+    Model.print(model);
+
+    //split in half
+    var txt = range.start.mod.text;
+    var off = range.start.offset;
+    var oldparent = range.start.mod.findBlockParent();
+    var newparent = model.makeBlock();
+    newparent.append(model.makeText(txt.substring(0,off)));
+    var span = model.makeSpan();
+    span.style = style;
+    span.append(model.makeText(txt.substring(off)));
+    newparent.append(span);
+    changes.push(makeReplaceBlockChange(oldparent.getParent(),oldparent.getIndex(),newparent));
+
+    //now continue on to new blocks
+
+
+    var it = model.getIterator(range.start.mod);
+    var seen = {};
+    while(it.hasNext()) {
+        var ch = it.next();
+        console.log("looking at ",ch.id);
+        if(ch == range.end.mod) {
+            console.log("at the end");
+            var oldparent = ch.findBlockParent();
+            var ch1 = model.makeText(ch.text.substring(0,range.end.offset));
+            var ch2 = model.makeText(ch.text.substring(range.end.offset));
+            var blk = model.makeBlock();
+            blk.append(ch1);
+            var span = model.makeSpan();
+            span.style = style;
+            span.append(ch2);
+            blk.append(span);
+            Model.print(blk);
+            changes.push(makeReplaceBlockChange(oldparent.getParent(),oldparent.getIndex(),blk));
+            break;
+        }
+        if(ch.type == Model.BLOCK) {
+            console.log("  block");
+            if(seen[ch.id]) {
+                console.log("  done with block",ch.id);
+                //if we get here, then this block didn't contain the end point, so just style the whole thing
+                var blk = duplicateBlock(ch);
+                var span = model.makeSpan();
+                span.style = style;
+                span.appendAll(blk.content);
+                blk.clear();
+                blk.append(span);
+                console.log("new block is");
+                Model.print(blk);
+                changes.push(makeReplaceBlockChange(ch.getParent(),ch.getIndex(),blk));
+            } else {
+                seen[ch.id] = ch;
+            }
+        }
+    }
+    console.log('change count is',changes.length);
+    return makeComboChange(changes[0],makeComboChange(changes[1],changes[2],"style span"));
 }
+exports.makeStyleSelectionChange = makeStyleSelectionChange;
 
 exports.changeBlockStyle = function(style, editor) {
     var model = editor.getModel();
