@@ -26,19 +26,35 @@ exports.makeRangeFromSelection = function(model,window) {
 };
 
 exports.styleSelection = function(e,editor,style) {
-    var model = editor.getModel();
     exports.stopKeyboardEvent(e);
+    var model = editor.getModel();
     var range = exports.makeRangeFromSelection(model,window);
+    var chg = makeStyleSelectionChange(range,style);
+    editor.applyChange(chg);
+    editor.setCursorAtDocumentOffset(range.documentOffset);
+    /*
     var changes = Dom.makeStyleTextRange(range,model,style);
-    var com_mod = range.start.mod.getParent();
-    Dom.applyChanges(changes,model);
-    editor.markAsChanged();
-    var dom_root = editor.getDomRoot();
-    var com_dom = Dom.findDomForModel(com_mod,dom_root);
-    Dom.rebuildDomFromModel(com_mod,com_dom,dom_root, document, editor.getMapping());
-    var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
+    */
 };
+
+function makeStyleSelectionChange(range,style) {
+    if(range.start.mod == range.end.mod) {
+        var oldtext = range.start.mod;
+        var txt = range.start.mod.text;
+        var oldblock = range.start.mod.findBlockParent();
+        var newblock = duplicateBlock(oldblock);
+        var newtext  = newblock.child(oldtext.getIndex());
+        newtext.text = txt.substring(0,range.start.offset);
+        var newtext1 = newblock.model.makeText(txt.substring(range.start.offset,range.end.offset));
+        var newspan  = newblock.model.makeSpan() ;
+        newspan.style = style;
+        newspan.append(newtext1);
+        newblock.insertAfter(newtext,newspan);
+        var newtext2 = newblock.model.makeText(txt.substring(range.end.offset));
+        newblock.insertAfter(newspan,newtext2);
+        return makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock);
+    }
+}
 
 exports.changeBlockStyle = function(style, editor) {
     var model = editor.getModel();
@@ -77,7 +93,6 @@ exports.splitLine = function(e, editor) {
     editor.applyChange(chg);
     editor.setCursorAtDocumentOffset(range.documentOffset);
 };
-
 
 exports.deleteBackwards = function(e, editor) {
     exports.stopKeyboardEvent(e);
@@ -137,8 +152,6 @@ exports.styleInlineLink = function(e,editor) {
     console.log("links not implemented");
 };
 
-//actions_map[exports.UPDATE_CURRENT_STYLE] = updateCurrentStyle;
-//exports.actions_map = actions_map;
 exports.findActionByEvent = function(e, browser_keymap, key_to_actions, actions_map) {
     //console.log("keycode = ", e.keyCode);
     if(browser_keymap[e.keyCode]) {
@@ -200,6 +213,7 @@ function cleanChildren(blk) {
         i++;
     }
 }
+
 exports.handleInput = function(e,editor) {
     var wrange = window.getSelection().getRangeAt(0);
     var dom_root = editor.getDomRoot();

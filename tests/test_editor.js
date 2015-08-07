@@ -91,18 +91,32 @@ function makeEditorWithLink(a,b,c,h) {
     var t2 = ed.getModel().makeText(b);
     var l1 = ed.getModel().makeSpan();
     l1.style = 'link';
+    l1.meta = { href:"http://poop.com"};
     ed.getModel().getRoot().append(block);
+    ed.syncDom();
+    return {
+        mod_text_1: function() {
+            return t1;
+        },
+        mod_link_1: function() {
+            return l1;
+        },
+        dom_text_1: function() {
+            return dom_root.childNodes[0].childNodes[0]
+        },
+        ed: ed
+    }
 }
 
 test("type before a link", function(t) {
     var std = makeEditorWithLink('abc','def','ghi','http://poop.com/');
     //var link = std.model.getRoot().child(0).child(1)
-    t.equals(std.mod_text_1().getText(),'abc');
+    t.equals(std.mod_text_1().text,'abc');
     t.equals(std.mod_link_1().meta.href,'http://poop.com/');
     t.equals(std.dom_text_1().nodeValue,'abc');
     //insert some text
     std.dom_text_1().nodeValue = 'abXc';
-    std.ed.syncModel();
+    //std.ed.syncModel();
     std.ed.syncDom();
     t.equals(std.mod_text_1().getText(),'abXc');
     t.equals(std.mod_link_1().meta.href,'http://poop.com/');
@@ -118,7 +132,7 @@ test("type middle of a link", function(t) {
     t.equals(std.dom_link_1().childNodes[0].nodeValue,'def');
     //insert some text
     std.dom_link_1().childNodes[0].nodeValue = 'deXf';
-    std.ed.syncModel();
+    //std.ed.syncModel();
     std.ed.syncDom();
     t.equals(std.mod_link_1().child(0).getText(),'deXf');
     t.equals(std.mod_link_1().meta.href,'http://poop.com/');
@@ -134,7 +148,7 @@ test("type after a link", function(t) {
     t.equals(std.dom_text_2().nodeValue,'abc');
     //insert some text
     std.dom_text_2().nodeValue = 'abXc';
-    std.ed.syncModel();
+    //std.ed.syncModel();
     std.ed.syncDom();
     t.equals(std.mod_text_2().getText(),'abXc');
     t.equals(std.mod_link_2().meta.href,'http://poop.com/');
@@ -151,7 +165,7 @@ test("enter key in middle of link", function(t) {
 
     //move cursor
     var pos = std.ed.makeModelPosition(std.mod_link_1(),2);
-    std.ed.setCursor(pos);
+    //std.ed.setCursor(pos);
     //enter key
     ed._simulateKeyboardEvent({metaKey:false,shiftKey:false,keyCode:13}); //this is enter key
 

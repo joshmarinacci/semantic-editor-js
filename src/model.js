@@ -47,15 +47,19 @@ function DNode(type,text,model) {
         if(this.type == exports.BLOCK) return this;
         return this.parent.findBlockParent();
     };
+    this.insertAfter = function(n1,n2) {
+        this.content.splice(n1.getIndex()+1,0,n2);
+        n2.parent = this;
+    };
     this.isEmpty = function() {
         if(this.type == exports.TEXT && this.text.length == 0) return true;
         if(this.type == exports.SPAN && this.content.length == 0) return true;
         if(this.type == exports.BLOCK && this.content.length == 0) return true;
         return false;
-    }
+    };
     this.getIndex = function() {
         return this.getParent().content.indexOf(this);
-    }
+    };
     function stillInTree(mod) {
         if(mod.type == exports.ROOT) return true;
         if(mod.getIndex() < 0) return false;
