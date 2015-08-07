@@ -462,7 +462,6 @@ test("multi-line style", function(t) {
     var range = makeRange(editor,2,15);
     var chg = Keystrokes.makeStyleSelectionChange(range,'bold');
     editor.applyChange(chg);
-    console.log("---");
     Model.print(editor.getModel());
     var blk = editor.getModel().getRoot().child(0);
     t.equals(blk.child(0).text,'ab');
@@ -472,4 +471,17 @@ test("multi-line style", function(t) {
     t.end();
 });
 
-
+test('block style change', function(t) {
+    var editor = makeThreeBlocks();
+    t.equals(editor.getModel().getRoot().child(1).style,'body');
+    var range = makeRange(editor,8,9);
+    t.equals(range.start.mod.id,'id_5');
+    var chg = Keystrokes.makeBlockStyleChange(range,'header');
+    editor.applyChange(chg);
+    t.equals(editor.getModel().getRoot().child(1).style,'header');
+    editor.undoChange();
+    t.equals(editor.getModel().getRoot().child(1).style,'body');
+    editor.redoChange();
+    t.equals(editor.getModel().getRoot().child(1).style,'header');
+    t.end();
+});

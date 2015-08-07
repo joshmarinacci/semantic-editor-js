@@ -155,6 +155,14 @@ exports.changeBlockStyle = function(style, editor) {
     Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
 };
 
+exports.makeBlockStyleChange = function(range, style) {
+    var target_node = range.start.mod;
+    var target_block = target_node.findBlockParent();
+    var newblock = duplicateBlock(target_block);
+    newblock.style = style;
+    return makeReplaceBlockChange(target_block.getParent(),target_block.getIndex(),newblock);
+};
+
 exports.stopKeyboardEvent = function(e) {
     if(e && e.preventDefault) {
         e.preventDefault();
