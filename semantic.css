@@ -114,3 +114,7 @@
 .semantic-view .delete {
     text-decoration: line-through;
 }
+
+.semantic-view img {
+    max-width: 100%;
+}
