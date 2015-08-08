@@ -34,15 +34,10 @@ exports.deleteForwards = function(e, editor) {
             return;
         }
         range.end.offset++;
-        if(range.end.offset > range.end.mod.text.length) {
-            var nexttext = model.getNextTextNode(range.end.mod);
-            if(nexttext == null) {
-                range.end.offset = range.end.mod.text.length;
-            } else {
-                range.end.mod = nexttext;
-                range.end.offset = 1;
-            }
-        }
+        var abs = range.end.offset + Model.modelToDocumentOffset(model.getRoot(),range.end.mod).offset;
+        var nmod = Model.documentOffsetToModel(model.getRoot(),abs);
+        range.end.offset = nmod.offset;
+        range.end.mod = nmod.node;
     }
 
     var chg = makeDeleteTextRangeChange(range,model);
@@ -336,13 +331,15 @@ function makeDeleteTextRangeChange(range,model) {
         //end text
         if(ch == range.end.mod) {
             //add the todeletes
+            var oldblock2 = ch.findBlockParent();
             for(var id in todelete) {
-                var blk = todelete[id];
-                changes.push(makeDeleteBlockChange(blk.getParent(),blk.getIndex(),blk));
+                if(id !== oldblock2.id) {
+                    var blk = todelete[id];
+                    changes.push(makeDeleteBlockChange(blk.getParent(), blk.getIndex(), blk));
+                }
             }
 
 
-            var oldblock2 = ch.findBlockParent();
             var newblock2 = duplicateBlock(oldblock2);
             var oldtext2 = ch;
             var newtext2 = newblock2.child(oldtext2.getIndex());

@@ -532,7 +532,24 @@ test("delete backwards at start of doc",function(t) {
 
 
 
+test('split fwd delete, split fwd delete', function(t) {
+    var editor = makeThreeBlocks();
+    editor.setSelectionAtDocumentOffset(2,2);
+    Keystrokes.splitLine(null,editor);
+    t.equals(editor.getModel().getRoot().child(1).child(0).text,'cdef');
+    Keystrokes.deleteForwards(null,editor);
+    t.equals(editor.getModel().getRoot().child(0).child(1).text,'def');
+    Keystrokes.splitLine(null,editor);
+    t.equals(editor.getModel().getRoot().child(1).child(0).text,'');
+    Keystrokes.deleteForwards(null,editor);
+    t.equals(editor.getModel().getRoot().child(0).child(1).text,'ef');
 
+    editor.undoChange();
+    editor.undoChange();
+    editor.undoChange();
+    t.equals(editor.getModel().getRoot().child(1).child(0).text,'cdef');
+    t.end();
+});
 
 
 

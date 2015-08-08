@@ -607,10 +607,14 @@ Editor.prototype.setSelectionAtDocumentOffset = function(off1, off2) {
 Editor.prototype.setCursorAtDocumentOffset = function(off) {
     if(off < 0) off = 0;
     console.log("setting cursor to offset", off);
+    var nmod = Model.documentOffsetToModel(this.getModel().getRoot(),off);
     if(this._fake_range && this._fake_range != null) {
+        this._fake_range.start.mod = nmod.node;
+        this._fake_range.start.offset = nmod.offset;
+        this._fake_range.end.mod = nmod.node;
+        this._fake_range.end.offset = nmod.offset;
         return;
     }
-    var nmod = Model.documentOffsetToModel(this.getModel().getRoot(),off);
     Dom.setCursorAtModel(nmod.node, nmod.offset, this.getDomRoot());
 };
 
