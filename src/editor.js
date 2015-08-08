@@ -596,18 +596,18 @@ Editor.prototype.getSelectionRange = function() {
     return range;
 };
 
-Editor.prototype.setSelectionAtDocumentOffset = function(off1, off2, collapsed) {
+Editor.prototype.setSelectionAtDocumentOffset = function(off1, off2) {
     var range = makeRange(this,off1,off2);
-    range.collapsed = collapsed;
+    range.collapsed = (off1 === off2);
     range.documentOffset = range.start.offset +
         Model.modelToDocumentOffset(this.getModel().getRoot(), range.start.mod).offset;
     this._fake_range = range;
 };
 
 Editor.prototype.setCursorAtDocumentOffset = function(off) {
+    if(off < 0) off = 0;
     console.log("setting cursor to offset", off);
     if(this._fake_range && this._fake_range != null) {
-        console.log('not really setting the cursor');
         return;
     }
     var nmod = Model.documentOffsetToModel(this.getModel().getRoot(),off);

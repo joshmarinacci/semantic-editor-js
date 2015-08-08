@@ -487,10 +487,9 @@ test('block style change', function(t) {
 });
 
 
-test("multi-line delete",function(t) {
+test("multi-line delete backwards",function(t) {
     var editor = makeThreeBlocks();
     editor.setSelectionAtDocumentOffset(2,15,false);
-    var range = editor.getSelectionRange();
     t.equals(editor.getModel().getRoot().childCount(),3);
     Keystrokes.deleteBackwards(null,editor);
     t.equals(editor.getModel().getRoot().childCount(),1);
@@ -504,7 +503,32 @@ test("multi-line delete",function(t) {
     t.end();
 });
 
+test("multi-line delete forwards",function(t) {
+    var editor = makeThreeBlocks();
+    editor.setSelectionAtDocumentOffset(2,15);
+    t.equals(editor.getModel().getRoot().childCount(),3);
+    Keystrokes.deleteForwards(null,editor);
+    t.equals(editor.getModel().getRoot().childCount(),1);
+    t.equals(editor.getModel().toPlainText(),'abpqr');
+    editor.undoChange();
+    t.equals(editor.getModel().getRoot().childCount(),3);
+    t.equals(editor.getModel().toPlainText(),'abcdefghijklmnopqr');
+    editor.redoChange();
+    t.equals(editor.getModel().getRoot().childCount(),1);
+    t.equals(editor.getModel().toPlainText(),'abpqr');
+    t.end();
+});
 
+
+
+test("delete backwards at start of doc",function(t) {
+    var editor = makeThreeBlocks();
+    editor.setSelectionAtDocumentOffset(0,0);
+    t.equals(editor.getModel().getRoot().childCount(),3);
+    Keystrokes.deleteBackwards(null,editor);
+    t.equals(editor.getModel().toPlainText(),'abcdefghijklmnopqr');
+    t.end();
+});
 
 
 

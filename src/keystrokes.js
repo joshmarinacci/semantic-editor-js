@@ -5,7 +5,7 @@ exports.deleteBackwards = function(e, editor) {
     exports.stopKeyboardEvent(e);
     var model = editor.getModel();
     var range = editor.getSelectionRange();
-    if(range.collapsed) {
+    if(range.collapsed === true) {
         range.documentOffset--;
         range.start.offset--;
         if(range.start.offset < 0) {
