@@ -429,6 +429,7 @@ Editor.prototype.getModel = function() {
     return this._model;
 };
 
+
 Editor.prototype.setModel = function(model) {
     this._model = model;
     this.syncDom(this.getMapping());
@@ -454,14 +455,6 @@ Editor.prototype.toJSON = function() {
 
 Editor.prototype.fromJSON = function(json) {
     this._model = Model.fromJSON(json);
-};
-
-Editor.prototype.getCurrentSelection = function() {
-
-};
-
-Editor.prototype.getStyleAtPosition = function(pos) {
-
 };
 
 Editor.prototype._simulateKeyboardEvent = function(evt) {
@@ -561,8 +554,8 @@ Editor.prototype.undoChange = function() {
     var chg = this._undostack.pop();
     chg.undoit();
     this._redostack.push(chg);
-    editor.syncDom();
-    editor.markAsChanged();
+    this.syncDom();
+    this.markAsChanged();
 };
 
 Editor.prototype.redoChange = function() {
@@ -573,14 +566,95 @@ Editor.prototype.redoChange = function() {
     var chg = this._redostack.pop();
     chg.redoit();
     this._undostack.push(chg);
-    editor.syncDom();
-    editor.markAsChanged();
+    this.syncDom();
+    this.markAsChanged();
+};
+
+
+/* ========= selection stuff ========== */
+
+Editor.prototype.getSelectionRange = function() {
+    if(this._fake_range && this._fake_range != null) return this._fake_range;
+    var model = this.getModel();
+    var selection = window.getSelection().getRangeAt(0);
+    var range = {
+        start: {
+            dom: selection.startContainer,
+            mod: Dom.findModelForDom(model, selection.startContainer),
+            offset: selection.startOffset
+        },
+        end: {
+            dom: selection.endContainer,
+            mod: Dom.findModelForDom(model, selection.endContainer),
+            offset: selection.endOffset
+        }
+    };
+    range.collapsed = selection.collapsed;
+    range.documentOffset =
+        range.start.offset +
+        Model.modelToDocumentOffset(model.getRoot(), range.start.mod).offset;
+    return range;
+};
+
+Editor.prototype.setSelectionAtDocumentOffset = function(off1, off2, collapsed) {
+    var range = makeRange(this,off1,off2);
+    range.collapsed = collapsed;
+    range.documentOffset = range.start.offset +
+        Model.modelToDocumentOffset(this.getModel().getRoot(), range.start.mod).offset;
+    this._fake_range = range;
 };
 
 Editor.prototype.setCursorAtDocumentOffset = function(off) {
+    console.log("setting cursor to offset", off);
+    if(this._fake_range && this._fake_range != null) {
+        console.log('not really setting the cursor');
+        return;
+    }
     var nmod = Model.documentOffsetToModel(this.getModel().getRoot(),off);
     Dom.setCursorAtModel(nmod.node, nmod.offset, this.getDomRoot());
 };
+
+
+function makeRange(editor,off1,off2) {
+    //Dom.print(editor.getDomRoot());
+    var s = findDomTextAtOffset(editor.getDomRoot(),off1);
+    var e = findDomTextAtOffset(editor.getDomRoot(),off2);
+    //console.log("id = ",s[1].nodeValue,s[2]);
+    //console.log("id = ",e[1].nodeValue,e[2]);
+    return {
+        start: {
+            dom: s[1],
+            mod: Dom.findModelForDom(editor.getModel(),s[1]),
+            offset:s[2]
+        },
+        end: {
+            dom: e[1],
+            mod: Dom.findModelForDom(editor.getModel(),e[1]),
+            offset:e[2]
+        }
+    }
+}
+
+function findDomTextAtOffset(node, off) {
+    //console.log("looking at",node.id,off);
+    if(node.nodeType == Dom.Node.ELEMENT_NODE) {
+        for(var i=0; i<node.childNodes.length; i++) {
+            var ret = findDomTextAtOffset(node.childNodes[i],off);
+            if(ret[0] === true) return ret;
+            off = ret[2];
+        }
+        return [false, null, off];
+    }
+    if(node.nodeType == Dom.Node.TEXT_NODE) {
+        if(node.nodeValue.length > off) {
+            //console.log("found it",off,node.nodeValue.length);
+            return [true,  node, off];
+        } else {
+            //console.log("no found",off,node.nodeValue.length);
+            return [false, node, off-node.nodeValue.length];
+        }
+    }
+}
 
 
 

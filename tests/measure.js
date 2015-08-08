@@ -3,7 +3,8 @@ var fs = require('fs');
 var paths = [
     'src/dom.js',
     'src/model.js',
-    'src/keystrokes.js'
+    'src/keystrokes.js',
+    'src/editor.js'
 ];
 var total = 0;
 paths.forEach(function(path){
@@ -32,11 +33,3 @@ function countFile(path) {
     console.log('code lines = ',code.length);
     return code.length;
 }
-
-//1491, start
-//1367 july 28th, 2015
-//1554 after adding selection restoration and link code
-//1543 switch to document offset calcs. more deleting dead code
-//1544
-//1507 removed duplicate dom generation code
-//1502 duplicate node syncing code

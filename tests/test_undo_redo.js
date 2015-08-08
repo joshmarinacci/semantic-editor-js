@@ -489,10 +489,10 @@ test('block style change', function(t) {
 
 test("multi-line delete",function(t) {
     var editor = makeThreeBlocks();
-    var range = makeRange(editor,2,15);
+    editor.setSelectionAtDocumentOffset(2,15,false);
+    var range = editor.getSelectionRange();
     t.equals(editor.getModel().getRoot().childCount(),3);
-    var chg = Keystrokes.makeDeleteTextRangeChange(range,editor.getModel());
-    editor.applyChange(chg);
+    Keystrokes.deleteBackwards(null,editor);
     t.equals(editor.getModel().getRoot().childCount(),1);
     t.equals(editor.getModel().toPlainText(),'abpqr');
     editor.undoChange();

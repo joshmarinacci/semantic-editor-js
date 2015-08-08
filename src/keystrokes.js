@@ -4,7 +4,7 @@ var Model = require('./model');
 exports.deleteBackwards = function(e, editor) {
     exports.stopKeyboardEvent(e);
     var model = editor.getModel();
-    var range = exports.makeRangeFromSelection(model, window);
+    var range = editor.getSelectionRange();
     if(range.collapsed) {
         range.documentOffset--;
         range.start.offset--;
@@ -27,7 +27,7 @@ exports.deleteBackwards = function(e, editor) {
 exports.deleteForwards = function(e, editor) {
     exports.stopKeyboardEvent(e);
     var model = editor.getModel();
-    var range = exports.makeRangeFromSelection(model, window);
+    var range = editor.getSelectionRange();
     if(range.collapsed) {
         if(range.end.mod.type !== Model.TEXT) {
             console.log('something weird happened. bailing');
@@ -53,7 +53,7 @@ exports.deleteForwards = function(e, editor) {
 exports.splitLine = function(e, editor) {
     exports.stopKeyboardEvent(e);
     var model = editor.getModel();
-    var range = exports.makeRangeFromSelection(model,window);
+    var range = editor.getSelectionRange();
     var chg = makeSplitBlockChange(range.start);
     editor.applyChange(chg);
     editor.setCursorAtDocumentOffset(range.documentOffset);
@@ -78,8 +78,7 @@ exports.styleInlineLink = function(e,editor) {
 
 exports.styleSelection = function(e,editor,style) {
     exports.stopKeyboardEvent(e);
-    var model = editor.getModel();
-    var range = exports.makeRangeFromSelection(model,window);
+    var range = editor.getSelectionRange();
     var chg = makeStyleSelectionChange(range,style);
     editor.applyChange(chg);
     editor.setCursorAtDocumentOffset(range.documentOffset);
@@ -96,11 +95,9 @@ exports.redo = function(e,editor) {
 };
 
 exports.handleInput = function(e,editor) {
-    var wrange = window.getSelection().getRangeAt(0);
     var dom_root = editor.getDomRoot();
     var model  = editor.getModel();
-
-    var range = exports.makeRangeFromSelection(model,window);
+    var range = editor.getSelectionRange();
     var changeRange = Dom.calculateChangeRange(model,dom_root,range.start);
     if(changeRange.start.mod == changeRange.end.mod && changeRange.start.mod.type == Model.TEXT) {
         var chg = makeBlockReplaceChange(changeRange.start);
@@ -130,32 +127,9 @@ exports.handleInput = function(e,editor) {
     */
 };
 
-
-
-exports.makeRangeFromSelection = function(model,window) {
-    var selection = window.getSelection().getRangeAt(0);
-    var range = {
-        start: {
-            dom: selection.startContainer,
-            mod: Dom.findModelForDom(model, selection.startContainer),
-            offset: selection.startOffset
-        },
-        end: {
-            dom: selection.endContainer,
-            mod: Dom.findModelForDom(model, selection.endContainer),
-            offset: selection.endOffset
-        }
-    };
-    range.collapsed = selection.collapsed;
-    range.documentOffset =
-        range.start.offset +
-        Model.modelToDocumentOffset(model.getRoot(), range.start.mod).offset;
-    return range;
-};
-
 exports.changeBlockStyle = function(style, editor) {
     var model = editor.getModel();
-    var range = exports.makeRangeFromSelection(model, window);
+    var range = editor.getSelectionRange();
     var mod_b = range.start.mod.findBlockParent();
     mod_b.style = style;
     var par = mod_b.getParent();
@@ -226,25 +200,6 @@ exports.findActionByEvent = function(e, browser_keymap, key_to_actions, actions_
     }
     return null;
 };
-
-function cleanChildren(blk) {
-    var i=0;
-    while(i<blk.content.length) {
-        var ch = blk.content[i];
-        if(ch.childCount() > 0) cleanChildren(ch);
-        if(ch.type == Model.TEXT && ch.text.trim() == "") {
-            blk.content.splice(i,1);
-            continue;
-        }
-        if(ch.type != Model.TEXT && ch.childCount() == 0) {
-            blk.content.splice(i,1);
-            continue;
-        }
-        i++;
-    }
-}
-
-
 
 function makeStyleSelectionChange(range,style) {
     if(range.start.mod == range.end.mod) {
