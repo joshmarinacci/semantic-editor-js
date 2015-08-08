@@ -16,8 +16,8 @@ var std_styles = {
         'block-quote':'block-quote'
     },
     inline: {
-        bold:'bold',
-        italic:'italic',
+        strong:'strong',
+        emphasis:'emphasis',
         'inline-code':'inline-code',
         link:'link',
         subscript:'subscript',

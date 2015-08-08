@@ -172,7 +172,7 @@ function DModel() {
             body:'body'
         },
         inline: {
-            bold:'bold'
+            bold:'plain'
         }
     };
 
