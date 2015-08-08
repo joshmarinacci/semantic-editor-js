@@ -314,12 +314,12 @@ or synthesize or proxy events.
 */
 
 var actions_map = {
+    "delete-backward": Keystrokes.deleteBackwards,
+    "delete-forward": Keystrokes.deleteForwards,
+    "split-block": Keystrokes.splitLine,
     "style-bold": Keystrokes.styleBold,
     "style-italic": Keystrokes.styleItalic,
     "style-inline-code": Keystrokes.styleInlineCode,
-    "delete-forward": Keystrokes.deleteForwards,
-    "delete-backward": Keystrokes.deleteBackwards,
-    "split-block": Keystrokes.splitLine,
     "undo":Keystrokes.undo,
     "redo":Keystrokes.redo
 };
@@ -561,6 +561,8 @@ Editor.prototype.undoChange = function() {
     var chg = this._undostack.pop();
     chg.undoit();
     this._redostack.push(chg);
+    editor.syncDom();
+    editor.markAsChanged();
 };
 
 Editor.prototype.redoChange = function() {
@@ -571,6 +573,8 @@ Editor.prototype.redoChange = function() {
     var chg = this._redostack.pop();
     chg.redoit();
     this._undostack.push(chg);
+    editor.syncDom();
+    editor.markAsChanged();
 };
 
 Editor.prototype.setCursorAtDocumentOffset = function(off) {

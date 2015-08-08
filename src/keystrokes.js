@@ -1,29 +1,136 @@
-/**
- * Created by josh on 7/18/15.
- */
 var Dom = require('./dom');
 var Model = require('./model');
 
-/*
+exports.deleteBackwards = function(e, editor) {
+    exports.stopKeyboardEvent(e);
+    var model = editor.getModel();
+    var range = exports.makeRangeFromSelection(model, window);
+    if(range.collapsed) {
+        range.documentOffset--;
+        range.start.offset--;
+        if(range.start.offset < 0) {
+            var prevtext = model.getPreviousTextNode(range.start.mod);
+            if(prevtext == null) {
+                range.start.offset = 0;
+            } else {
+                range.start.mod = prevtext;
+                range.start.offset = prevtext.text.length;
+            }
+        }
+    }
+
+    var chg = makeDeleteTextRangeChange(range,model);
+    editor.applyChange(chg);
+    editor.setCursorAtDocumentOffset(range.documentOffset);
+};
+
+exports.deleteForwards = function(e, editor) {
+    exports.stopKeyboardEvent(e);
+    var model = editor.getModel();
+    var range = exports.makeRangeFromSelection(model, window);
+    if(range.collapsed) {
+        if(range.end.mod.type !== Model.TEXT) {
+            console.log('something weird happened. bailing');
+            return;
+        }
+        range.end.offset++;
+        if(range.end.offset > range.end.mod.text.length) {
+            var nexttext = model.getNextTextNode(range.end.mod);
+            if(nexttext == null) {
+                range.end.offset = range.end.mod.text.length;
+            } else {
+                range.end.mod = nexttext;
+                range.end.offset = 1;
+            }
+        }
+    }
+
+    var chg = makeDeleteTextRangeChange(range,model);
+    editor.applyChange(chg);
+    editor.setCursorAtDocumentOffset(range.documentOffset);
+};
+
+exports.splitLine = function(e, editor) {
+    exports.stopKeyboardEvent(e);
+    var model = editor.getModel();
+    var range = exports.makeRangeFromSelection(model,window);
+    var chg = makeSplitBlockChange(range.start);
+    editor.applyChange(chg);
+    editor.setCursorAtDocumentOffset(range.documentOffset);
+};
+
+exports.styleBold = function(e,editor) {
+    exports.styleSelection(e,editor,'strong');
+};
+
+exports.styleItalic = function(e,editor) {
+    exports.styleSelection(e,editor,'emphasis');
+};
+
+exports.styleInlineCode = function(e,editor) {
+    exports.styleSelection(e,editor,'inline-code');
+};
+
+exports.styleInlineLink = function(e,editor) {
+    exports.stopKeyboardEvent(e);
+    console.log("links not implemented");
+};
+
+exports.styleSelection = function(e,editor,style) {
+    exports.stopKeyboardEvent(e);
+    var model = editor.getModel();
+    var range = exports.makeRangeFromSelection(model,window);
+    var chg = makeStyleSelectionChange(range,style);
+    editor.applyChange(chg);
+    editor.setCursorAtDocumentOffset(range.documentOffset);
+};
+
+exports.undo = function(e,editor) {
+    exports.stopKeyboardEvent(e);
+    editor.undoChange();
+};
+
+exports.redo = function(e,editor) {
+    exports.stopKeyboardEvent(e);
+    editor.redoChange();
+};
+
+exports.handleInput = function(e,editor) {
+    var wrange = window.getSelection().getRangeAt(0);
+    var dom_root = editor.getDomRoot();
+    var model  = editor.getModel();
+
+    var range = exports.makeRangeFromSelection(model,window);
+    var changeRange = Dom.calculateChangeRange(model,dom_root,range.start);
+    if(changeRange.start.mod == changeRange.end.mod && changeRange.start.mod.type == Model.TEXT) {
+        var chg = makeBlockReplaceChange(changeRange.start);
+        editor.applyChange(chg);
+        editor.setCursorAtDocumentOffset(range.documentOffset);
+        return;
+    }
+
+    console.log('more than typing. must be a paste');
+    /*
+    var doff = wrange.startOffset + Dom.domToDocumentOffset(dom_root,wrange.startContainer).offset;
+    //rebuild the model root and swap it in
+    var model2 = Dom.rebuildModelFromDom(dom_root, model, editor.getImportMapping());
+    model.getRoot().content = model2.content;
+    model.getRoot().content.forEach(function(blk){
+        blk.parent = model.getRoot();
+    });
+
+    //clean up the model because pasting might have messed up some stuff
+    cleanChildren(model.getRoot());
+    editor.syncDom();
+
+    //set the cursor back
+    var offd = Dom.documentOffsetToDom(dom_root,doff);
+    Dom.setCursorAtDom(offd.node, offd.offset);
+    editor.markAsChanged();
+    */
+};
 
 
-to style a long selection across N blocks
-split first block in half at span boundary
-mark middle blocks
-split last  block in half
-wrap the sections in spans
-
-
-
-to delete a long selection
-split first block in half at the block boundary
-mark middle blocks
-split last  block in half
-delete excess blocks
-swap in the new stuff
-
-
-*/
 
 exports.makeRangeFromSelection = function(model,window) {
     var selection = window.getSelection().getRangeAt(0);
@@ -46,17 +153,98 @@ exports.makeRangeFromSelection = function(model,window) {
     return range;
 };
 
-exports.styleSelection = function(e,editor,style) {
-    exports.stopKeyboardEvent(e);
+exports.changeBlockStyle = function(style, editor) {
     var model = editor.getModel();
-    var range = exports.makeRangeFromSelection(model,window);
-    var chg = makeStyleSelectionChange(range,style);
-    editor.applyChange(chg);
-    editor.setCursorAtDocumentOffset(range.documentOffset);
-    /*
-    var changes = Dom.makeStyleTextRange(range,model,style);
-    */
+    var range = exports.makeRangeFromSelection(model, window);
+    var mod_b = range.start.mod.findBlockParent();
+    mod_b.style = style;
+    var par = mod_b.getParent();
+    var dom_root = editor.getDomRoot();
+    var dom_b = Dom.findDomForModel(par,dom_root);
+    Dom.rebuildDomFromModel(par,dom_b, dom_root, document, editor.getMapping());
+    editor.markAsChanged();
+    var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
+    Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
 };
+
+exports.makeBlockStyleChange = function(range, style) {
+    var target_node = range.start.mod;
+    var target_block = target_node.findBlockParent();
+    var newblock = duplicateBlock(target_block);
+    newblock.style = style;
+    return makeReplaceBlockChange(target_block.getParent(),target_block.getIndex(),newblock);
+};
+
+exports.stopKeyboardEvent = function(e) {
+    if(e && e.preventDefault) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+};
+
+exports.findActionByEvent = function(e, browser_keymap, key_to_actions, actions_map) {
+    //console.log("keycode = ", e.keyCode);
+    if(browser_keymap[e.keyCode]) {
+        var keyname = browser_keymap[e.keyCode];
+        //console.log("matched the keycode",e.keyCode, keyname)
+        if(e.metaKey && e.shiftKey) {
+            var name = "cmd-shift-"+keyname;
+            //console.log("checking",name);
+            //console.log("actions = ", key_to_actions);
+            if(key_to_actions[name]) {
+                var action = key_to_actions[name];
+                if(actions_map[action]) {
+                    return actions_map[action];
+                }
+            }
+        }
+        if(e.metaKey) {
+            var name = "cmd-"+keyname;
+            if(key_to_actions[name]) {
+                var action = key_to_actions[name];
+                if(actions_map[action]) {
+                    return actions_map[action];
+                }
+            }
+        }
+        if(e.ctrlKey) {
+            var name = "ctrl-"+keyname;
+            if(key_to_actions[name]) {
+                var action = key_to_actions[name];
+                if(actions_map[action]) {
+                    return actions_map[action];
+                }
+            }
+        }
+        var name = ""+keyname;
+        if(key_to_actions[name]) {
+            var action = key_to_actions[name];
+            if(actions_map[action]) {
+                return actions_map[action];
+            }
+        }
+    }
+    return null;
+};
+
+function cleanChildren(blk) {
+    var i=0;
+    while(i<blk.content.length) {
+        var ch = blk.content[i];
+        if(ch.childCount() > 0) cleanChildren(ch);
+        if(ch.type == Model.TEXT && ch.text.trim() == "") {
+            blk.content.splice(i,1);
+            continue;
+        }
+        if(ch.type != Model.TEXT && ch.childCount() == 0) {
+            blk.content.splice(i,1);
+            continue;
+        }
+        i++;
+    }
+}
+
+
 
 function makeStyleSelectionChange(range,style) {
     if(range.start.mod == range.end.mod) {
@@ -141,217 +329,6 @@ function makeStyleSelectionChange(range,style) {
 }
 exports.makeStyleSelectionChange = makeStyleSelectionChange;
 
-exports.changeBlockStyle = function(style, editor) {
-    var model = editor.getModel();
-    var range = exports.makeRangeFromSelection(model, window);
-    var mod_b = range.start.mod.findBlockParent();
-    mod_b.style = style;
-    var par = mod_b.getParent();
-    var dom_root = editor.getDomRoot();
-    var dom_b = Dom.findDomForModel(par,dom_root);
-    Dom.rebuildDomFromModel(par,dom_b, dom_root, document, editor.getMapping());
-    editor.markAsChanged();
-    var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
-};
-
-exports.makeBlockStyleChange = function(range, style) {
-    var target_node = range.start.mod;
-    var target_block = target_node.findBlockParent();
-    var newblock = duplicateBlock(target_block);
-    newblock.style = style;
-    return makeReplaceBlockChange(target_block.getParent(),target_block.getIndex(),newblock);
-};
-
-exports.stopKeyboardEvent = function(e) {
-    if(e && e.preventDefault) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-};
-
-exports.styleBold = function(e,editor) {
-    exports.styleSelection(e,editor,'strong');
-};
-
-exports.styleItalic = function(e,editor) {
-    exports.styleSelection(e,editor,'emphasis');
-};
-
-exports.splitLine = function(e, editor) {
-    exports.stopKeyboardEvent(e);
-    var model = editor.getModel();
-    var range = exports.makeRangeFromSelection(model,window);
-    var chg = makeSplitBlockChange(range.start);
-    editor.applyChange(chg);
-    editor.setCursorAtDocumentOffset(range.documentOffset);
-};
-
-exports.deleteBackwards = function(e, editor) {
-    exports.stopKeyboardEvent(e);
-    var model = editor.getModel();
-    var range = exports.makeRangeFromSelection(model, window);
-    if(range.collapsed) {
-        range.documentOffset--;
-        range.start.offset--;
-        if(range.start.offset < 0) {
-            var prevtext = model.getPreviousTextNode(range.start.mod);
-            if(prevtext == null) {
-                range.start.offset = 0;
-            } else {
-                range.start.mod = prevtext;
-                range.start.offset = prevtext.text.length;
-            }
-        }
-    }
-
-    var chg = makeDeleteTextRangeChange(range,model);
-    editor.applyChange(chg);
-    editor.setCursorAtDocumentOffset(range.documentOffset);
-};
-
-exports.deleteForwards = function(e, editor) {
-    exports.stopKeyboardEvent(e);
-    var model = editor.getModel();
-    var range = exports.makeRangeFromSelection(model, window);
-    if(range.collapsed) {
-        if(range.end.mod.type !== Model.TEXT) {
-            console.log('something weird happened. bailing');
-            return;
-        }
-        range.end.offset++;
-        if(range.end.offset > range.end.mod.text.length) {
-            var nexttext = model.getNextTextNode(range.end.mod);
-            if(nexttext == null) {
-                range.end.offset = range.end.mod.text.length;
-            } else {
-                range.end.mod = nexttext;
-                range.end.offset = 1;
-            }
-        }
-    }
-
-    var chg = makeDeleteTextRangeChange(range,model);
-    editor.applyChange(chg);
-    editor.setCursorAtDocumentOffset(range.documentOffset);
-};
-
-exports.styleInlineCode = function(e,editor) {
-    exports.styleSelection(e,editor,'inline-code');
-};
-
-exports.styleInlineLink = function(e,editor) {
-    exports.stopKeyboardEvent(e);
-    console.log("links not implemented");
-};
-
-exports.findActionByEvent = function(e, browser_keymap, key_to_actions, actions_map) {
-    //console.log("keycode = ", e.keyCode);
-    if(browser_keymap[e.keyCode]) {
-        var keyname = browser_keymap[e.keyCode];
-        //console.log("matched the keycode",e.keyCode, keyname)
-        if(e.metaKey && e.shiftKey) {
-            var name = "cmd-shift-"+keyname;
-            //console.log("checking",name);
-            //console.log("actions = ", key_to_actions);
-            if(key_to_actions[name]) {
-                var action = key_to_actions[name];
-                if(actions_map[action]) {
-                    return actions_map[action];
-                }
-            }
-        }
-        if(e.metaKey) {
-            var name = "cmd-"+keyname;
-            if(key_to_actions[name]) {
-                var action = key_to_actions[name];
-                if(actions_map[action]) {
-                    return actions_map[action];
-                }
-            }
-        }
-        if(e.ctrlKey) {
-            var name = "ctrl-"+keyname;
-            if(key_to_actions[name]) {
-                var action = key_to_actions[name];
-                if(actions_map[action]) {
-                    return actions_map[action];
-                }
-            }
-        }
-        var name = ""+keyname;
-        if(key_to_actions[name]) {
-            var action = key_to_actions[name];
-            if(actions_map[action]) {
-                return actions_map[action];
-            }
-        }
-    }
-    return null;
-};
-
-function cleanChildren(blk) {
-    var i=0;
-    while(i<blk.content.length) {
-        var ch = blk.content[i];
-        if(ch.childCount() > 0) cleanChildren(ch);
-        if(ch.type == Model.TEXT && ch.text.trim() == "") {
-            blk.content.splice(i,1);
-            continue;
-        }
-        if(ch.type != Model.TEXT && ch.childCount() == 0) {
-            blk.content.splice(i,1);
-            continue;
-        }
-        i++;
-    }
-}
-
-exports.handleInput = function(e,editor) {
-    var wrange = window.getSelection().getRangeAt(0);
-    var dom_root = editor.getDomRoot();
-    var model  = editor.getModel();
-
-    var range = exports.makeRangeFromSelection(model,window);
-    var changeRange = Dom.calculateChangeRange(model,dom_root,range.start);
-    if(changeRange.start.mod == changeRange.end.mod && changeRange.start.mod.type == Model.TEXT) {
-        var chg = makeBlockReplaceChange(changeRange.start);
-        editor.applyChange(chg);
-        editor.setCursorAtDocumentOffset(range.documentOffset);
-        return;
-    }
-
-    var doff = wrange.startOffset + Dom.domToDocumentOffset(dom_root,wrange.startContainer).offset;
-    //rebuild the model root and swap it in
-    var model2 = Dom.rebuildModelFromDom(dom_root, model, editor.getImportMapping());
-    model.getRoot().content = model2.content;
-    model.getRoot().content.forEach(function(blk){
-        blk.parent = model.getRoot();
-    });
-
-    //clean up the model because pasting might have messed up some stuff
-    cleanChildren(model.getRoot());
-    editor.syncDom();
-
-    //set the cursor back
-    var offd = Dom.documentOffsetToDom(dom_root,doff);
-    Dom.setCursorAtDom(offd.node, offd.offset);
-    editor.markAsChanged();
-};
-
-exports.undo = function(e,editor) {
-    exports.stopKeyboardEvent(e);
-    editor.undoChange();
-    editor.syncDom();
-    editor.markAsChanged();
-};
-
-exports.redo = function(e,editor) {
-    exports.stopKeyboardEvent(e);
-    editor.redoChange();
-    editor.syncDom();
-    editor.markAsChanged();
-};
 
 function makeBlockReplaceChange(req) {
     var oldblock = req.mod.findBlockParent();
@@ -436,8 +413,6 @@ function makeDeleteTextRangeChange(range,model) {
 }
 
 exports.makeDeleteTextRangeChange = makeDeleteTextRangeChange;
-
-
 
 function makeReplaceBlockChange(parent, index, newNode) {
     var oldNode = parent.content[index];
