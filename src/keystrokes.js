@@ -8,15 +8,10 @@ exports.deleteBackwards = function(e, editor) {
     if(range.collapsed === true) {
         range.documentOffset--;
         range.start.offset--;
-        if(range.start.offset < 0) {
-            var prevtext = model.getPreviousTextNode(range.start.mod);
-            if(prevtext == null) {
-                range.start.offset = 0;
-            } else {
-                range.start.mod = prevtext;
-                range.start.offset = prevtext.text.length;
-            }
-        }
+        var abs = range.start.offset + Model.modelToDocumentOffset(model.getRoot(),range.start.mod).offset;
+        var nmod = Model.documentOffsetToModel(model.getRoot(),abs);
+        range.start.offset = nmod.offset;
+        range.start.mod = nmod.node;
     }
 
     var chg = makeDeleteTextRangeChange(range,model);
@@ -333,7 +328,7 @@ function makeDeleteTextRangeChange(range,model) {
             //add the todeletes
             var oldblock2 = ch.findBlockParent();
             for(var id in todelete) {
-                if(id !== oldblock2.id) {
+                if(id !== oldblock2.id && id !== oldblock.id) {
                     var blk = todelete[id];
                     changes.push(makeDeleteBlockChange(blk.getParent(), blk.getIndex(), blk));
                 }

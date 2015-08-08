@@ -553,4 +553,19 @@ test('split fwd delete, split fwd delete', function(t) {
 
 
 
+test('split, back delete, split, back delete', function(t) {
+    var editor = makeThreeBlocks();
+    editor.setSelectionAtDocumentOffset(2,2);
+    Keystrokes.splitLine(null,editor);
+    t.equals(editor.getModel().getRoot().child(1).child(0).text,'cdef');
+    editor.setSelectionAtDocumentOffset(2,2);
+    Keystrokes.deleteBackwards(null,editor);
+    editor.setSelectionAtDocumentOffset(2,2);
+    Keystrokes.splitLine(null,editor);
+    editor.setSelectionAtDocumentOffset(2,2);
+    Keystrokes.deleteBackwards(null,editor);
+    t.end();
+});
+
+
 
