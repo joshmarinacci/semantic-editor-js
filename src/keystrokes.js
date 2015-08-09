@@ -493,6 +493,7 @@ function makeDeleteTextRangeChange(range,model) {
 exports.makeDeleteTextRangeChange = makeDeleteTextRangeChange;
 
 function makeDeleteTextRangeChange2(range,model) {
+    //console.log("deleting with range",range.toString());
     var root = model.getRoot();
     var old_start_block = range.start.mod.findBlockParent();
     var old_start_index = old_start_block.getIndex();
@@ -535,12 +536,24 @@ function makeDeleteTextRangeChange2(range,model) {
 
 function deleteWithRange(range,node,insideDelete) {
     //console.log("node is",node.id, 'inside delete',insideDelete);
+    //if at both start and end
+    if(node == range.start.mod && node == range.end.mod) {
+        //console.log("entirely within one text node");
+        var before = range.start.mod.text.substring(0,range.start.offset);
+        var after = range.start.mod.text.substring(range.end.offset);
+        var nn = node.model.makeText(before+after);
+        return [false,nn];
+    }
+    //if at start
     if(node.id == range.start.mod.id) {
         var nn = node.model.makeText(range.start.mod.text.substring(0,range.start.offset));
+        //console.log("starting node is now",nn.text);
         return [true,nn];
     }
+    //if at end
     if(node.id == range.end.mod.id) {
         var nn = node.model.makeText(range.end.mod.text.substring(range.end.offset));
+        //console.log("ending node is now",nn.text);
         return [false,nn];
     }
     if(node.type == Model.BLOCK) {
@@ -573,8 +586,12 @@ function deleteWithRange(range,node,insideDelete) {
         }
     }
 
-    //if this is a text node and we are already passed the delete point then delete
+
     if(nnode.type == Model.BLOCK) {
+        if(nnode.childCount() == 0) nnode = null;
+        return [insideDelete,nnode];
+    }
+    if(nnode.type == Model.SPAN) {
         if(nnode.childCount() == 0) nnode = null;
         return [insideDelete,nnode];
     }

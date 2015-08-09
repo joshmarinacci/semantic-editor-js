@@ -620,3 +620,63 @@ test('backwards delete image', function(t) {
     t.end();
 });
 
+test('backwards delete in the middle of a long text', function(t) {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+
+    var blk1 = model.makeBlock();
+    blk1.append(model.makeText("abcdef"));
+    model.getRoot().append(blk1);
+    editor.syncDom();
+    Model.print(model);
+    editor.setSelectionAtDocumentOffset(3,3);
+    Keystrokes.deleteBackwards(null,editor);
+    t.equal(model.toPlainText(),'abdef');
+    t.end();
+
+});
+
+test('backwards delete into a span', function(t) {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+    var blk1 = model.makeBlock();
+    blk1.append(model.makeText("abc"));
+    var span = model.makeSpan();
+    span.append(model.makeText('def'));
+    blk1.append(span);
+    blk1.append(model.makeText("ghi"));
+    model.getRoot().append(blk1);
+    editor.syncDom();
+    Model.print(model);
+    editor.setSelectionAtDocumentOffset(6,6);
+    console.log("range = ", editor.getSelectionRange().toString())
+    Keystrokes.deleteBackwards(null,editor);
+    Model.print(model);
+    t.equal(model.toPlainText(),'abcdeghi');
+    t.end();
+
+});
+
+test('backwards delete within a span', function(t) {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+    var blk1 = model.makeBlock();
+    blk1.append(model.makeText("abc"));
+    var span = model.makeSpan();
+    span.append(model.makeText('def'));
+    blk1.append(span);
+    blk1.append(model.makeText("ghi"));
+    model.getRoot().append(blk1);
+    editor.syncDom();
+    Model.print(model);
+    editor.setSelectionAtDocumentOffset(5,5);
+    console.log("range = ", editor.getSelectionRange().toString())
+    Keystrokes.deleteBackwards(null,editor);
+    Model.print(model);
+    t.equal(model.toPlainText(),'abcdfghi');
+    t.end();
+
+});
