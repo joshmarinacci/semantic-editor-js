@@ -71,7 +71,7 @@ exports.styleInlineLink = function(e,editor) {
 exports.styleSelection = function(e,editor,style) {
     exports.stopKeyboardEvent(e);
     var range = editor.getSelectionRange();
-    var chg = makeStyleSelectionChange(range,style);
+    var chg = makeStyleSelectionChange2(range,style);
     editor.applyChange(chg);
     editor.setCursorAtDocumentOffset(range.documentOffset);
 };
@@ -276,6 +276,129 @@ function makeStyleSelectionChange(range,style) {
 }
 exports.makeStyleSelectionChange = makeStyleSelectionChange;
 
+
+function makeStyleSelectionChange2(range,style) {
+    var model = range.start.mod.model;
+    var root = model.getRoot();
+    var old_start_block = range.start.mod.findBlockParent();
+    var old_start_index = old_start_block.getIndex();
+    var old_end_block   = range.end.mod.findBlockParent();
+    var old_end_index   = old_end_block.getIndex();
+    var insideSpan = false;
+    var changes = [];
+    for(var i=old_start_index; i<=old_end_index; i++) {
+        var blk = root.child(i);
+        var res = styleWithRange(range,blk,insideSpan,style);
+        insideSpan = res.insideSpan;
+        changes.push(makeReplaceBlockChange(root,i,res.nodes[0]));
+    }
+    var chg = changes.shift();
+    while(changes.length > 0) {
+        chg = makeComboChange(chg,changes.shift(),'combo');
+    }
+    return chg;
+
+}
+
+function styleWithRange(range, node, insideSpan,style) {
+    //console.log('style with range',node.id,insideSpan);
+
+    if(node == range.start.mod && node == range.end.mod) {
+        //console.log("start and end node");
+        var before = node.model.makeText(node.text.substring(0,range.start.offset));
+        var middle = node.model.makeText(node.text.substring(range.start.offset,range.end.offset));
+        var after  = node.model.makeText(node.text.substring(range.end.offset));
+        //console.log("split text to",before.text,middle.text,after.text);
+        var span = node.model.makeSpan();
+        span.style = style;
+        span.append(middle);
+        return {
+            nodes:[before,span,after],
+            insideSpan:false
+        }
+    }
+
+    if(node == range.start.mod) {
+        //console.log("starting node");
+        var before = node.model.makeText(node.text.substring(0,range.start.offset));
+        var middle = node.model.makeText(node.text.substring(range.start.offset));
+        //console.log("split text to",before.text,middle.text);
+        var span = node.model.makeSpan();
+        span.style = style;
+        span.append(middle);
+        return {
+            nodes:[before,span],
+            insideSpan:true
+        }
+    }
+
+    if(node == range.end.mod) {
+        //console.log("ending node");
+        var middle = node.model.makeText(node.text.substring(0,range.end.offset));
+        var after  = node.model.makeText(node.text.substring(range.end.offset));
+        //console.log("split text to",middle.text,after.text);
+        var span = node.model.makeSpan();
+        span.style = style;
+        span.append(middle);
+        return {
+            nodes:[span,after],
+            insideSpan:false
+        }
+    }
+
+    if(node.type == Model.BLOCK) {
+        var new_node = node.model.makeBlock();
+        new_node.style = node.style;
+        node.content.forEach(function(ch) {
+            var ret = styleWithRange(range,ch,insideSpan,style);
+            //console.log("returned node count", ret.nodes.length);
+            insideSpan = ret.insideSpan;
+            ret.nodes.forEach(function(new_ch) {
+                new_node.append(new_ch);
+            });
+        });
+        return {
+            insideSpan: insideSpan,
+            nodes:[new_node]
+        }
+    }
+
+    if(node.type == Model.TEXT) {
+        //console.log("middle node", insideSpan);
+        if(insideSpan) {
+            var new_node = node.model.makeText(node.text);
+            var span = node.model.makeSpan();
+            span.style = style;
+            span.append(new_node);
+            return {
+                insideSpan: insideSpan,
+                nodes: [span]
+            }
+        } else {
+            var new_node = node.model.makeText(node.text);
+            return {
+                insideSpan: insideSpan,
+                nodes: [new_node]
+            }
+        }
+    }
+    if(node.type == Model.SPAN) {
+        var new_node = node.model.makeSpan();
+        new_node.style = node.style;
+        node.content.forEach(function(ch) {
+            var ret = styleWithRange(range,ch,insideSpan,style);
+            console.log("returned node count", ret.nodes.length);
+            insideSpan = ret.insideSpan;
+            ret.nodes.forEach(function(new_ch) {
+                new_node.append(new_ch);
+            });
+        });
+        return {
+            insideSpan: insideSpan,
+            nodes:[new_node]
+        }
+    }
+}
 
 function makeBlockReplaceChange(req) {
     var oldblock = req.mod.findBlockParent();
