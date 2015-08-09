@@ -601,6 +601,10 @@ Editor.prototype.setSelectionAtDocumentOffset = function(off1, off2) {
     range.collapsed = (off1 === off2);
     range.documentOffset = range.start.offset +
         Model.modelToDocumentOffset(this.getModel().getRoot(), range.start.mod).offset;
+    range.toString = function () {
+        return "Range: " + this.start.mod.id + " " + this.start.offset
+            + " -> " + this.end.mod.id + " " + this.end.offset
+    };
     this._fake_range = range;
 };
 

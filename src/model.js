@@ -530,6 +530,10 @@ function dataToModel_helper(data,root,model) {
 
 exports.print = function(model,tab) {
     if(!tab) tab = "";
+    if(model == null) {
+        console.log(tab + "null");
+        return;
+    }
     if(model.getRoot) return exports.print(model.getRoot(),"");
     if(model.type == exports.TEXT) {
         console.log(tab + model.type + "#"+model.id+ "." + model.style + " '" + model.text+"'");

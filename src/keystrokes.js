@@ -10,11 +10,13 @@ exports.deleteBackwards = function(e, editor) {
         range.start.offset--;
         var abs = range.start.offset + Model.modelToDocumentOffset(model.getRoot(),range.start.mod).offset;
         var nmod = Model.documentOffsetToModel(model.getRoot(),abs);
+        if(nmod.offset < 0) nmod.offset = 0;
         range.start.offset = nmod.offset;
         range.start.mod = nmod.node;
+        if(range.start.mod == range.end.mod && range.start.offset == range.end.offset) return;
     }
 
-    var chg = makeDeleteTextRangeChange(range,model);
+    var chg = makeDeleteTextRangeChange2(range,model);
     editor.applyChange(chg);
     editor.setCursorAtDocumentOffset(range.documentOffset);
 };
@@ -314,12 +316,12 @@ function makeDeleteTextRangeChange(range,model) {
         }
         //start text
         if(ch == range.start.mod) {
-            var oldblock = range.start.mod.findBlockParent();
-            var newblock1 = duplicateBlock(oldblock);
+            var oldblock1 = range.start.mod.findBlockParent();
+            var newblock1 = duplicateBlock(oldblock1);
             var oldtext  = range.start.mod;
             var newtext = newblock1.child(oldtext.getIndex());
             newtext.text  = oldtext.text.substring(0,range.start.offset);
-            changes.push(makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock1));
+            changes.push(makeReplaceBlockChange(oldblock1.getParent(),oldblock1.getIndex(),newblock1));
             ch = it.next();
             continue;
         }
@@ -328,20 +330,26 @@ function makeDeleteTextRangeChange(range,model) {
             //add the todeletes
             var oldblock2 = ch.findBlockParent();
             for(var id in todelete) {
-                if(id !== oldblock2.id && id !== oldblock.id) {
+                if(id !== oldblock2.id && id !== oldblock1.id) {
                     var blk = todelete[id];
                     changes.push(makeDeleteBlockChange(blk.getParent(), blk.getIndex(), blk));
                 }
             }
 
 
-            var newblock2 = duplicateBlock(oldblock2);
+            if(oldblock2 == oldblock1) {
+                var newblock2 = newblock1;
+            } else {
+                var newblock2 = duplicateBlock(oldblock2);
+            }
             var oldtext2 = ch;
             var newtext2 = newblock2.child(oldtext2.getIndex());
             newtext2.text = oldtext2.text.substring(range.end.offset);
-            newblock1.append(newtext2);
-            var delete2 = makeDeleteBlockChange(oldblock2.getParent(),oldblock2.getIndex(),oldblock2);
-            changes.push(delete2);
+            if(oldblock2 !== oldblock1) {
+                newblock1.append(newtext2);
+                var delete2 = makeDeleteBlockChange(oldblock2.getParent(),oldblock2.getIndex(),oldblock2);
+                changes.push(delete2);
+            }
             var chg = changes.shift();
             while(changes.length > 0) {
                 chg = makeComboChange(chg,changes.shift(),'combo');
@@ -360,6 +368,120 @@ function makeDeleteTextRangeChange(range,model) {
 }
 
 exports.makeDeleteTextRangeChange = makeDeleteTextRangeChange;
+
+function makeDeleteTextRangeChange2(range,model) {
+    var root = model.getRoot();
+    var old_start_block = range.start.mod.findBlockParent();
+    var old_start_index = old_start_block.getIndex();
+    var old_end_block   = range.end.mod.findBlockParent();
+    var old_end_index   = old_end_block.getIndex();
+
+    console.log("going from", old_start_index,'to',old_end_index);
+    var insideDelete = false;
+    var changes = [];
+    var new_start_block;
+    for(var i=old_start_index; i<=old_end_index; i++) {
+        var blk = root.child(i);
+        var res = deleteWithRange(range,blk,insideDelete);
+        console.log("res = ", res[0]);
+        Model.print(res[1]);
+        if(res[0]==true) insideDelete = true;
+        if(i == old_start_index) {
+            console.log("replacing",blk.id);
+            changes.push(makeReplaceBlockChange(root,i,res[1]));
+            new_start_block = res[1];
+            continue;
+        }
+        if(res[1] == null) {
+            console.log("deleting",blk.id);
+            changes.push(makeDeleteBlockChange(root,i,blk));
+        }
+        if(i == old_end_index) {
+            console.log('final. append to start');
+            var nblk = res[1];
+            nblk.content.forEach(function(ch) {
+                new_start_block.append(ch);
+            });
+            changes.push(makeDeleteBlockChange(root,i,blk));
+        }
+    }
+    console.log("final changes = ", changes);
+    var chg = changes.shift();
+    while(changes.length > 0) {
+        chg = makeComboChange(chg,changes.shift(),'combo');
+    }
+    return chg;
+}
+
+function deleteWithRange(range,node,insideDelete) {
+    //console.log("node is",node.id, 'inside delete',insideDelete);
+    if(node.id == range.start.mod.id) {
+        //console.log("at the start node");
+        //node.text = range.start.mod.text.substring(0,range.start.offset);
+        var nn = node.model.makeText(range.start.mod.text.substring(0,range.start.offset));
+        console.log("new start text is",nn.text);
+        return [true,nn];
+    }
+    if(node.id == range.end.mod.id) {
+        //console.log("at the end node");
+        var nn = node.model.makeText(range.end.mod.text.substring(range.end.offset));
+        console.log("new end text is",nn.text);
+        return [false,nn];
+    }
+    if(node.type == Model.BLOCK) {
+        var nnode = node.model.makeBlock();
+        nnode.style = node.style;
+    }
+    if(node.type == Model.TEXT) {
+        var nnode = node.model.makeText(node.text);
+    }
+
+    var startingDelete = insideDelete;
+
+    if(node.childCount() > 0) {
+        var i = 0;
+        while(i<node.childCount()) {
+            var ch = node.content[i];
+            var res = deleteWithRange(range,ch,insideDelete);
+            if(res[1] == null) {
+                //console.log('no child. dont add it');
+            } else {
+                //console.log("yo child. add it");
+                nnode.append(res[1]);
+                if (res[0] === true) {
+                    insideDelete = true;
+                }
+                if(res[0] === false) {
+                    insideDelete = false;
+                }
+            }
+            i++;
+        }
+    }
+
+    //if this is a text node and we are already passed the delete point
+    //then delete
+    if(nnode.type == Model.BLOCK) {
+        if(nnode.childCount() == 0) {
+            console.log("this is an empty block");
+            return [insideDelete,null];
+        } else {
+            console.log("this is a full block");
+            return [insideDelete,nnode];
+        }
+    }
+    /*
+    if(startingDelete) {
+        console.log("must delete this node",node.id);
+        return [insideDelete,null];
+    }
+    */
+
+    if(insideDelete) {
+        return [insideDelete,null];
+    }
+    return [insideDelete,nnode];
+}
 
 function makeReplaceBlockChange(parent, index, newNode) {
     var oldNode = parent.content[index];
