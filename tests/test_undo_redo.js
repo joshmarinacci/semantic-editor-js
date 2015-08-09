@@ -645,3 +645,84 @@ test('backwards delete image', function(t) {
     t.end();
 });
 
+
+test("style on span",function(t){
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+
+    var blk1 = model.makeBlock();
+    blk1.append(model.makeText("abc"));
+    var strong = model.makeSpan();
+    strong.style = 'strong';
+    strong.append(model.makeText('def'));
+    blk1.append(strong);
+    blk1.append(model.makeText("ghi"));
+    model.getRoot().append(blk1);
+    editor.syncDom();
+
+    t.equal(model.toPlainText(),'abcdefghi');
+
+    editor.setSelectionAtDocumentOffset(3,5);
+    var range = editor.getSelectionRange();
+    console.log("range is " + range);
+    Model.print(model);
+    Keystrokes.styleSelection(null,editor,'italic');
+    Model.print(model);
+    t.equal(model.toPlainText(),'abcdefghi');
+    t.end();
+});
+
+test("style around span",function(t){
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+
+    var blk1 = model.makeBlock();
+    blk1.append(model.makeText("abc"));
+    var strong = model.makeSpan();
+    strong.style = 'strong';
+    strong.append(model.makeText('def'));
+    blk1.append(strong);
+    blk1.append(model.makeText("ghi"));
+    model.getRoot().append(blk1);
+    editor.syncDom();
+
+    t.equal(model.toPlainText(),'abcdefghi');
+
+    editor.setSelectionAtDocumentOffset(1,7);
+    var range = editor.getSelectionRange();
+    console.log("range is " + range);
+    Model.print(model);
+    Keystrokes.styleSelection(null,editor,'italic');
+    Model.print(model);
+    t.equal(model.toPlainText(),'abcdefghi');
+    t.end();
+});
+
+test("style overlapping span",function(t){
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+
+    var blk1 = model.makeBlock();
+    blk1.append(model.makeText("abc"));
+    var strong = model.makeSpan();
+    strong.style = 'strong';
+    strong.append(model.makeText('def'));
+    blk1.append(strong);
+    blk1.append(model.makeText("ghi"));
+    model.getRoot().append(blk1);
+    editor.syncDom();
+
+    t.equal(model.toPlainText(),'abcdefghi');
+
+    editor.setSelectionAtDocumentOffset(3,7);
+    var range = editor.getSelectionRange();
+    console.log("range is " + range);
+    Model.print(model);
+    Keystrokes.styleSelection(null,editor,'italic');
+    Model.print(model);
+    t.equal(model.toPlainText(),'abcdefghi');
+    t.end();
+})
