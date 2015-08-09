@@ -164,8 +164,9 @@ exports.modelToDom = function(mod,dom, document, mapping) {
         mod.content.forEach(function(modch){
             elem.appendChild(exports.modelToDom(modch,dom,document, mapping));
         });
-        if(rule.isImage === true) elem.setAttribute('src',mod.meta.src);
-        if(rule.isLink === true && mod.meta && mod.meta.href)  elem.setAttribute('href',mod.meta.href);
+        //console.log("the mod is",mod);
+        if(rule.isImage === true && mod.meta && mod.meta.src)  elem.setAttribute('src', mod.meta.src);
+        if(rule.isLink  === true && mod.meta && mod.meta.href) elem.setAttribute('href',mod.meta.href);
         return elem;
     }
     console.log("didn't match a rule!", mod.type, mod.style);

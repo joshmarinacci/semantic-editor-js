@@ -376,28 +376,25 @@ function makeDeleteTextRangeChange2(range,model) {
     var old_end_block   = range.end.mod.findBlockParent();
     var old_end_index   = old_end_block.getIndex();
 
-    console.log("going from", old_start_index,'to',old_end_index);
     var insideDelete = false;
     var changes = [];
     var new_start_block;
     for(var i=old_start_index; i<=old_end_index; i++) {
         var blk = root.child(i);
         var res = deleteWithRange(range,blk,insideDelete);
-        console.log("res = ", res[0]);
-        Model.print(res[1]);
         if(res[0]==true) insideDelete = true;
+        //if first, replace it
         if(i == old_start_index) {
-            console.log("replacing",blk.id);
             changes.push(makeReplaceBlockChange(root,i,res[1]));
             new_start_block = res[1];
             continue;
         }
+        //if null, then it must be deleted
         if(res[1] == null) {
-            console.log("deleting",blk.id);
             changes.push(makeDeleteBlockChange(root,i,blk));
         }
+        //if last block, move children to first block
         if(i == old_end_index) {
-            console.log('final. append to start');
             var nblk = res[1];
             nblk.content.forEach(function(ch) {
                 new_start_block.append(ch);
@@ -405,7 +402,7 @@ function makeDeleteTextRangeChange2(range,model) {
             changes.push(makeDeleteBlockChange(root,i,blk));
         }
     }
-    console.log("final changes = ", changes);
+    //merge into one combo change
     var chg = changes.shift();
     while(changes.length > 0) {
         chg = makeComboChange(chg,changes.shift(),'combo');
@@ -416,37 +413,31 @@ function makeDeleteTextRangeChange2(range,model) {
 function deleteWithRange(range,node,insideDelete) {
     //console.log("node is",node.id, 'inside delete',insideDelete);
     if(node.id == range.start.mod.id) {
-        //console.log("at the start node");
-        //node.text = range.start.mod.text.substring(0,range.start.offset);
         var nn = node.model.makeText(range.start.mod.text.substring(0,range.start.offset));
-        console.log("new start text is",nn.text);
         return [true,nn];
     }
     if(node.id == range.end.mod.id) {
-        //console.log("at the end node");
         var nn = node.model.makeText(range.end.mod.text.substring(range.end.offset));
-        console.log("new end text is",nn.text);
         return [false,nn];
     }
     if(node.type == Model.BLOCK) {
         var nnode = node.model.makeBlock();
         nnode.style = node.style;
     }
+    if(node.type == Model.SPAN) {
+        var nnode = node.model.makeSpan();
+        nnode.style = node.style;
+    }
     if(node.type == Model.TEXT) {
         var nnode = node.model.makeText(node.text);
     }
-
-    var startingDelete = insideDelete;
 
     if(node.childCount() > 0) {
         var i = 0;
         while(i<node.childCount()) {
             var ch = node.content[i];
             var res = deleteWithRange(range,ch,insideDelete);
-            if(res[1] == null) {
-                //console.log('no child. dont add it');
-            } else {
-                //console.log("yo child. add it");
+            if(res[1] != null) {
                 nnode.append(res[1]);
                 if (res[0] === true) {
                     insideDelete = true;
@@ -459,27 +450,12 @@ function deleteWithRange(range,node,insideDelete) {
         }
     }
 
-    //if this is a text node and we are already passed the delete point
-    //then delete
+    //if this is a text node and we are already passed the delete point then delete
     if(nnode.type == Model.BLOCK) {
-        if(nnode.childCount() == 0) {
-            console.log("this is an empty block");
-            return [insideDelete,null];
-        } else {
-            console.log("this is a full block");
-            return [insideDelete,nnode];
-        }
+        if(nnode.childCount() == 0) nnode = null;
+        return [insideDelete,nnode];
     }
-    /*
-    if(startingDelete) {
-        console.log("must delete this node",node.id);
-        return [insideDelete,null];
-    }
-    */
-
-    if(insideDelete) {
-        return [insideDelete,null];
-    }
+    if(insideDelete) nnode = null;
     return [insideDelete,nnode];
 }
 

@@ -462,7 +462,6 @@ test("multi-line style", function(t) {
     var range = makeRange(editor,2,15);
     var chg = Keystrokes.makeStyleSelectionChange(range,'bold');
     editor.applyChange(chg);
-    Model.print(editor.getModel());
     var blk = editor.getModel().getRoot().child(0);
     t.equals(blk.child(0).text,'ab');
     t.equals(blk.child(1).child(0).text,'cdef');
@@ -567,50 +566,59 @@ test('split, back delete, split, back delete', function(t) {
     t.end();
 });
 
-test('backwards delete across spans', function(t) {
+test('backwards delete across multiple text 1', function(t) {
     var dom_root = VirtualDoc.createElement('div');
     var editor = Editor.makeEditor(dom_root);
     var model = editor.getModel();
-
     var blk1 = model.makeBlock();
     blk1.append(model.makeText("abc"));
     blk1.append(model.makeText("def"));
     model.getRoot().append(blk1);
     editor.syncDom();
-    Model.print(model);
     editor.setSelectionAtDocumentOffset(3,3);
-    var range = editor.getSelectionRange();
-    console.log("range is " + range);
     Keystrokes.deleteBackwards(null,editor);
-    Model.print(model);
-
     t.equal(model.toPlainText(),'abdef');
     t.end();
 });
 
 
-test('backwards delete across spans2', function(t) {
+test('backwards delete across multiple text 2', function(t) {
     var dom_root = VirtualDoc.createElement('div');
     var editor = Editor.makeEditor(dom_root);
     var model = editor.getModel();
-
     var blk1 = model.makeBlock();
     blk1.append(model.makeText("abc"));
     blk1.append(model.makeText("def"));
     blk1.append(model.makeText("ghi"));
     model.getRoot().append(blk1);
     editor.syncDom();
-    Model.print(model);
     editor.setSelectionAtDocumentOffset(2,7);
-    var range = editor.getSelectionRange();
-    console.log("range is " + range);
     Keystrokes.deleteBackwards(null,editor);
-    Model.print(model);
-
     t.equal(model.toPlainText(),'abhi');
     t.end();
 });
-return;
+
+
+test('delete across spans',function(t) {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+
+    var blk1 = model.makeBlock();
+    blk1.append(model.makeText("abc"));
+    var span = model.makeSpan();
+    span.append(model.makeText("def"));
+    blk1.append(span);
+    blk1.append(model.makeText("ghi"));
+    model.append(blk1);
+    editor.syncDom();
+
+    editor.setSelectionAtDocumentOffset(2,4);
+    Keystrokes.deleteBackwards(null,editor);
+    t.equal(model.toPlainText(),'abefghi');
+    t.end();
+});
+
 
 
 test('backwards delete image', function(t) {
@@ -625,19 +633,15 @@ test('backwards delete image', function(t) {
     img.meta = {
         src:'foo'
     };
+    img.append(model.makeText('X'));
     blk1.append(img);
     blk1.append(model.makeText("def"));
     model.getRoot().append(blk1);
     editor.syncDom();
 
-
-    Model.print(model);
-
-    editor.setSelectionAtDocumentOffset(3,3);
-    var range = editor.getSelectionRange();
-    console.log("range is " + range);
+    editor.setSelectionAtDocumentOffset(4,4);
     Keystrokes.deleteBackwards(null,editor);
-    Model.print(model);
-
+    t.equal(model.toPlainText(),'abcdef');
+    t.end();
 });
 
