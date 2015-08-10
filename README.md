@@ -21,7 +21,7 @@ semantic styles. You can modify the rendering and import/export filters. (see ex
 
 # Screenshot
 
-![screenshot][docs/screenshot1.png]
+![screenshot](docs/screenshot1.png)
 
 
 # Using Semantic Editor
