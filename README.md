@@ -144,11 +144,11 @@ editor.addAction('insert-poop', function(e,editor) {
     var offset  = range.start.offset;
 ```
 First, get the selection range to find the text node at the cursor (`range.start.mod`),
-then get the parent block with `findBlockParent(`. This is required because SE performs
+then get the parent block with `findBlockParent()`. This is required because SE performs
 all document changes at the block level, not individual spans.
 
 
-```    
+``` javascript   
     var punycode = require('punycode');
     //from http://www.fileformat.info/info/unicode/char/1F4A9/index.htm
     var char = punycode.ucs2.encode([0x0001F4A9]); // '\uD834\uDF06'
