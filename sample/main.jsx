@@ -401,6 +401,25 @@ var MainView = React.createClass({
             editor.setCursorAtModel(nmod.node, nmod.offset);
         });
         editor.addKeyBinding('clear-styles','cmd-shift-u');
+
+
+        editor.addAction('insert-poop', function(e,editor) {
+            Keystrokes.stopKeyboardEvent(e);
+            console.log('inserting poop');
+            var range = editor.getSelectionRange();
+            var oldBlock = range.start.mod.findBlockParent();
+            var node = range.start.mod;
+            var offset  = range.start.offset;
+            var punycode = require('punycode');
+            //from http://www.fileformat.info/info/unicode/char/1F4A9/index.htm
+            var char = punycode.ucs2.encode([0x0001F4A9]); // '\uD834\uDF06'
+            var txt = node.text.substring(0,offset) + char + node.text.substring(offset);
+            var newBlock = Keystrokes.copyWithEdit(oldBlock,node,txt);
+            var change = Keystrokes.makeReplaceBlockChange(oldBlock.getParent(),oldBlock.getIndex(),newBlock);
+            editor.applyChange(change);
+            editor.setCursorAtDocumentOffset(range.documentOffset+1);
+        });
+        editor.addKeyBinding('insert-poop','cmd-shift-p');
     },
     toggleZen: function() {
         this.setState({

@@ -128,6 +128,62 @@ You will mainly only use the selection when making new actions.
 
 
 
+# Examples:
+
+Insert the poop emoji when you press command shift P. This looks more complicated than it is,
+so let's walk through it together.
+
+```
+editor.addAction('insert-poop', function(e,editor) {
+    Keystrokes.stopKeyboardEvent(e);
+    var range = editor.getSelectionRange();
+    var oldBlock = range.start.mod.findBlockParent();
+    var node = range.start.mod;
+    var offset  = range.start.offset;
+```
+First, get the selection range to find the text node at the cursor (`range.start.mod`),
+then get the parent block with `findBlockParent(`. This is required because SE performs
+all document changes at the block level, not individual spans.
+
+
+```    
+    var punycode = require('punycode');
+    //from http://www.fileformat.info/info/unicode/char/1F4A9/index.htm
+    var char = punycode.ucs2.encode([0x0001F4A9]); // '\uD834\uDF06'
+```
+
+The poop emoji is part of the extended unicode character set which Javascript does not
+support natively. Instead we have to use the `punycode` library to encode the raw
+hex value into an array of bytes with the correct surrogate pairs. 
+See [this](https://nodejs.org/api/punycode.html) for an explanation.
+    
+```
+    var txt = node.text.substring(0,offset) + char + node.text.substring(offset);
+    var newBlock = Keystrokes.copyWithEdit(oldBlock,node,txt);
+```
+
+Now create the new text string from the old one with the unicode character inserted in
+the middle.  The function `Keystrokes.copyWithEdit(oldBlock,node,txt)` 
+will copy the block into a new one, replacing the text of `node` with the new `txt`.
+
+```
+    var change = Keystrokes.makeReplaceBlockChange(oldBlock.getParent(),oldBlock.getIndex(),newBlock);
+    editor.applyChange(change);
+    editor.setCursorAtDocumentOffset(range.documentOffset+1);
+});
+```
+
+Finally, create a new document change to swap the old block for the new one, and apply it.
+Then move the cursor by one character to be right after the newly inserted character.
+
+```
+editor.addKeyBinding('insert-poop','cmd-shift-p');
+```
+
+Add a key binding for our new action. 
+
+
+
 
 --------------
 
