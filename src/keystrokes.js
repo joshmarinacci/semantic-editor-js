@@ -402,10 +402,29 @@ function styleWithRange(range, node, insideSpan,style) {
 
 function makeBlockReplaceChange(req) {
     var oldblock = req.mod.findBlockParent();
-    var newblock = duplicateBlock(oldblock);
-    var newtext = newblock.child(req.mod.getIndex());
-    newtext.text = req.dom.nodeValue;
+    var newblock = copyWithEdit(oldblock,req.mod,req.dom.nodeValue);
     return makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock);
+}
+
+function copyWithEdit(node,target,text) {
+    if(node == target) {
+        return node.model.makeText(text);
+    }
+    if(node.type == Model.TEXT) {
+        return node.model.makeText(node.text);
+    }
+    if(node.type == Model.BLOCK) {
+        var nnode = node.model.makeBlock();
+        nnode.style = node.style;
+    }
+    if(node.type == Model.SPAN) {
+        var nnode = node.model.makeSpan();
+        nnode.style = node.style;
+    }
+    node.content.forEach(function(ch) {
+        nnode.append(copyWithEdit(ch,target,text));
+    });
+    return nnode;
 }
 
 function makeSplitBlockChange(start) {

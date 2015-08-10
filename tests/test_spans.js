@@ -216,3 +216,66 @@ test("multi-line style 2", function(t) {
 
     t.end();
 });
+
+test('editing span from multiple lines', function(t) {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+
+    var block2 = model.makeBlock();
+    block2.append(model.makeText("If you've found this site you probably came from one of my technical blogs on "));
+    model.append(block2);
+
+    var block4 = model.makeBlock();
+    var span5 = model.makeSpan();
+    span5.style = 'link';
+    span5.append(model.makeText("Java"));
+    block4.append(span5);
+    model.append(block4);
+
+    var block7 = model.makeBlock();
+    block7.append(model.makeText(", "));
+    model.append(block7);
+
+    var block9 = model.makeBlock();
+    var span10 = model.makeSpan();
+    span10.style = 'link';
+    span10.append(model.makeText("JavaFX"));
+    block9.append(span10);
+    model.append(block9);
+
+    var block12 = model.makeBlock();
+    block12.append(model.makeText(" or fun "));
+    model.append(block12);
+
+
+    var block14 = model.makeBlock();
+    var span15 = model.makeSpan();
+    span15.style = 'link';
+    span15.append(model.makeText("JavaFX demos"));
+    block14.append(span15);
+    model.append(block14);
+
+    var block17 = model.makeBlock();
+    block17.append(model.makeText(". First let me say: Welcome!"));
+    model.append(block17);
+
+    editor.syncDom();
+    Model.print(model);
+
+
+    editor.setSelectionAtDocumentOffset(80,80);
+    console.log("range is " + editor.getSelectionRange());
+
+
+    var dom = Dom.findDomForModel(editor.getSelectionRange().start.mod,editor.getDomRoot());
+    //console.log("found the dom",dom);
+    //insert 'X'
+    dom.nodeValue = 'JaXva';
+    Keystrokes.handleInput(null,editor);
+    Model.print(model);
+
+
+    t.equal(model.getRoot().child(1).child(0).child(0).text,'JaXva');
+    t.end();
+});
