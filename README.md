@@ -130,7 +130,9 @@ You will mainly only use the selection when making new actions.
 
 # Examples:
 
-Insert the poop emoji when you press command shift P. This looks more complicated than it is,
+*Insert the poop emoji when you press command shift P*
+ 
+This looks more complicated than it is,
 so let's walk through it together.
 
 ```
