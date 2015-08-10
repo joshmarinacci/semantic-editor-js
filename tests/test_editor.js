@@ -8,6 +8,7 @@ var Dom = require('../src/dom');
 var Model = require('../src/model');
 var vdom = require('./virtualdom');
 
+/*
 test("make editor", function(t) {
     var dom_root = vdom.createElement('div');
     var ed = Editor.makeEditor(dom_root);
@@ -47,6 +48,7 @@ test("make editor", function(t) {
 
     t.end();
 });
+*/
 
 /*
 test("test custom keystroke", function(t) {

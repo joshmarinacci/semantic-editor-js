@@ -505,29 +505,6 @@ Editor.prototype.makeModelPosition = function(mod,off) {
     }
 };
 
-Editor.prototype.insertPlainText = function(pos, str) {
-    var changes = [];
-    if(pos.mod.type != Model.TEXT) throw new Error("can only insert into a Text node", pos.mod);
-    var txt = pos.mod.text;
-    changes.push({
-        type:'text-change',
-        mod: pos.mod,
-        text: txt.substring(0,pos.off)
-    });
-    changes.push({
-        type:'insert-after',
-        mod: pos.mod,
-        insert: this._model.makeText(txt.substring(pos.off))
-    });
-    changes.push({
-        type:'insert-after',
-        mod: pos.mod,
-        insert: this._model.makeText(str)
-    });
-    Dom.applyChanges(changes,this._model);
-    this.syncDom(this.getMapping());
-};
-
 Editor.prototype.getMapping = function() {
     return semantic_map;
 };

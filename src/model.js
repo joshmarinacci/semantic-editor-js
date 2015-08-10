@@ -545,25 +545,7 @@ exports.print = function(model,tab) {
             exports.print(node,tab+"  ");
         })
     }
-}
-
-
-exports.nodeToPath = function(node) {
-    if(node.getParent() == null) return [];
-    var n = node.getIndex();
-    var arr = exports.nodeToPath(node.getParent());
-    arr.push(n);
-    return arr;
 };
-
-
-exports.pathToNode = function(path,root) {
-    if(path.length == 0) return root;
-    var n = path[0];
-    root = root.child(n);
-    return exports.pathToNode(path.slice(1),root);
-}
-
 
 exports.modelToDocumentOffset = function(node,target) {
     if(node == target) return {found:true,offset:0};

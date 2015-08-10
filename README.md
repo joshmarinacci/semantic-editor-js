@@ -1,19 +1,155 @@
 #semantic editor
 
+Semantic Editor (SE) is an HTML editor built on `contentEditable` designed expressly
+for reliable editing of semantic markup. It is highly customizable but not yet easy
+ to use. SE differs from similar editors in that:
 
-Description of the datastructure and operations
+* SE is purely semantic. The user edits a document in terms of body, header, blockquotes, etc. Later the document
+ can be rendered as whatever non-semantic markup is desired.
+* SE keeps an internal semantic  model as the authoritative document. The browser's DOM is 
+  used for rendering only (with a few exceptions), not storing the document data.
+* SE does not replace or manipulate the browser input system. This ensures native context menus and input editors
+  continue to work. For example, on Mac if you press and hold the E key the OS will render a popup menu
+  with accented forms of E.  This will continue to work properly in SE, as will pasting content and
+  other native input methods (Japanese, Chinese, etc.)
+* SE is highly customizable. You can create your own keybindings, insert custom actions, add or remove supported
+semantic styles. You can modify the rendering and import/export filters. (see examples) 
+* SE does not provide a GUI. It does not have dropdowns or a toolbar, allowing you to implement your own
+ with whatever GUI library you prefer (ReactJS, JQuery, Bootstrap, etc.) It modifies only the actual editor div.
+ (see examples)
+
+
+# screenshot
+
+# using Semantic Editor
+
+
+Create a DIV in your document then make a new editor attached to it like this:
+
+```
+<div id="myeditor" class="semantic-view" contenteditable="true" spellcheck="false"></div>
+<script>
+var editor = Editor.makeEditor(document.getElementById('editor'));
+</script>
+```
+
+Create a simple document
+
+```
+var model = editor.getModel();
+var block1 = model.makeBlock();
+var text1  = model.makeText("abc");
+block1.append(text1);
+model.getRoot().append(block1);
+editor.syncDom();
+```
+
+
+Default styling is done with the `semantic.css` file.
+ 
+Add a new action with `editor.addAction(name, function)`. ex:
+
+```
+editor.addAction('print-as-plain',function(nativeEvent, editor) {
+   console.log(editor.getModel().toPlainText());
+});
+```
+ 
+Add a key binding with `editor.addKeyBinding(name, keystroke)`. ex:
+
+```
+editor.addKeyBinding('print-as-plain', 'cmd-shift-p');
+```
+
+
+Set a new model with `editor.setModel()` then update the view with `editor.syncDom()`. 
+Retrieve the model with `editor.getModel()`. ex:
+
+```
+var mod = editor.makeModel();
+var blk1 = mod.makeBlock();
+blk1.style = 'header';
+blk1.append(mod.makeText('this is my header');
+mod.append(blk1);
+ 
+editor.setModel(mod);
+editor.syncDom();
+console.log('the model as JSON is ', editor.getModel().toJSON());
+```
+
+
+# import and export
+
+Semantic Editor does not have it's own document export other than
+JSON (`editor.toJSON()` and `editor.fromJSON()`) or plain
+text (`editor.toPlainText()`). 
+The model is a tree structure made of block, span, and text nodes. You can easily
+export whatever you want by traversing the tree. See the examples.
+
+
+
+# Events
+
+Listen for when the document is changed with the 'change' event.
+
+```
+editor.on('change', function() {
+    console.log('the document was modified');
+});
+```
+
+
+# selection
+
+The selection is stored on the browser side. You can set it with:
+`editor.setSelectionAtDocumentOffset(off1,off2)` where `off1` and
+`off2` are characters of text from the start of the document, irrespective of
+blocks and spans.
+
+You can get the current selection with `getSelectionRange()` which returns
+a Range object. This object contains the start and ending dom and model nodes, as well
+as the offsets within those model nodes. ex:
+
+```
+var range = editor.getSelectionRange();
+console.log('selection starts at model node',
+    range.start.mod,
+    'with an character offset of',
+    range.start.offset,
+    'to',
+    range.end.mod,
+    'offset:',
+    range.end.offset,
+    );
+console.log("the dom nodes are ", range.start.dom, range.end.dom);
+```
+
+You will mainly only use the selection when making new actions.
+
+
+
+
+--------------
+
+# notes
+
+Description of the data structure and operations
 
 Since content-editable is so unreliable, we use a separate
 data model which is then synced to the DOM.  Whenever the model changes
-the DOM is fully regenerated from it.  Changing the style of a block
-or span happens this way.  For simple adding and deleting of characters we let
+the DOM is fully regenerated from it (with a few exceptions).
+Changing styles, splitting paragraphs, and deleting selections is all done this way.
+For simple typing of characters we let
 the DOM side handle it, then do a reverse sync. This reverse sync figures out
 what has changed between the DOM and model, producing a series of changes. Then
 these changes are applied to the model and the DOM is re-rendered from the model.
+This list of changes is also used for the undo/redo stack.
 
 This system means the model is authoritative. We may not be able to handle
 every possible change that content editable supports in the DOM, but the model
-will always be in a known valid state. This ensures reliablity above all else.
+will always be in a known valid state. This ensures reliability above all else.
+
+# old notes. no longer accurate.
 
 To modify the document you must use the following operations:
 
