@@ -258,6 +258,15 @@ var PostEditor = React.createClass({
             if(props.post.format == 'jsem') {
                 var model = Model.fromJSON(props.post.raw);
                 fixImages(model.getRoot());
+                fixStyles(model.getRoot());
+                PostDataStore.setModel(model);
+                this.updateTree();
+                return;
+            }
+            if(props.post.format == 'raw') {
+                console.log("got a raw post. trying it with markdown");
+                console.log(props.post);
+                var model = MarkdownParser.parse(props.post.raw);
                 PostDataStore.setModel(model);
                 this.updateTree();
                 return;
@@ -326,3 +335,14 @@ function fixImages(root) {
     }
 }
 
+
+function fixStyles(root) {
+    if(root.type == Model.ROOT || root.type == Model.BLOCK) {
+        root.content.forEach(fixStyles);
+    }
+    if(root.type == Model.SPAN) {
+        if(root.style == 'bold') root.style = 'strong';
+        if(root.style == 'italic') root.style = 'emphasis';
+        if(root.style == 'italics') root.style = 'emphasis';
+    }
+}
