@@ -652,6 +652,17 @@ test("multiline paste", function(t) {
     t.end();
 
 });
+
+test('delete forward with span', function(t) {
+    var editor = makeTextSpanText();
+    var model = editor.getModel();
+    Model.print(model);
+    editor.setSelectionAtDocumentOffset(3,3);
+    Keystrokes.deleteForwards(null,editor);
+    Model.print(model);
+    t.equals(model.getRoot().child(0).child(0).text,'abc');
+    t.end();
+});
 return;
 
 test("make span around another, start on the span",function(t){
@@ -669,3 +680,4 @@ test("make span around another, start on the span",function(t){
     editor.syncDom();
     t.end();
 });
+

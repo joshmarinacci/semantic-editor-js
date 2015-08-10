@@ -37,7 +37,7 @@ exports.deleteForwards = function(e, editor) {
         range.end.mod = nmod.node;
     }
 
-    var chg = makeDeleteTextRangeChange(range,model);
+    var chg = makeDeleteTextRangeChange2(range,model);
     editor.applyChange(chg);
     editor.setCursorAtDocumentOffset(range.documentOffset);
 };
@@ -438,78 +438,6 @@ function makeSplitBlockChange(start) {
     var insert  = makeInsertBlockChange(oldblock.getParent(),oldblock.getIndex()+1,newblock2);
     return makeComboChange(replace,insert,'split block');
 }
-
-//this won't work if there is middle text or spans
-function makeDeleteTextRangeChange(range,model) {
-    var it = model.getIterator(range.start.mod);
-    var ch = range.start.mod;
-    var changes = [];
-    var todelete = {};
-    while(it.hasNext()){
-        //start and end text
-        if(ch == range.start.mod && ch == range.end.mod) {
-            var oldblock = range.start.mod.findBlockParent();
-            var newblock = duplicateBlock(oldblock);
-            var oldtext  = range.start.mod;
-            var newtext = newblock.child(oldtext.getIndex());
-            newtext.text  = oldtext.text.substring(0,range.start.offset)
-                + oldtext.text.substring(range.end.offset);
-            return makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock);
-        }
-        //start text
-        if(ch == range.start.mod) {
-            var oldblock1 = range.start.mod.findBlockParent();
-            var newblock1 = duplicateBlock(oldblock1);
-            var oldtext  = range.start.mod;
-            var newtext = newblock1.child(oldtext.getIndex());
-            newtext.text  = oldtext.text.substring(0,range.start.offset);
-            changes.push(makeReplaceBlockChange(oldblock1.getParent(),oldblock1.getIndex(),newblock1));
-            ch = it.next();
-            continue;
-        }
-        //end text
-        if(ch == range.end.mod) {
-            //add the todeletes
-            var oldblock2 = ch.findBlockParent();
-            for(var id in todelete) {
-                if(id !== oldblock2.id && id !== oldblock1.id) {
-                    var blk = todelete[id];
-                    changes.push(makeDeleteBlockChange(blk.getParent(), blk.getIndex(), blk));
-                }
-            }
-
-
-            if(oldblock2 == oldblock1) {
-                var newblock2 = newblock1;
-            } else {
-                var newblock2 = duplicateBlock(oldblock2);
-            }
-            var oldtext2 = ch;
-            var newtext2 = newblock2.child(oldtext2.getIndex());
-            newtext2.text = oldtext2.text.substring(range.end.offset);
-            if(oldblock2 !== oldblock1) {
-                newblock1.append(newtext2);
-                var delete2 = makeDeleteBlockChange(oldblock2.getParent(),oldblock2.getIndex(),oldblock2);
-                changes.push(delete2);
-            }
-            var chg = changes.shift();
-            while(changes.length > 0) {
-                chg = makeComboChange(chg,changes.shift(),'combo');
-            }
-            return chg;
-        }
-        //middle text
-        if(ch.type == Model.TEXT) {
-            var par = ch.findBlockParent();
-            todelete[par.id] = par;
-            console.log("middle text");
-        }
-        ch = it.next();
-    }
-
-}
-
-exports.makeDeleteTextRangeChange = makeDeleteTextRangeChange;
 
 function makeDeleteTextRangeChange2(range,model) {
     //console.log("deleting with range",range.toString());
