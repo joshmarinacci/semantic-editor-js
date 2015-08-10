@@ -258,6 +258,22 @@ var LinkModal = React.createClass({
     componentDidMount: function() {
         var self = this;
         var editor = PostDataStore.getRealEditor();
+        editor.addAction('split-block',function(e,editor) {
+            var range = editor.getSelectionRange();
+            var oldBlock = range.start.mod.findBlockParent();
+            if(!e.shiftKey && oldBlock.style == 'block-code') {
+                Keystrokes.stopKeyboardEvent(e);
+                var node = range.start.mod;
+                var offset  = range.start.offset;
+                var txt = node.text.substring(0,offset) + '\n' + node.text.substring(offset);
+                var newBlock = Keystrokes.copyWithEdit(oldBlock,node,txt);
+                var change = Keystrokes.makeReplaceBlockChange(oldBlock.getParent(),oldBlock.getIndex(),newBlock);
+                editor.applyChange(change);
+                editor.setCursorAtDocumentOffset(range.documentOffset+1);
+                return;
+            }
+            Keystrokes.splitLine(e,editor);
+        });
         editor.addKeyBinding("style-inline-link",'cmd-shift-a');
         editor.addAction("style-inline-link",function(e, editor) {
             console.log('styling an inline link');
