@@ -185,6 +185,14 @@ editor.addKeyBinding('insert-poop','cmd-shift-p');
 Add a key binding for our new action. 
 
 
+Also make sure you add the correct encoding to the top of your HTML file:
+
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+```
 
 
 --------------
