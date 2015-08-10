@@ -19,9 +19,12 @@ semantic styles. You can modify the rendering and import/export filters. (see ex
  (see examples)
 
 
-# screenshot
+# Screenshot
 
-# using Semantic Editor
+![screenshot][docs/screenshot1.png]
+
+
+# Using Semantic Editor
 
 
 Create a DIV in your document then make a new editor attached to it like this:
@@ -78,7 +81,7 @@ console.log('the model as JSON is ', editor.getModel().toJSON());
 ```
 
 
-# import and export
+# Import and Export
 
 Semantic Editor does not have it's own document export other than
 JSON (`editor.toJSON()` and `editor.fromJSON()`) or plain
@@ -99,7 +102,7 @@ editor.on('change', function() {
 ```
 
 
-# selection
+# Selection
 
 The selection is stored on the browser side. You can set it with:
 `editor.setSelectionAtDocumentOffset(off1,off2)` where `off1` and
@@ -128,7 +131,7 @@ You will mainly only use the selection when making new actions.
 
 
 
-# Examples:
+# Examples
 
 *Insert the poop emoji when you press command shift P*
  
