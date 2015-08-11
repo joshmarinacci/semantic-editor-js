@@ -587,7 +587,7 @@ Editor.prototype.setSelectionAtDocumentOffset = function(off1, off2) {
 
 Editor.prototype.setCursorAtDocumentOffset = function(off) {
     if(off < 0) off = 0;
-    console.log("setting cursor to offset", off);
+    //console.log("setting cursor to offset", off);
     var nmod = Model.documentOffsetToModel(this.getModel().getRoot(),off);
     if(this._fake_range && this._fake_range != null) {
         this._fake_range.start.mod = nmod.node;

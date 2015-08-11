@@ -86,15 +86,124 @@ exports.redo = function(e,editor) {
     editor.redoChange();
 };
 
+exports.calculateTextDifference = function(txt1, txt2) {
+    var i = 0;
+    while(true) {
+        if(i >= txt1.length) {
+            if(txt2.length > txt1.length) {
+                //console.log("it's longer");
+                return {
+                    same:false,
+                    newChar:txt2[i],
+                    newString:txt2[i],
+                    offset:i
+                }
+            }
+            return {
+                same:true
+            }
+        }
+        var ch1 = txt1[i];
+        var ch2 = txt2[i];
+        if(ch1 == ch2) {
+            i++;
+            continue;
+        }
+        //console.log("they differ",ch1,ch2, ch1.charCodeAt(0), ch2.charCodeAt(0), txt1.length,txt2.length);
+        var ch2b = txt2[i+1];
+        if(ch1 == ch2b) {
+            //console.log('inserted char',ch2);
+            return {
+                same:false,
+                newChar: ch2,
+                newString:ch2,
+                offset:i
+            }
+        }
+        if(txt1.length == txt2.length) {
+            //console.log("changed a char");
+            return {
+                same:false,
+                newChar:ch2,
+                newString:ch2,
+                offset:i
+            }
+        }
+        if(txt1.length < txt2.length) {
+            //console.log("changed and inserted");
+            return {
+                same:false,
+                newChar:txt2.substring(i+1,i+2),
+                newString: txt2.substring(i,i+2),
+                offset:i
+            }
+        }
+
+        break;
+    }
+};
+
+var replacements = {
+    'lambda':'\u03BB',
+    'theta':'\u0398',
+    'qed':'\u220E'
+};
+
+function delegateChange(change) {
+    var keys = Object.keys(replacements);
+    for(var i=0; i<keys.length; i++) {
+        var key = keys[i];
+        var str = change.newText.substring(change.offset-key.length+1, change.offset+1);
+        console.log('checking',key,str);
+        if(str == key) {
+            return change.newText.substring(0,change.offset-key.length+1)
+            + replacements[key]
+            + change.newText.substring(change.offset+1);
+        }
+    }
+
+    if(change.newChar == '"') {
+        var prevchar = change.newText.substring(change.offset-1,change.offset);
+        console.log("prevchar is",prevchar);
+        var right_double_quote = '\u201D';
+        var left_double_quote = '\u201C';
+        var non_breaking_space = String.fromCharCode(160);
+        var newChar = '\u201D';
+        if(prevchar == ' ' || prevchar == non_breaking_space) {
+            newChar = left_double_quote
+        } else {
+            newChar = right_double_quote;
+        }
+        return change.newText.substring(0,change.offset)
+            + newChar
+            + change.newText.substring(change.offset+1);
+    }
+    return change.newText;
+}
+
 exports.handleInput = function(e,editor) {
     var dom_root = editor.getDomRoot();
     var model  = editor.getModel();
     var range = editor.getSelectionRange();
     var changeRange = Dom.calculateChangeRange(model,dom_root,range.start);
     if(changeRange.start.mod == changeRange.end.mod && changeRange.start.mod.type == Model.TEXT) {
-        var chg = makeBlockReplaceChange(changeRange.start);
+        var oldText = changeRange.start.mod.text;
+        var newText = changeRange.start.dom.nodeValue;
+        var diff = exports.calculateTextDifference(oldText,newText);
+        var change = {
+            oldText:oldText,
+            newText:newText,
+            newString:diff.newString,
+            newChar:diff.newChar,
+            offset:diff.offset
+        };
+        var newtext = delegateChange(change);
+        var ldiff = newtext.length - oldText.length;
+        var oldBlock = changeRange.start.mod.findBlockParent();
+        var newBlock = copyWithEdit(oldBlock,changeRange.start.mod,newtext);
+        var chg = makeReplaceBlockChange(oldBlock.getParent(),oldBlock.getIndex(),newBlock);
         editor.applyChange(chg);
-        editor.setCursorAtDocumentOffset(range.documentOffset);
+        editor.setCursorAtDocumentOffset(range.documentOffset+ldiff-1);
         return;
     }
 
@@ -314,12 +423,6 @@ function styleWithRange(range, node, insideSpan,style) {
             nodes:[new_node]
         }
     }
-}
-
-function makeBlockReplaceChange(req) {
-    var oldblock = req.mod.findBlockParent();
-    var newblock = copyWithEdit(oldblock,req.mod,req.dom.nodeValue);
-    return makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock);
 }
 
 exports.makeReplaceBlockChange = makeReplaceBlockChange;
