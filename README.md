@@ -197,6 +197,30 @@ Also make sure you add the correct encoding to the top of your HTML file:
     <meta charset="UTF-8">
 ```
 
+# Installation
+
+Install as an NPM 
+
+```
+npm install semantic-editor-js
+```
+
+then include `'semantic-editor-js/src/editor` it in your webpage with your preferred packaging
+mechanism that supports 'require'. I use Browserify.
+
+
+# Roadmap
+
+As with any open source project, it's tough predicting what will be popular, but here are a
+few things I _know_ need to be done:
+
+* turn image support into a general inline-block type to be customized
+* improve support for large pastes of HTML content
+* examples of inline auto-completion. ex: @twitter handles, amazon queries, expression syntax.
+* reduce unnecessary DOM regeneration
+* setting the same text to bold twice should un-bold it
+* test more desktop browsers
+* mobile browser support
 
 --------------
 
