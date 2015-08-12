@@ -1,7 +1,7 @@
 {
   "name": "semantic-editor-js",
   "version": "0.0.1",
-  "description": "",
+  "description": "semantic editor for html",
   "main": "index.js",
   "scripts": {
     "test": "node tests/tests.js",

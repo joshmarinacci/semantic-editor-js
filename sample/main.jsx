@@ -7,20 +7,9 @@ var Keystrokes = require('../src/keystrokes');
 var moment = require('moment');
 var PostDataStore = require('./PostDataStore');
 var PostEditor = require('./PostEditor.jsx');
-var PostMeta = require('./PostMeta.jsx');
-var PostList = require('./PostList.jsx');
 var utils = require('./utils');
 
-
-function setupModel() {
-    var model = Editor.makeModel();
-    var block1 = model.makeBlock();
-    var text1 = model.makeText("This is an empty post. please create a new one.");
-    block1.append(text1);
-    model.append(block1);
-    PostDataStore.setModel(model);
-}
-setupModel();
+var model = PostDataStore.getModel();
 
 var BlockDropdown = React.createClass({
     getInitialState: function() {
@@ -214,36 +203,14 @@ var Toolbar = React.createClass({
     },
     componentDidMount: function() {
         var self = this;
-        PostDataStore.on('selected',function() {
-            var model = PostDataStore.getModel();
-            self.setState({
-                styles:model.getStyles()
-            });
+        self.setState({
+            styles:model.getStyles()
         });
-    },
-    setModelToPost: function() {
-        var model = PostDataStore.getModel();
-        var data = model.toJSON();
-        PostDataStore.updateContent(this.props.post,data);
-    },
-    doNewPost: function() {
-        PostDataStore.makeNewPost();
-    },
-    doDeletePost: function() {
-        PostDataStore.deletePost(PostDataStore.getSelected());
-    },
-    toggleZen: function() {
-        this.props.onZen();
     },
     render: function() {
         return <div className='grow' id="toolbar">
             <BlockDropdown styles={this.state.styles.block} type="block"/>
             <BlockDropdown styles={this.state.styles.inline} type="inline"/>
-            <CleanupDropdown/>
-            <button className="btn btn-default" onClick={this.setModelToPost}>Save</button>
-            <button className="btn btn-default" onClick={this.doNewPost}>New</button>
-            <button className="btn btn-default" onClick={this.doDeletePost}>Delete</button>
-            <button className="btn btn-default" onClick={this.toggleZen}>Zen</button>
         </div>
     }
 });
@@ -316,10 +283,6 @@ var LinkModal = React.createClass({
             mod.meta = {}
         }
         mod.meta.href = this.state.targetHref;
-        //must propagate this back to the dom
-        //var editor = PostDataStore.getEditor();
-        //var com_dom = Dom.findDomForModel(mod, editor);
-        //Dom.rebuildDomFromModel(mod.getParent(),com_dom.parentElement, editor, editor.ownerDocument);
         PostDataStore.getRealEditor().syncDom();
         this.close();
     },
@@ -370,13 +333,13 @@ var LinkModal = React.createClass({
 var MainView = React.createClass({
     getInitialState: function() {
         return {
-            posts: PostDataStore.getPosts(),
-            selected: PostDataStore.getPosts()[0],
+            selected: PostDataStore.getModel(),
             zen:false
         }
     },
     componentDidMount: function() {
         var self = this;
+        /*
         PostDataStore.on('selected',function() {
             self.setState({
                 selected:PostDataStore.getSelected(),
@@ -387,6 +350,7 @@ var MainView = React.createClass({
                 posts:PostDataStore.getPosts(),
             })
         });
+        */
 
         var editor = PostDataStore.getRealEditor();
         editor.addAction('clear-styles',function(e,editor) {
@@ -432,15 +396,10 @@ var MainView = React.createClass({
                 <LinkModal/>
                 <div id="main-content" className='container-fluid vbox grow'>
                     <div className='hbox'>
-                        <PostMeta   post={this.state.selected}  zen={this.state.zen}/>
-                        <Toolbar    post={this.state.selected} onZen={this.toggleZen}/>
+                        <Toolbar    model={model} onZen={this.toggleZen}/>
                     </div>
                     <div className='hbox grow'>
-                        <PostList posts={this.state.posts} zen={this.state.zen}/>
                         <PostEditor post={this.state.selected}  zen={this.state.zen}/>
-                        <div id="modeltree" className="scroll" style={{display:this.state.zen?"none":"block"}}>
-                            tree goes here
-                        </div>
                     </div>
                 </div>
         </div>);
@@ -449,5 +408,3 @@ var MainView = React.createClass({
 
 React.render(<MainView/>, document.getElementById("main"));
 
-
-PostDataStore.loadPosts();

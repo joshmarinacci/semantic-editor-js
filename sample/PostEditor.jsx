@@ -212,104 +212,18 @@ domToNewModel = function(dom_root, options) {
 function clearChildren(root) {
     while (root.firstChild) root.removeChild(root.firstChild);
 }
-function renderTree(root,model) {
-    clearChildren(root);
-    root.appendChild(renderTreeChild(model.getRoot()));
-}
-
-function renderTreeChild(mnode) {
-    var ul = document.createElement('ul');
-    for(var i=0; i<mnode.childCount(); i++) {
-        var li = document.createElement('li');
-
-        var child = mnode.child(i);
-        var text = child.type + " " + child.id + " " + child.style;
-        li.appendChild(document.createTextNode(text));
-        if(child.type == Model.TEXT) {
-            li.appendChild(document.createTextNode(': "'+child.text+'"'));
-        }
-        if(child.childCount() > 0) {
-            var child_dom = renderTreeChild(child);
-            li.appendChild(child_dom);
-        }
-        ul.appendChild(li);
-    }
-    return ul;
-}
-
 var PostEditor = React.createClass({
     componentWillUpdate: function() {
         return false;
     },
-    updateTree: function() {
-        var tree_root = document.getElementById("modeltree");
-        var model = PostDataStore.getModel();
-        renderTree(tree_root,model);
-    },
     componentDidMount:function() {
         var editor = PostDataStore.getRealEditor();
         editor.setDomRoot(React.findDOMNode(this.refs.editor));
-        editor.on('change',this.updateTree);
     },
     componentWillReceiveProps: function(props) {
-        if (typeof props.post == 'undefined') return;
-        var domRoot = React.findDOMNode(this.refs.editor);
-        try {
-            if(props.post.format == 'jsem') {
-                var model = Model.fromJSON(props.post.raw);
-                fixImages(model.getRoot());
-                fixStyles(model.getRoot());
-                PostDataStore.setModel(model);
-                this.updateTree();
-                return;
-            }
-            if(props.post.format == 'raw') {
-                console.log("got a raw post. trying it with markdown");
-                console.log(props.post);
-                var model = MarkdownParser.parse(props.post.raw);
-                PostDataStore.setModel(model);
-                this.updateTree();
-                return;
-            }
-            if(props.post.format == 'semantic') {
-                console.log("doing semantic");
-                Dom.setRawHtml(domRoot,props.post.raw);
-                var options = {
-                    style_to_element_map:{
-                        'blocktype_header':'h3'
-                    }
-                }
-                var model = domToNewModel(domRoot,options);
-                PostDataStore.setModel(model);
-                this.updateTree();
-                return;
-            }
-            if(props.post.format == 'markdown') {
-                console.log("doing markdown yet");
-                console.log(props.post);
-                var model = MarkdownParser.parse(props.post.raw);
-                PostDataStore.setModel(model);
-                this.updateTree();
-                return;
-            }
-            if(typeof props.post.format == 'undefined') {
-                console.log("no format, must be old");
-                Dom.setRawHtml(domRoot,props.post.content);
-                var model = domToNewModel(domRoot);
-                PostDataStore.setModel(model);
-                this.updateTree();
-                return;
-            }
-        } catch (e) {
-            console.log("error converting dataToModel");
-            console.log(e);
-        }
     },
     render: function() {
         var clss = "semantic-view grow scroll";
-        if(this.props.zen) {
-            clss+= " zen";
-        }
         return <div
                 ref="editor"
                 id="post-editor"
@@ -319,30 +233,3 @@ var PostEditor = React.createClass({
     }
 });
 module.exports = PostEditor;
-
-function fixImages(root) {
-    if(root.type == Model.ROOT || root.type == Model.BLOCK) {
-        root.content.forEach(fixImages);
-    }
-    if(root.type == Model.SPAN && root.style == 'image') {
-        console.log("Found an image",root.meta.src);
-        var prefix = "http://localhost/images/";
-        if(root.meta.src.indexOf(prefix)==0) {
-            var path = root.meta.src.substring(prefix.length);
-            root.meta.src = "http://joshondesign.com/images/"+path;
-            console.log("changed to ",root.meta.src);
-        }
-    }
-}
-
-
-function fixStyles(root) {
-    if(root.type == Model.ROOT || root.type == Model.BLOCK) {
-        root.content.forEach(fixStyles);
-    }
-    if(root.type == Model.SPAN) {
-        if(root.style == 'bold') root.style = 'strong';
-        if(root.style == 'italic') root.style = 'emphasis';
-        if(root.style == 'italics') root.style = 'emphasis';
-    }
-}
