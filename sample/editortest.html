@@ -26,12 +26,10 @@
             flex:1;
             -webkit-flex: 1;
         }
-        #post-list, #post-editor, #post-meta, #toolbar, #modeltree {
+        #post-editor, #toolbar {
             min-width: 20em;
             padding: 1em;
             margin: 0;
-            flex:0;
-            -webkit-flex:0;
         }
         #post-editor {
             -webkit-flex:1;
@@ -40,46 +38,18 @@
         .semantic-view.zen {
             font-size: 200%;
         }
-        #toolbar {
-            text-align: right;
+        .visual-view.zen {
+            font-size: 200%;
         }
-        #post-meta, #toolbar {
-            flex:1;
-            -webkit-flex: 1;
+        #toolbar {
+            padding: 0.5em;
         }
         #post-editor textarea {
             width: 100%;
         }
-        #modeltree { min-width: 30em; }
-
-        a.with-tooltip {
-            position: relative;
-        }
-        a.with-tooltip b.link-tooltip {
-            display: none;
-        }
-        a.with-tooltip:hover b.link-tooltip {
-            display: block;
-            white-space: nowrap;
-        }
-        b.link-tooltip {
-            border: 1px solid black;
-            position: absolute;
-            bottom: 2em;
-            left: auto;
-            right: auto;
-            background-color: white;
-            padding: 0.5em;
-            border-radius: 0.5em;
-        }
         .scroll {
-            border: 1px solid green;
+            border: 1px solid gray;
             overflow: scroll;
-        }
-
-        #post-list li {
-            list-style: none;
-            padding-bottom: 1em;
         }
 
         #main-content {
@@ -88,6 +58,10 @@
             bottom:0;
             left:0;
             right:0;
+        }
+
+        #sidebar {
+            max-width: 20em;
         }
     </style>
 </head>

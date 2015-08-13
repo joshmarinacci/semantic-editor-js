@@ -1,4 +1,4 @@
-#editor.visual-view div {
+.visual-view div {
     margin: 0.5em;
     padding: 0.5em;
     line-height:  130%;
@@ -6,31 +6,57 @@
 
 
 
-#editor.visual-view div.header {
+.visual-view div.header {
     background-color: transparent;
     font-size: 130%;
     font-weight: bold;
+    text-decoration: underline;
+    margin-top: 2em;
 }
-#editor.visual-view div.body {
+
+.visual-view .subheader {
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 95%;
+    margin-top: 2em;
+}
+
+.visual-view div.body {
     background-color: transparent;
     font-family: serif;
 }
-#editor.visual-view div.block-quote {
-    background-color: red;
+.visual-view div.block-quote {
+    background-color: #f0f0f0;
+    font-style: italic;
+    font-size: 120%;
+    padding: 1em 1em 1em 1em;
+    margin: 2em;
+    margin-left: 5em;
 }
-#editor.visual-view div.block-code {
+
+.visual-view div.block-code {
     background-color: #ffe;
     font-family: monospace;
     font-weight: bold;
     white-space: pre;
     border: 1px solid #cc8;
     border-radius: 1em;
+    padding: 1em;
+    margin: 1em;
 }
-#editor.visual-view .bold {
+.visual-view .strong {
     font-weight: bold;
 }
-#editor.visual-view .italic {
+.visual-view .emphasis {
     font-style: italic;
+}
+
+.visual-view .inline-code {
+    font-family: monospace;
+    font-size: 90%;
+    border: 1px solid rgba(185, 185, 0, 0.44);
+    background-color: rgba(217, 217, 0, 0.16);
+    border-radius: 3px;
 }
 
 

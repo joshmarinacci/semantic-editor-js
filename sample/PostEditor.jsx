@@ -223,7 +223,16 @@ var PostEditor = React.createClass({
     componentWillReceiveProps: function(props) {
     },
     render: function() {
-        var clss = "semantic-view grow scroll";
+        var clss = "grow scroll";
+        if(this.props.zen) {
+            clss += ' zen';
+        }
+        if(this.props.view == 'visual') {
+            clss += ' visual-view';
+        }
+        if(this.props.view == 'semantic') {
+            clss += ' semantic-view';
+        }
         return <div
                 ref="editor"
                 id="post-editor"

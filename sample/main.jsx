@@ -66,9 +66,12 @@ var Toolbar = React.createClass({
         });
     },
     render: function() {
-        return <div className='grow' id="toolbar">
+        return <div className='foo' id="toolbar">
             <BlockDropdown styles={this.state.styles.block} type="block"/>
             <BlockDropdown styles={this.state.styles.inline} type="inline"/>
+            <button className="btn btn-default" onClick={this.props.doSemantic}>Semantic</button>
+            <button className="btn btn-default" onClick={this.props.doVisual}>Visual</button>
+            <button className="btn btn-default" onClick={this.props.toggleZen}>Zen</button>
         </div>
     }
 });
@@ -192,24 +195,11 @@ var MainView = React.createClass({
     getInitialState: function() {
         return {
             selected: PostDataStore.getModel(),
-            zen:false
+            zen:false,
+            view:'semantic'
         }
     },
     componentDidMount: function() {
-        var self = this;
-        /*
-        PostDataStore.on('selected',function() {
-            self.setState({
-                selected:PostDataStore.getSelected(),
-            })
-        });
-        PostDataStore.on('posts',function() {
-            self.setState({
-                posts:PostDataStore.getPosts(),
-            })
-        });
-        */
-
         var editor = PostDataStore.getRealEditor();
         editor.addAction('clear-styles',function(e,editor) {
             var model = editor.getModel();
@@ -248,16 +238,38 @@ var MainView = React.createClass({
             zen:!this.state.zen
         })
     },
+    doSemantic: function() {
+        console.log("doing semantic");
+        this.setState({
+            view:'semantic',
+        })
+    },
+    doVisual: function() {
+        console.log("doing visual");
+        this.setState({
+            view:'visual',
+        })
+    },
     render: function() {
+        var sidebarClasses = "";
+        if(this.state.zen == true) {
+            sidebarClasses += " hidden";
+        }
         return (
             <div>
                 <LinkModal/>
                 <div id="main-content" className='container-fluid vbox grow'>
-                    <div className='hbox'>
-                        <Toolbar    model={model} onZen={this.toggleZen}/>
-                    </div>
                     <div className='hbox grow'>
-                        <PostEditor post={this.state.selected}  zen={this.state.zen}/>
+                        <div id='sidebar' className={sidebarClasses}>
+                            <h3>Semantic Editor demo</h3>
+                            <p>this is a demo of <a href='#'>semantic-editor-js</a>
+                                that lets you do lots of cool stuff. Just click and start editing.</p>
+
+                        </div>
+                        <div className='vbox grow'>
+                            <Toolbar    model={model} toggleZen={this.toggleZen} doVisual={this.doVisual} doSemantic={this.doSemantic}/>
+                            <PostEditor post={this.state.selected}  zen={this.state.zen} view={this.state.view}/>
+                        </div>
                     </div>
                 </div>
         </div>);
