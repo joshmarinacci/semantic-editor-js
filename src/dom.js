@@ -211,18 +211,40 @@ function isText(node) {
     return false;
 }
 
+function findDomBlockParent(dom) {
+    if(dom.nodeType == ELEMENT_NODE){
+        if(dom.nodeName.toLowerCase() == 'div') {
+            return dom;
+        }
+    }
+    return findDomBlockParent(dom.parentNode);
+}
+
+function handleBlockPaste(dom,model) {
+    var dblock = findDomBlockParent(dom);
+    if(!dblock.id) {
+        throw new Error("no id still for the dom. this is a problem");
+    }
+    var mblock = exports.findModelForDom(model,dblock);
+    return {
+        start : {
+            dom:dblock,
+            mod:mblock
+        },
+        end: {
+            dom:dblock,
+            mod:mblock
+        }
+    };
+}
+
 exports.calculateChangeRange = function(model,dom_root,sel) {
     var change = {};
     //is there a previous sibling?
     var domch = sel.dom;
     var modch = sel.mod;
     if(modch == null) {
-        console.log("can't find the modified node. could be something that was pasted");
-        var prev = prevDom(sel.start_node);
-        console.log("prev is",prev);
-        if(prev !== null) {
-            modch = exports.findModelForDom(model,prev);
-        }
+        return handleBlockPaste(sel.dom,model);
     }
     if(modch == null) {
         throw new Error("cannot find model for dom", dom_root);
@@ -237,9 +259,8 @@ exports.calculateChangeRange = function(model,dom_root,sel) {
                 }
             }
         }
-        if(modch.type == Model.TEXT && domch.nodeType == TEXT_NODE) {
-            if(modch.text == domch.nodeValue) {
-            } else {
+        if(isText(modch) && isText(domch)) {
+            if(modch.text != domch.nodeValue) {
                 change.start = {
                     dom: domch,
                     mod: modch
@@ -275,6 +296,14 @@ exports.calculateChangeRange = function(model,dom_root,sel) {
         }
     }
 
+    if(!change.start) {
+        console.log('change start is still undefined');
+        change.start = {
+            dom:domch,
+            mod:modch
+        }
+    }
+
     if(!change.end) {
         console.log("change end is still undefined!!!");
         change.end = {
@@ -295,8 +324,9 @@ function nextDom(dom) {
     var n = domIndexOf(dom);
     if(dom.parentNode.childNodes.length > n+1) {
         return dom.parentNode.childNodes[n+1];
+    } else {
+        return nextDom(dom.parentNode);
     }
-    return null;
 }
 function prevDom(dom) {
     var n = domIndexOf(dom);

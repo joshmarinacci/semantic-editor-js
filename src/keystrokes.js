@@ -207,6 +207,17 @@ exports.handleInput = function(e,editor) {
         return;
     }
 
+
+    if(changeRange.start.mod == changeRange.end.mod && changeRange.start.mod.type == Model.BLOCK) {
+        var mod2 = Dom.rebuildModelFromDom(changeRange.start.dom,editor.getModel(), editor.getImportMapping());
+        var oldBlock = changeRange.start.mod;
+        var newBlock = mod2;
+        var chg = makeReplaceBlockChange(oldBlock.getParent(),oldBlock.getIndex(),newBlock);
+        editor.applyChange(chg);
+        editor.setCursorAtDocumentOffset(range.documentOffset);
+        return;
+
+    }
     console.log('more than typing. must be a paste');
     /*
     var doff = wrange.startOffset + Dom.domToDocumentOffset(dom_root,wrange.startContainer).offset;
