@@ -94,4 +94,141 @@ test('long paste html spans and text', function(t) {
     t.end();
 });
 
+function makeTestBlocks() {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+    var texts = ['abc','def','ghi','jkl','mno'];
+    texts.forEach(function(text) {
+        var block = model.makeBlock();
+        block.style = 'header';
+        block.append(model.makeText(text));
+        model.getRoot().append(block);
+    });
+
+    editor.syncDom();
+    return editor;
+}
+
+function insertPaste(dom_root, n) {
+    var div1 = dom_root.childNodes[n];
+    var next = dom_root.childNodes[n+1];
+    var oldText = div1.childNodes[0].nodeValue;
+    div1.childNodes[0].nodeValue = oldText.substring(0,2);
+    var span1 = VirtualDoc.createElement('span');
+    span1.appendChild(VirtualDoc.createTextNode('XXX'));
+    div1.appendChild(span1);
+    div1.appendChild(VirtualDoc.createTextNode(' \n '));
+
+    var div2 = VirtualDoc.createElement('div');
+    div2.appendChild(VirtualDoc.createElement('br'));
+    if(next) {
+        dom_root.insertBefore(div2, next);
+    } else {
+        dom_root.appendChild(div2);
+    }
+
+
+    var div3 = VirtualDoc.createElement('div');
+    div3.id = div1.id;
+    div3.classList.add('header');
+    var span3 = VirtualDoc.createElement('span');
+    span3.appendChild(VirtualDoc.createTextNode('YYY'));
+    div3.appendChild(span3);
+    div3.appendChild(VirtualDoc.createTextNode(oldText.substring(2)));
+    if(next) {
+        dom_root.insertBefore(div3, next);
+    } else {
+        dom_root.appendChild(div3);
+    }
+
+    var range = {
+        start: {
+            dom:dom_root.childNodes[n+2].childNodes[0].childNodes[0],
+            mod:null
+        }
+    };
+    return range;
+}
+
+test("paste multiple paragraphs 1", function(t) {
+    var editor = makeTestBlocks();
+    var dom_root = editor.getDomRoot();
+    var model    = editor.getModel();
+    var n = 0;
+    var range = insertPaste(dom_root,n);
+
+
+    //Dom.print(dom_root);
+    var pdom = Dom.findDomBlockParent(range.start.dom);
+    var start = Keystrokes.scanDomBackwardsForMatch(pdom,model);
+    t.equal(start.dom,dom_root.childNodes[n]);
+    t.equal(start.mod,model.getRoot().child(n));
+    var end  = Keystrokes.scanDomForwardsForMatch(pdom,model);
+    t.equal(end.dom,dom_root.childNodes[n+2]);
+    t.equal(end.mod,model.getRoot().child(n));
+
+    editor.applyChange(Keystrokes.makeChangesFromPasteRange(start,end,editor));
+    //Model.print(editor.getModel());
+
+    t.equal(model.getRoot().child(n).child(0).text,'ab');
+    t.equal(model.getRoot().child(n).child(1).child(0).text,'XXX');
+    t.equal(model.getRoot().child(n+2).child(0).child(0).text,'YYY');
+    t.equal(model.getRoot().child(n+2).child(1).text,'c');
+    t.end();
+});
+
+
+
+test("paste multiple paragraphs 2", function(t) {
+    var editor = makeTestBlocks();
+    var dom_root = editor.getDomRoot();
+    var model    = editor.getModel();
+    var n = 1;
+    var range = insertPaste(dom_root,n);
+
+
+    var pdom = Dom.findDomBlockParent(range.start.dom);
+    var start = Keystrokes.scanDomBackwardsForMatch(pdom,model);
+    t.equal(start.dom,dom_root.childNodes[n]);
+    t.equal(start.mod,model.getRoot().child(n));
+    var end  = Keystrokes.scanDomForwardsForMatch(pdom,model);
+    t.equal(end.dom,dom_root.childNodes[n+2]);
+    t.equal(end.mod,model.getRoot().child(n));
+
+    editor.applyChange(Keystrokes.makeChangesFromPasteRange(start,end,editor));
+
+    t.equal(model.getRoot().child(n).child(0).text,'de');
+    t.equal(model.getRoot().child(n).child(1).child(0).text,'XXX');
+    t.equal(model.getRoot().child(n+2).child(0).child(0).text,'YYY');
+    t.equal(model.getRoot().child(n+2).child(1).text,'f');
+    t.end();
+});
+
+
+
+test("paste multiple paragraphs 3", function(t) {
+    var editor = makeTestBlocks();
+    var dom_root = editor.getDomRoot();
+    var model    = editor.getModel();
+    var n = 4;
+    var range = insertPaste(dom_root,n);
+
+    //Dom.print(dom_root);
+    var pdom = Dom.findDomBlockParent(range.start.dom);
+    var start = Keystrokes.scanDomBackwardsForMatch(pdom,model);
+    t.equal(start.dom,dom_root.childNodes[n]);
+    t.equal(start.mod,model.getRoot().child(n));
+    var end  = Keystrokes.scanDomForwardsForMatch(pdom,model);
+    t.equal(end.dom,dom_root.childNodes[n+2]);
+    t.equal(end.mod,model.getRoot().child(n));
+
+    editor.applyChange(Keystrokes.makeChangesFromPasteRange(start,end,editor));
+
+    t.equal(model.getRoot().child(n).child(0).text,'mn');
+    t.equal(model.getRoot().child(n).child(1).child(0).text,'XXX');
+    t.equal(model.getRoot().child(n+2).child(0).child(0).text,'YYY');
+    t.equal(model.getRoot().child(n+2).child(1).text,'o');
+    t.end();
+});
 

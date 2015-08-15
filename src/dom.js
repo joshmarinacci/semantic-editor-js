@@ -4,9 +4,11 @@ var Model = doc;
 if(typeof document === 'undefined') {
     var TEXT_NODE = 'TEXT_NODE';
     var ELEMENT_NODE = 'ELEMENT_NODE';
+    var COMMENT_NODE = 'COMMENT_NODE';
 } else {
     var TEXT_NODE = document.TEXT_NODE;
     var ELEMENT_NODE = document.ELEMENT_NODE;
+    var COMMENT_NODE = document.COMMENT_NODE;
 }
 
 
@@ -175,6 +177,7 @@ exports.modelToDom = function(mod,dom, document, mapping) {
 function domIndexOf(dom_child) {
     return Array.prototype.indexOf.call(dom_child.parentNode.childNodes,dom_child);
 }
+exports.domIndexOf = domIndexOf;
 
 
 exports.findModelForDom = function(model,domch) {
@@ -219,6 +222,7 @@ function findDomBlockParent(dom) {
     }
     return findDomBlockParent(dom.parentNode);
 }
+exports.findDomBlockParent = findDomBlockParent;
 
 function handleBlockPaste(dom,model) {
     var dblock = findDomBlockParent(dom);
@@ -235,9 +239,47 @@ function handleBlockPaste(dom,model) {
             dom:dblock,
             mod:mblock
         }
-    };
+    }
 }
+/*
+if multiple blocks were pasted, it will have split the main block, so there will
+be two blocks with that id.  We need to scan backwards until
+we find two blocks in a row with the correct IDs, or hit the doc start.
 
+We need to scan forwards until we find two blocks in a row with the correct IDs, or
+hit the doc end.
+
+return change.start/end of the two block nodes.
+
+rebuild by
+* replacing old block with start replacement
+* appending any blocks between start and end by going through the dom
+* appending end replacement
+
+There may or may not be any blocks in the middle
+In some cases the start and end will actually be the same dom node, if it's only one.
+tell the difference by checking if start == end, not just start.id == end.id
+
+
+
+scan backwards by:
+start.dom.findBlockParent
+find model
+find prev dom and prev model
+if at doc start, this is the start
+if prev dom and prev model match, then this is the start
+else, move back one and repeat
+
+scan forwards by
+end.dom.findBlockParent
+find model
+find next dom and next model
+if at doc end, this is the end
+if next dom and next model match, then this is the end
+else, move forward one and repeat
+
+
+ */
 exports.calculateChangeRange = function(model,dom_root,sel) {
     var change = {};
     //is there a previous sibling?
@@ -595,6 +637,7 @@ function genModelFromDom(node,model, mapping) {
         var name = node.nodeName.toLowerCase();
         if(mapping[name]) return genModelFromMapping(mapping[name],name,node,mapping, model);
     }
+    if(node.nodeType == COMMENT_NODE) return null;
     throw new Error("cant convert dom node " + node.nodeType + " " + node.nodeName);
 }
 
@@ -609,7 +652,8 @@ function genModelFromMapping(mp, name, node, mappings, model) {
     nd.style = mp.style;
     if(mp.isLink === true) nd.meta = { href: node.getAttribute("href") };
     for(var i=0; i<node.childNodes.length; i++) {
-        nd.append(genModelFromDom(node.childNodes[i],model, mappings));
+        var mod = genModelFromDom(node.childNodes[i],model, mappings);
+        if(mod != null) nd.append(mod);
     }
     return nd;
 }

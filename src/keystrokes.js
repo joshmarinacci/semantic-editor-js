@@ -185,6 +185,20 @@ exports.handleInput = function(e,editor) {
     var dom_root = editor.getDomRoot();
     var model  = editor.getModel();
     var range = editor.getSelectionRange();
+    if(range.start.mod == null) {
+        console.log("this must be a paste");
+        //Model.print(editor.getModel());
+        var pdom  = Dom.findDomBlockParent(range.start.dom);
+        //console.log("pdom = ",pdom);
+        //Dom.print(editor.getDomRoot());
+        var start = exports.scanDomBackwardsForMatch(pdom,model);
+        var end   = exports.scanDomForwardsForMatch(pdom,model);
+        //console.log("scanned backwards for",start.dom.id,start.mod.id);
+        //console.log("scanned forwards for",end.dom.id,end.mod.id);
+        editor.applyChange(exports.makeChangesFromPasteRange(start,end,editor));
+        //Model.print(editor.getModel());
+        return;
+    }
     var changeRange = Dom.calculateChangeRange(model,dom_root,range.start);
     if(changeRange.start.mod == changeRange.end.mod && changeRange.start.mod.type == Model.TEXT) {
         var oldText = changeRange.start.mod.text;
@@ -598,6 +612,9 @@ function makeInsertBlockChange(parent, index, node) {
         }
     }
 }
+
+exports.makeInsertBlockChange = makeInsertBlockChange;
+
 function makeDeleteBlockChange(parent, index, node) {
     return {
         redoit: function() {
@@ -645,4 +662,129 @@ function makeComboChange(chg1, chg2, name) {
             chg1.undoit();
         }
     }
+}
+
+exports.makeComboChange = makeComboChange;
+
+
+exports.makeChangesFromPasteRange = function(start,end,editor) {
+    var model = editor.getModel();
+    var changes = [];
+    var count = -1;
+    //console.log("dom = ");
+    Dom.print(editor.getDomRoot());
+    var parent = start.mod.getParent();
+    for(var i = Dom.domIndexOf(start.dom); i<= Dom.domIndexOf(end.dom); i++) {
+        //console.log('at',i);
+        count++;
+        var dom = start.dom.parentNode.childNodes[i];
+        var mod2 = Dom.rebuildModelFromDom(dom,model, editor.getImportMapping());
+        //console.log("dom is",dom);
+        //Model.print(mod2);
+        if(dom == start.dom) {
+            //console.log('at start');
+            var mod1 = start.mod;
+            if(mod1 == null) {
+                console.log("ERROR. still no start model");
+            }
+            var chg = exports.makeReplaceBlockChange(parent,mod1.getIndex(),mod2);
+            changes.push(chg);
+            continue;
+        }
+        if(dom == end.dom) {
+            //console.log('at end');
+            if(end.mod == null) {
+                console.log("we still don't have an end model!");
+            }
+            var chg = exports.makeInsertBlockChange(parent, start.mod.getIndex()+count, mod2);
+            changes.push(chg);
+            continue;
+        }
+        //console.log('in the middle');
+        if(mod2 == null) {
+            //console.log("converted to null. skipping");
+            count--;
+            continue;
+        }
+        var chg = exports.makeInsertBlockChange(parent,start.mod.getIndex()+count,mod2);
+        changes.push(chg);
+    }
+
+
+    //merge into one combo change
+    var chg = changes.shift();
+    while(changes.length > 0) {
+        chg = exports.makeComboChange(chg,changes.shift(),'combo');
+    }
+
+    return chg;
+}
+
+
+exports.scanDomForwardsForMatch = function(dom1, model) {
+    while(true) {
+        var dom1n = Dom.domIndexOf(dom1);
+        var len = dom1.parentNode.childNodes.length;
+        //console.log("checking",dom1.id,":",dom1n,'len',len);
+        var mod1 = model.findNodeById(dom1.id);
+        //console.log("mod1 = ",mod1?mod1.id:"null");
+        if(dom1n+1 >= len) {
+            //console.log('at the end');
+            return {
+                dom: dom1,
+                mod: mod1,
+            }
+        }
+        var dom2 = dom1.parentNode.childNodes[dom1n+1];
+        var mod2 = model.findNodeById(dom2.id);
+        if(mod2 == null) {
+            console.log('counldnt find mod2. continueing');
+            dom1 = dom2;
+        } else {
+            //console.log("next is valid and matches",mod2.id);
+            return {
+                dom: dom1,
+                mod: mod1
+            }
+        }
+    }
+
+}
+
+exports.scanDomBackwardsForMatch = function(dom1, model) {
+    while(true) {
+        var dom1n = Dom.domIndexOf(dom1);
+        //console.log("checking",dom1.id,":",dom1n);
+        if (dom1n <= 0) {
+            //console.log('at the start');
+            var mod1 = model.findNodeById(dom1.id);
+            //console.log("mod1 = ", mod1.id);
+            return {
+                dom: dom1,
+                mod: mod1
+            }
+        }
+        var mod1 = model.findNodeById(dom1.id);
+        if (mod1 == null) {
+            //console.log("mod1 not found");
+            dom1 = dom1.parentNode.childNodes[dom1n - 1];
+            continue;
+        }
+
+        var dom2 = dom1.parentNode.childNodes[dom1n - 1];
+        //console.log("dom2.id = ", dom2.id);
+        var mod2 = model.findNodeById(dom2.id);
+        if (mod2 == null) {
+            //console.log('cant find the model');
+            dom1 = dom2;
+        } else {
+            //console.log("found it. it's good");
+            return {
+                dom: dom1,
+                mod: mod1
+            }
+        }
+    }
+
+
 }

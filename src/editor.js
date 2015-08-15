@@ -69,7 +69,7 @@ var import_map = {
         style:'emphasis'
     },
     br: {
-        type:'block',
+        type:'span',
         style:'body'
     },
     object: {
