@@ -651,6 +651,7 @@ function genModelFromMapping(mp, name, node, mappings, model) {
         var mod = genModelFromDom(node.childNodes[i],model, mappings);
         if(mod != null) nd.append(mod);
     }
+    if(nd.childCount() <= 0) return null;
     return nd;
 }
 

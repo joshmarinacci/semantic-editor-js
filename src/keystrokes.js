@@ -188,7 +188,7 @@ exports.handleInput = function(e,editor) {
     if(range.start.mod == null) {
         console.log("this must be a paste");
         //Model.print(editor.getModel());
-        var pdom  = Dom.findDomBlockParent(range.start.dom);
+        var pdom  = Dom.findDomBlockParent(range.start.dom, dom_root);
         //console.log("pdom = ",pdom);
         //Dom.print(editor.getDomRoot());
         var start = exports.scanDomBackwardsForMatch(pdom,model);
@@ -678,9 +678,8 @@ exports.makeChangesFromPasteRange = function(start,end,editor) {
         //console.log('at',i);
         count++;
         var dom = start.dom.parentNode.childNodes[i];
-        var mod2 = Dom.rebuildModelFromDom(dom,model, editor.getImportMapping());
-        //console.log("dom is",dom);
         //Dom.print(dom);
+        var mod2 = Dom.rebuildModelFromDom(dom,model, editor.getImportMapping());
         //Model.print(mod2);
         if(dom == start.dom) {
             //console.log('at start');
@@ -700,6 +699,11 @@ exports.makeChangesFromPasteRange = function(start,end,editor) {
             //console.log("converted to null. skipping");
             count--;
             continue;
+        }
+        if(mod2.type == Model.TEXT) {
+            var block = model.makeBlock();
+            block.append(mod2);
+            mod2 = block;
         }
         var chg = exports.makeInsertBlockChange(parent,start.mod.getIndex()+count,mod2);
         changes.push(chg);
