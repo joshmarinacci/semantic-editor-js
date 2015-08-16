@@ -185,20 +185,25 @@ exports.handleInput = function(e,editor) {
     var dom_root = editor.getDomRoot();
     var model  = editor.getModel();
     var range = editor.getSelectionRange();
-    if(range.start.mod == null) {
-        console.log("this must be a paste");
-        //Model.print(editor.getModel());
-        var pdom  = Dom.findDomBlockParent(range.start.dom, dom_root);
-        //console.log("pdom = ",pdom);
-        //Dom.print(editor.getDomRoot());
-        var start = exports.scanDomBackwardsForMatch(pdom,model);
-        var end   = exports.scanDomForwardsForMatch(pdom,model);
-        //console.log("scanned backwards for",start.dom.id,start.mod.id);
-        //console.log("scanned forwards for",end.dom.id,end.mod.id);
-        editor.applyChange(exports.makeChangesFromPasteRange(start,end,editor));
-        //Model.print(editor.getModel());
-        return;
-    }
+    //console.log("dom is");
+    //Dom.print(dom_root);
+    //console.log("model is");
+    //Model.print(model);
+
+    var pdom  = Dom.findDomBlockParent(range.start.dom, dom_root);
+    //console.log("start dom is",range.start.dom);
+    var start = exports.scanDomBackwardsForMatch(pdom,model);
+    var end   = exports.scanDomForwardsForMatch(pdom,model);
+    //console.log("pdom = ",pdom.id);
+    //console.log("scanned backwards for",start.dom.id,start.mod.id);
+    //console.log("scanned forwards for",end.dom.id,end.mod.id);
+    editor.applyChange(exports.makeChangesFromPasteRange(start,end,editor));
+    //console.log('doc offset is',range.documentOffset);
+    editor.setCursorAtDocumentOffset(range.documentOffset);
+
+    //Model.print(editor.getModel());
+    return;
+    /*
     var changeRange = Dom.calculateChangeRange(model,dom_root,range.start);
     if(changeRange.start.mod == changeRange.end.mod && changeRange.start.mod.type == Model.TEXT) {
         var oldText = changeRange.start.mod.text;
@@ -233,6 +238,7 @@ exports.handleInput = function(e,editor) {
 
     }
     console.log('more than typing. must be a paste');
+    */
     /*
     var doff = wrange.startOffset + Dom.domToDocumentOffset(dom_root,wrange.startContainer).offset;
     //rebuild the model root and swap it in
@@ -738,6 +744,11 @@ exports.scanDomForwardsForMatch = function(dom1, model) {
                 mod: mod1,
             }
         }
+        if(!dom1.id) {
+            dom1 = dom1.parentNode.childNodes[dom1n+1];
+            continue;
+        }
+
         var dom2 = dom1.parentNode.childNodes[dom1n+1];
         var mod2 = model.findNodeById(dom2.id);
         if(mod2 == null) {

@@ -173,8 +173,8 @@ test("paste multiple paragraphs 1", function(t) {
 
     t.equal(model.getRoot().child(n).child(0).text,'ab');
     t.equal(model.getRoot().child(n).child(1).child(0).text,'XXX');
-    t.equal(model.getRoot().child(n+2).child(0).child(0).text,'YYY');
-    t.equal(model.getRoot().child(n+2).child(1).text,'c');
+    t.equal(model.getRoot().child(n+1).child(0).child(0).text,'YYY');
+    t.equal(model.getRoot().child(n+1).child(1).text,'c');
     t.end();
 });
 
@@ -200,8 +200,8 @@ test("paste multiple paragraphs 2", function(t) {
 
     t.equal(model.getRoot().child(n).child(0).text,'de');
     t.equal(model.getRoot().child(n).child(1).child(0).text,'XXX');
-    t.equal(model.getRoot().child(n+2).child(0).child(0).text,'YYY');
-    t.equal(model.getRoot().child(n+2).child(1).text,'f');
+    t.equal(model.getRoot().child(n+1).child(0).child(0).text,'YYY');
+    t.equal(model.getRoot().child(n+1).child(1).text,'f');
     t.end();
 });
 
@@ -227,8 +227,8 @@ test("paste multiple paragraphs 3", function(t) {
 
     t.equal(model.getRoot().child(n).child(0).text,'mn');
     t.equal(model.getRoot().child(n).child(1).child(0).text,'XXX');
-    t.equal(model.getRoot().child(n+2).child(0).child(0).text,'YYY');
-    t.equal(model.getRoot().child(n+2).child(1).text,'o');
+    t.equal(model.getRoot().child(n+1).child(0).child(0).text,'YYY');
+    t.equal(model.getRoot().child(n+1).child(1).text,'o');
     t.end();
 });
 
@@ -243,9 +243,6 @@ test("paste empty doc", function(t) {
     model.getRoot().append(header);
     editor.syncDom();
 
-    //Model.print(model);
-    //Dom.print(dom_root);
-
     var dheader = dom_root.childNodes[0];
     var div1 = VirtualDoc.createElement('div');
     div1.appendChild(VirtualDoc.createTextNode('Xx\n'));
@@ -253,6 +250,62 @@ test("paste empty doc", function(t) {
     var div2 = VirtualDoc.createElement('div');
     div2.appendChild(VirtualDoc.createTextNode('yY '));
     dheader.appendChild(div2);
+
+    var range = {
+        start: {
+            dom:div2.childNodes[0],
+            mod:null
+        }
+    };
+
+    var pdom = Dom.findDomBlockParent(range.start.dom, dom_root);
+    var start = Keystrokes.scanDomBackwardsForMatch(pdom,model);
+    var end  = Keystrokes.scanDomForwardsForMatch(pdom,model);
+    editor.applyChange(Keystrokes.makeChangesFromPasteRange(start,end,editor));
+
+    t.equal(model.getRoot().child(0).type,'block');
+    t.equal(model.toPlainText(),'Xx\nyY ');
+    t.end();
+
+});
+
+test("handle pasted spans", function(t) {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+
+    var header = model.makeBlock();
+    header.style = 'header';
+    header.append(model.makeText("abcdef"));
+    model.getRoot().append(header);
+    editor.syncDom();
+
+    //Model.print(model);
+    //Dom.print(dom_root);
+
+    var dheader = dom_root.childNodes[0];
+    dheader.childNodes[0].nodeValue = 'abc';
+    var span1 = VirtualDoc.createElement('SPAN');
+    dheader.appendChild(span1);
+    span1.appendChild(VirtualDoc.createTextNode("      return null;"));
+    dom_root.appendChild(VirtualDoc.createTextNode(" \n "));
+
+    var div1 = VirtualDoc.createElement('DIV');
+    div1.appendChild(VirtualDoc.createTextNode('   }\n '));
+    dom_root.appendChild(div1);
+
+    var div2 = VirtualDoc.createElement('div');
+    div2.appendChild(VirtualDoc.createElement('br'));
+    dom_root.appendChild(div2);
+
+    var div3 = VirtualDoc.createElement('div');
+    dom_root.appendChild(div3);
+
+    var div4 = VirtualDoc.createElement('DIV');
+    div4.classList.add('header');
+    div4.id = 'id_2';
+    div4.appendChild(VirtualDoc.createTextNode('def'));
+    dom_root.appendChild(div4);
 
 
     console.log("------")
@@ -262,7 +315,7 @@ test("paste empty doc", function(t) {
 
     var range = {
         start: {
-            dom:div2.childNodes[0],
+            dom:div3,
             mod:null
         }
     };
@@ -275,8 +328,6 @@ test("paste empty doc", function(t) {
     editor.applyChange(Keystrokes.makeChangesFromPasteRange(start,end,editor));
     Model.print(model);
 
-    t.equal(model.getRoot().child(0).type,'block');
-    t.equal(model.toPlainText(),'Xx\nyY ');
     t.end();
 
 });
