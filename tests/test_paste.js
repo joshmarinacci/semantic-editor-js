@@ -160,7 +160,7 @@ test("paste multiple paragraphs 1", function(t) {
 
 
     //Dom.print(dom_root);
-    var pdom = Dom.findDomBlockParent(range.start.dom);
+    var pdom = Dom.findDomBlockParent(range.start.dom, dom_root);
     var start = Keystrokes.scanDomBackwardsForMatch(pdom,model);
     t.equal(start.dom,dom_root.childNodes[n]);
     t.equal(start.mod,model.getRoot().child(n));
@@ -188,7 +188,7 @@ test("paste multiple paragraphs 2", function(t) {
     var range = insertPaste(dom_root,n);
 
 
-    var pdom = Dom.findDomBlockParent(range.start.dom);
+    var pdom = Dom.findDomBlockParent(range.start.dom, dom_root);
     var start = Keystrokes.scanDomBackwardsForMatch(pdom,model);
     t.equal(start.dom,dom_root.childNodes[n]);
     t.equal(start.mod,model.getRoot().child(n));
@@ -215,7 +215,7 @@ test("paste multiple paragraphs 3", function(t) {
     var range = insertPaste(dom_root,n);
 
     //Dom.print(dom_root);
-    var pdom = Dom.findDomBlockParent(range.start.dom);
+    var pdom = Dom.findDomBlockParent(range.start.dom, dom_root);
     var start = Keystrokes.scanDomBackwardsForMatch(pdom,model);
     t.equal(start.dom,dom_root.childNodes[n]);
     t.equal(start.mod,model.getRoot().child(n));
@@ -230,5 +230,54 @@ test("paste multiple paragraphs 3", function(t) {
     t.equal(model.getRoot().child(n+2).child(0).child(0).text,'YYY');
     t.equal(model.getRoot().child(n+2).child(1).text,'o');
     t.end();
+});
+
+test("paste empty doc", function(t) {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+
+    var header = model.makeBlock();
+    header.style = 'header';
+    header.append(model.makeText(""));
+    model.getRoot().append(header);
+    editor.syncDom();
+
+    //Model.print(model);
+    //Dom.print(dom_root);
+
+    var dheader = dom_root.childNodes[0];
+    var div1 = VirtualDoc.createElement('div');
+    div1.appendChild(VirtualDoc.createTextNode('Xx\n'));
+    dheader.appendChild(div1);
+    var div2 = VirtualDoc.createElement('div');
+    div2.appendChild(VirtualDoc.createTextNode('yY '));
+    dheader.appendChild(div2);
+
+
+    console.log("------")
+    Model.print(model);
+    Dom.print(dom_root);
+    console.log("------")
+
+    var range = {
+        start: {
+            dom:div2.childNodes[0],
+            mod:null
+        }
+    };
+
+    var pdom = Dom.findDomBlockParent(range.start.dom, dom_root);
+    console.log("pdom is",pdom.id);
+    console.log('dom_root = ',dom_root.id);
+    var start = Keystrokes.scanDomBackwardsForMatch(pdom,model);
+    var end  = Keystrokes.scanDomForwardsForMatch(pdom,model);
+    editor.applyChange(Keystrokes.makeChangesFromPasteRange(start,end,editor));
+    Model.print(model);
+
+    t.equal(model.getRoot().child(0).type,'block');
+    t.equal(model.toPlainText(),'Xx\nyY ');
+    t.end();
+
 });
 

@@ -680,3 +680,31 @@ test('backwards delete within a span', function(t) {
     t.end();
 
 });
+
+return;
+test('delete backwards empty block',function(t) {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+
+    var blk1 = model.makeBlock();
+    blk1.append(model.makeText('foo'));
+    model.getRoot().append(blk1);
+
+    var blk2 = model.makeBlock();
+    var span2 = model.makeSpan();
+    blk2.append(span2);
+    model.getRoot().append(blk2);
+
+    var blk3 = model.makeBlock();
+    blk3.append(model.makeText('bar'));
+    model.getRoot().append(blk3);
+
+    Model.print(model);
+
+    editor.setSelectionAtDocumentOffset(4,4);
+    console.log("range = ", editor.getSelectionRange().toString())
+    Keystrokes.deleteBackwards(null,editor);
+    t.end();
+
+});

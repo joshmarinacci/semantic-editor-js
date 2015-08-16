@@ -672,30 +672,25 @@ exports.makeChangesFromPasteRange = function(start,end,editor) {
     var changes = [];
     var count = -1;
     //console.log("dom = ");
-    Dom.print(editor.getDomRoot());
-    var parent = start.mod.getParent();
+    //Dom.print(editor.getDomRoot());
+    var parent = editor.getModel().getRoot();
     for(var i = Dom.domIndexOf(start.dom); i<= Dom.domIndexOf(end.dom); i++) {
         //console.log('at',i);
         count++;
         var dom = start.dom.parentNode.childNodes[i];
         var mod2 = Dom.rebuildModelFromDom(dom,model, editor.getImportMapping());
         //console.log("dom is",dom);
+        //Dom.print(dom);
         //Model.print(mod2);
         if(dom == start.dom) {
             //console.log('at start');
             var mod1 = start.mod;
-            if(mod1 == null) {
-                console.log("ERROR. still no start model");
-            }
             var chg = exports.makeReplaceBlockChange(parent,mod1.getIndex(),mod2);
             changes.push(chg);
             continue;
         }
         if(dom == end.dom) {
             //console.log('at end');
-            if(end.mod == null) {
-                console.log("we still don't have an end model!");
-            }
             var chg = exports.makeInsertBlockChange(parent, start.mod.getIndex()+count, mod2);
             changes.push(chg);
             continue;
@@ -727,6 +722,10 @@ exports.scanDomForwardsForMatch = function(dom1, model) {
         var len = dom1.parentNode.childNodes.length;
         //console.log("checking",dom1.id,":",dom1n,'len',len);
         var mod1 = model.findNodeById(dom1.id);
+        if(mod1 == null) {
+            //use the last block
+            mod1 = model.getRoot().child(model.getRoot().childCount()-1);
+        }
         //console.log("mod1 = ",mod1?mod1.id:"null");
         if(dom1n+1 >= len) {
             //console.log('at the end');
@@ -758,6 +757,9 @@ exports.scanDomBackwardsForMatch = function(dom1, model) {
         if (dom1n <= 0) {
             //console.log('at the start');
             var mod1 = model.findNodeById(dom1.id);
+            if(mod1 == null) {
+                mod1 = model.getRoot().child(0);
+            }
             //console.log("mod1 = ", mod1.id);
             return {
                 dom: dom1,

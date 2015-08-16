@@ -214,18 +214,14 @@ function isText(node) {
     return false;
 }
 
-function findDomBlockParent(dom) {
-    if(dom.nodeType == ELEMENT_NODE){
-        if(dom.nodeName.toLowerCase() == 'div') {
-            return dom;
-        }
-    }
-    return findDomBlockParent(dom.parentNode);
+function findDomBlockParent(dom, dom_root) {
+    if(dom.parentNode == dom_root) return dom;
+    return findDomBlockParent(dom.parentNode, dom_root);
 }
 exports.findDomBlockParent = findDomBlockParent;
 
-function handleBlockPaste(dom,model) {
-    var dblock = findDomBlockParent(dom);
+function handleBlockPaste(dom,model,dom_root) {
+    var dblock = findDomBlockParent(dom,dom_root);
     if(!dblock.id) {
         throw new Error("no id still for the dom. this is a problem");
     }
@@ -286,7 +282,7 @@ exports.calculateChangeRange = function(model,dom_root,sel) {
     var domch = sel.dom;
     var modch = sel.mod;
     if(modch == null) {
-        return handleBlockPaste(sel.dom,model);
+        return handleBlockPaste(sel.dom,model,dom_root);
     }
     if(modch == null) {
         throw new Error("cannot find model for dom", dom_root);

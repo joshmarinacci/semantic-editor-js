@@ -12,6 +12,7 @@ block1.append(text1);
 block1.style = 'header';
 model.append(block1);
 
+/*
 var block2 = model.makeBlock();
 block2.append(model.makeText("This is a paragraph of text. It can have plain text or styled text. "));
 var span1 = model.makeSpan();
@@ -79,7 +80,7 @@ block8.append(model.makeText("Use whatever you want then export it to JSON or se
 model.append(block8);
 
 
-
+*/
 
 var std_styles = {
     block:{
