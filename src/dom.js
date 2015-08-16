@@ -632,6 +632,9 @@ function genModelFromDom(node,model, mapping) {
         if(mapping[name]) return genModelFromMapping(mapping[name],name,node,mapping, model);
         var name = node.nodeName.toLowerCase();
         if(mapping[name]) return genModelFromMapping(mapping[name],name,node,mapping, model);
+        console.log("WARNING: no mapping for element of type ",node.nodeName);
+        console.log("using generic DIV");
+        return genModelFromMapping(mapping['div'],'div',node,mapping,model);
     }
     if(node.nodeType == COMMENT_NODE) return null;
     throw new Error("cant convert dom node " + node.nodeType + " " + node.nodeName);

@@ -87,6 +87,10 @@ var import_map = {
         type:'block',
         style:'body'
     },
+    'pre': {
+        type:'block',
+        style:'block-code'
+    },
     'span.link': {
         type:'span',
         style:'link',
