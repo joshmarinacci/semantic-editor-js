@@ -32,7 +32,7 @@ Create a DIV in your document then make a new editor attached to it like this:
 ```
 <div id="myeditor" class="semantic-view" contenteditable="true" spellcheck="false"></div>
 <script>
-var editor = Editor.makeEditor(document.getElementById('editor'));
+var editor = Editor.makeEditor(document.getElementById('myeditor'));
 </script>
 ```
 
