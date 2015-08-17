@@ -147,19 +147,19 @@ var replacements = {
     'lambda':'\u03BB',
     'theta':'\u0398',
     'qed':'\u220E',
-    '--':'\u2013',
-    '---':'\u2014'
+    '---':'\u2014',
+    '--':'\u2013'
 };
 
 function delegateChange(change) {
     var keys = Object.keys(replacements);
     for(var i=0; i<keys.length; i++) {
         var key = keys[i];
-        var str = change.newText.substring(change.offset-key.length+1, change.offset+1);
-        console.log('checking',key,str);
-        if(str == key) {
-            return change.newText.substring(0,change.offset-key.length+1)
-            + replacements[key]
+        var cmp = key + ' ';
+        var str = change.newText.substring(change.offset-cmp.length+1, change.offset+1);
+        if(str == cmp) {
+            return change.newText.substring(0,change.offset-cmp.length+1)
+            + replacements[key]+' '
             + change.newText.substring(change.offset+1);
         }
     }
