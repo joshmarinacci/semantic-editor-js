@@ -146,7 +146,9 @@ exports.calculateTextDifference = function(txt1, txt2) {
 var replacements = {
     'lambda':'\u03BB',
     'theta':'\u0398',
-    'qed':'\u220E'
+    'qed':'\u220E',
+    '--':'\u2013',
+    '---':'\u2014'
 };
 
 function delegateChange(change) {
@@ -181,6 +183,34 @@ function delegateChange(change) {
     return change.newText;
 }
 
+function handleTypedLetter(range, editor) {
+    if(range.start.mod && range.start.mod.id && range.start.mod.type == Model.TEXT) {
+        var dlen = range.start.dom.nodeValue.length;
+        var mlen = range.start.mod.text.length;
+        if(dlen == mlen+1) {
+            var oldText = range.start.mod.text;
+            var newText = range.start.dom.nodeValue;
+            var diff = exports.calculateTextDifference(oldText,newText);
+            var change = {
+                oldText:oldText,
+                newText:newText,
+                newString:diff.newString,
+                newChar:diff.newChar,
+                offset:diff.offset
+            };
+            var newtext = delegateChange(change);
+            var ldiff = newtext.length - oldText.length;
+            var oldBlock = range.start.mod.findBlockParent();
+            var newBlock = copyWithEdit(oldBlock,range.start.mod,newtext);
+            var chg = makeReplaceBlockChange(oldBlock.getParent(),oldBlock.getIndex(),newBlock);
+            editor.applyChange(chg);
+            editor.setCursorAtDocumentOffset(range.documentOffset+ldiff-1);
+            return true;
+        }
+    }
+    return false;
+}
+
 exports.handleInput = function(e,editor) {
     var dom_root = editor.getDomRoot();
     var model  = editor.getModel();
@@ -189,6 +219,9 @@ exports.handleInput = function(e,editor) {
     //Dom.print(dom_root);
     //console.log("model is");
     //Model.print(model);
+
+    var handled = handleTypedLetter(range,editor);
+    if(handled) return;
 
     var pdom  = Dom.findDomBlockParent(range.start.dom, dom_root);
     //console.log("start dom is",range.start.dom);
@@ -202,61 +235,6 @@ exports.handleInput = function(e,editor) {
     editor.setCursorAtDocumentOffset(range.documentOffset);
 
     //Model.print(editor.getModel());
-    return;
-    /*
-    var changeRange = Dom.calculateChangeRange(model,dom_root,range.start);
-    if(changeRange.start.mod == changeRange.end.mod && changeRange.start.mod.type == Model.TEXT) {
-        var oldText = changeRange.start.mod.text;
-        var newText = changeRange.start.dom.nodeValue;
-        var diff = exports.calculateTextDifference(oldText,newText);
-        var change = {
-            oldText:oldText,
-            newText:newText,
-            newString:diff.newString,
-            newChar:diff.newChar,
-            offset:diff.offset
-        };
-        var newtext = delegateChange(change);
-        var ldiff = newtext.length - oldText.length;
-        var oldBlock = changeRange.start.mod.findBlockParent();
-        var newBlock = copyWithEdit(oldBlock,changeRange.start.mod,newtext);
-        var chg = makeReplaceBlockChange(oldBlock.getParent(),oldBlock.getIndex(),newBlock);
-        editor.applyChange(chg);
-        editor.setCursorAtDocumentOffset(range.documentOffset+ldiff-1);
-        return;
-    }
-
-
-    if(changeRange.start.mod == changeRange.end.mod && changeRange.start.mod.type == Model.BLOCK) {
-        var mod2 = Dom.rebuildModelFromDom(changeRange.start.dom,editor.getModel(), editor.getImportMapping());
-        var oldBlock = changeRange.start.mod;
-        var newBlock = mod2;
-        var chg = makeReplaceBlockChange(oldBlock.getParent(),oldBlock.getIndex(),newBlock);
-        editor.applyChange(chg);
-        editor.setCursorAtDocumentOffset(range.documentOffset);
-        return;
-
-    }
-    console.log('more than typing. must be a paste');
-    */
-    /*
-    var doff = wrange.startOffset + Dom.domToDocumentOffset(dom_root,wrange.startContainer).offset;
-    //rebuild the model root and swap it in
-    var model2 = Dom.rebuildModelFromDom(dom_root, model, editor.getImportMapping());
-    model.getRoot().content = model2.content;
-    model.getRoot().content.forEach(function(blk){
-        blk.parent = model.getRoot();
-    });
-
-    //clean up the model because pasting might have messed up some stuff
-    cleanChildren(model.getRoot());
-    editor.syncDom();
-
-    //set the cursor back
-    var offd = Dom.documentOffsetToDom(dom_root,doff);
-    Dom.setCursorAtDom(offd.node, offd.offset);
-    editor.markAsChanged();
-    */
 };
 
 exports.changeBlockStyle = function(style, editor) {

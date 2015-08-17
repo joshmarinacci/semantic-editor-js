@@ -14,7 +14,8 @@ if(typeof document === 'undefined') {
 
 exports.Node = {
     ELEMENT_NODE: ELEMENT_NODE,
-    TEXT_NODE: TEXT_NODE
+    TEXT_NODE: TEXT_NODE,
+    COMMENT_NODE: COMMENT_NODE
 };
 /**
 * Created by josh on 7/18/15.
