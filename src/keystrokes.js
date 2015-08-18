@@ -229,7 +229,7 @@ exports.handlePastedText = function(range,editor) {;
 exports.handleInput = function(e,editor) {
     var range = editor.getSelectionRange();
     //console.log("dom is");
-    //Dom.print(dom_root);
+    //Dom.print(editor.getDomRoot());
     //console.log("model is");
     //Model.print(model);
 
@@ -655,38 +655,43 @@ exports.makeComboChange = makeComboChange;
 
 
 exports.makeChangesFromPasteRange = function(start,end,editor) {
+    var DEBUG = false;
     var model = editor.getModel();
     var changes = [];
     var count = -1;
     //console.log("dom = ");
-    //Dom.print(editor.getDomRoot());
+    if(DEBUG) Dom.print(editor.getDomRoot());
     var parent = editor.getModel().getRoot();
     for(var i = Dom.domIndexOf(start.dom); i<= Dom.domIndexOf(end.dom); i++) {
-        //console.log('at',i);
+        if(DEBUG) console.log("-------- at block " + i);
         count++;
         var dom = start.dom.parentNode.childNodes[i];
-        //Dom.print(dom);
         var mod2 = Dom.rebuildModelFromDom(dom,model, editor.getImportMapping());
-        //Model.print(mod2);
+        if(DEBUG) {
+            console.log("dom")
+            Dom.print(dom);
+            console.log("mod")
+            Model.print(mod2);
+        }
+        if(mod2 == null) {
+            //console.log("converted to null. skipping");
+            count--;
+            continue;
+        }
         if(dom == start.dom) {
-            //console.log('at start');
+            if(DEBUG) console.log('at start');
             var mod1 = start.mod;
             var chg = exports.makeReplaceBlockChange(parent,mod1.getIndex(),mod2);
             changes.push(chg);
             continue;
         }
         if(dom == end.dom) {
-            //console.log('at end');
+            if(DEBUG) console.log('at end');
             var chg = exports.makeInsertBlockChange(parent, start.mod.getIndex()+count, mod2);
             changes.push(chg);
             continue;
         }
-        //console.log('in the middle');
-        if(mod2 == null) {
-            //console.log("converted to null. skipping");
-            count--;
-            continue;
-        }
+        if(DEBUG) console.log('in the middle');
         if(mod2.type == Model.TEXT) {
             var block = model.makeBlock();
             block.append(mod2);
@@ -696,6 +701,10 @@ exports.makeChangesFromPasteRange = function(start,end,editor) {
             var block = model.makeBlock();
             block.append(mod2);
             mod2 = block;
+        }
+        if(DEBUG) {
+            console.log("final mod");
+            Model.print(mod2);
         }
         var chg = exports.makeInsertBlockChange(parent,start.mod.getIndex()+count,mod2);
         changes.push(chg);

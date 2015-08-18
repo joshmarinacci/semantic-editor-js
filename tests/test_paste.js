@@ -412,3 +412,47 @@ test("pasting multi-line with junk span", function(t) {
     t.equal(editor.getModel().getRoot().child(2).type,Model.BLOCK);
     t.end();
 });
+
+test("pasting multi-line at end", function(t) {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+
+    var block = model.makeBlock();
+    block.append(model.makeText('abcd'));
+    model.append(block);
+    editor.syncDom();
+    //Dom.print(editor.getDomRoot());
+
+    var text1 = dom_root.childNodes[0].childNodes[0];
+    text1.nodeValue = 'abXXX';
+
+    var doc = dom_root.ownerDocument;
+    var div2 = doc.createElement('div');
+    div2.appendChild(doc.createTextNode('YYY'));
+    dom_root.appendChild(div2);
+    var span1 = doc.createElement('span');
+    span1.appendChild(doc.createTextNode("\n"));
+    dom_root.appendChild(span1);
+    var div3 = doc.createElement('div');
+    dom_root.appendChild(div3);
+    var div4 = doc.createElement('div');
+    div4.appendChild(doc.createTextNode('cd'));
+    dom_root.appendChild(div4);
+
+
+    //Dom.print(editor.getDomRoot());
+
+    var range = {
+        collapsed:true,
+        start: {
+            dom:div4.childNodes[0],
+            mod:null,
+        },
+        documentOffset: 9
+    };
+    Keystrokes.handlePastedText(range,editor);
+    //Model.print(editor.getModel());
+    t.equal(editor.getModel().getRoot().child(2).type,Model.BLOCK);
+    t.end();
+});
