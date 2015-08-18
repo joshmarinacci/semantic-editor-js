@@ -4,121 +4,49 @@
     <meta charset="UTF-8">
     <title></title>
     <style type="text/css">
-        .vbox, .hbox {
-            display: -webkit-flex;
-            display: flex;
+        #main-content {
+            position: absolute;
+            top: 100px;
+            bottom: 100px;
+            left: 0;
+            right: 0;
         }
-        .vbox {
-            flex-direction: column;
-            -webkit-flex-direction: column;
+
+       .big {
+            width: 100px;
+            height: 500px;
+            background-color: mediumpurple;
+        }
+        div {
+            border: 3px solid green;
+        }
+        .vbox, .hbox {
+            display: flex;
         }
         .hbox {
             flex-direction: row;
-            -webkit-flex-direction: row;
         }
-        .grow {
-            flex:1;
-            -webkit-flex: 1;
+        .vbox {
+            flex-direction: column;
         }
-        #post-editor, #toolbar {
-            min-width: 20em;
-            padding: 1em;
-            margin: 0;
-        }
-        #post-editor {
-            -webkit-flex:1;
-            flex:1;
-        }
-        .semantic-view.zen {
-            font-size: 200%;
-        }
-        .visual-view.zen {
-            font-size: 200%;
-        }
-        #toolbar {
-            padding: 0.5em;
-        }
-        #post-editor textarea {
-            width: 100%;
-        }
-        .scroll {
-            border: 1px solid gray;
-            overflow: scroll;
-        }
-
-        #main-content {
-            position: fixed;
-            top:0;
-            bottom:0;
-            left:0;
-            right:0;
-        }
-
         #sidebar {
             max-width: 20em;
+            min-width: 20em;
         }
-
-        div {
-            border: 4px solid blue;
-        }
-        div > div {
-            border: 4px solid red;
+        .grow {
+            flex: 1;
         }
     </style>
 </head>
 <body>
-<div id="main-content" class="vbox">
-    <div id="post-editor" class="scroll">
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
-        <p>foo</p>
 
+<div id="main-content" class="hbox">
+    <div id='sidebar' class="">sidebar</div>
+    <div class="vbox grow">
+        <div>toolbar</div>
+        <div style="overflow: scroll">
+            <div class="big"></div>
+        </div>
     </div>
 </div>
 </body>

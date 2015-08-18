@@ -258,8 +258,7 @@ var MainView = React.createClass({
         return (
             <div>
                 <LinkModal/>
-                <div id="main-content" className='container-fluid vbox grow'>
-                    <div className='hbox grow'>
+                <div id="main-content" className='container-fluid hbox grow'>
                         <div id='sidebar' className={sidebarClasses}>
                             <h3>Semantic Editor demo</h3>
                             <p>this is a demo of <a href='#'>semantic-editor-js</a>
@@ -270,7 +269,6 @@ var MainView = React.createClass({
                             <Toolbar    model={model} toggleZen={this.toggleZen} doVisual={this.doVisual} doSemantic={this.doSemantic}/>
                             <PostEditor post={this.state.selected}  zen={this.state.zen} view={this.state.view}/>
                         </div>
-                    </div>
                 </div>
         </div>);
     }
