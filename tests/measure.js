@@ -27,6 +27,7 @@ function countFile(path) {
         if (line.match(/^\s*$/)) {
             return false;
         }
+        if (line.match(/^\s*\*/)) return false;
         return true;
     });
 

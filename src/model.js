@@ -75,16 +75,6 @@ function DNode(type,text,model) {
     this.getIndex = function() {
         return this.getParent().content.indexOf(this);
     };
-    function stillInTree(mod) {
-        if(mod.type == exports.ROOT) return true;
-        if(mod.getIndex() < 0) return false;
-        if(mod.getParent().type == exports.ROOT) return true;
-        return stillInTree(mod.getParent());
-    }
-    this.stillInTree = function() {
-        return stillInTree(this);
-    }
-
 }
 
 function flattenChars(par) {
@@ -411,31 +401,6 @@ function DModel() {
         }
         console.log("WARNING can't split this node type",node.type);
     };
-
-    //replaces the first node in it's parent with the rest of the nodes
-    this.swapNode = function() {
-        var args = Array.prototype.slice.call(arguments);
-        var oldnode = args.shift();
-        var rest = args;
-        if(oldnode.type == exports.ROOT) throw new Error("can't swap out the root node");
-        var parent = oldnode.parent;
-        var index = oldnode.getIndex();
-        var cargs = [index,1].concat(rest);
-        parent.content.splice.apply(parent.content,cargs);
-        rest.forEach(function(node) {
-            node.parent = parent;
-        })
-    };
-
-    //splits a text node in half at the requested index
-    this.splitNode = function(node,index) {
-        if(node.type != exports.TEXT) throw new Error("ERROR: don't know how to split non text node yet");
-        var a = this.makeText(node.text.substring(0,index));
-        var b = this.makeText(node.text.substring(index));
-        this.swapNode(node,a,b);
-        return [a,b];
-    }
-
 
     this.toJSON = function() {
         return modelToData_helper(this.getRoot());

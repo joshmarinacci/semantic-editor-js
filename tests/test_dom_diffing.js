@@ -567,7 +567,9 @@ test("handle pasted span", function(t) {
     t.equals(doff,6);
 
     var new_mod = Dom.rebuildModelFromDom(dp1,model, editor.getImportMapping());
-    model.swapNode(mp1,new_mod);
+    var par = mp1.getParent();
+    var nn = mp1.getIndex();
+    par.content.splice(nn,1,new_mod);
     t.equals(model.getRoot().child(0).child(0).text,'abc');
     t.equals(model.getRoot().child(0).child(1).child(0).text,'foo');
     t.equals(model.getRoot().child(0).child(2).child(0).text,'def');
