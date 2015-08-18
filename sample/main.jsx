@@ -202,6 +202,8 @@ var MainView = React.createClass({
     componentDidMount: function() {
         var editor = PostDataStore.getRealEditor();
         editor.addAction('clear-styles',function(e,editor) {
+            console.log("clear styles no longer supported");
+            /*
             var model = editor.getModel();
             Keystrokes.stopKeyboardEvent(e);
             var range = Keystrokes.makeRangeFromSelection(model,window);
@@ -211,6 +213,7 @@ var MainView = React.createClass({
             editor.markAsChanged();
             var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
             editor.setCursorAtModel(nmod.node, nmod.offset);
+            */
         });
         editor.addKeyBinding('clear-styles','cmd-shift-u');
 

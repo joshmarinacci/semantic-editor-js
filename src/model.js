@@ -134,19 +134,6 @@ function DNodeIterator(thecurrent) {
 
 }
 
-function mergeBlocksBackwards(start,end) {
-    end.content.forEach(function(node) {
-        start.append(node);
-    });
-    end.deleteFromParent();
-}
-
-//merge blocks if deleting across blocks
-function mergeParentBlocksIfNeeded(nodeA, nodeB) {
-    var startBlock = nodeA.findBlockParent();
-    var endBlock   = nodeB.findBlockParent();
-    if(startBlock.id != endBlock.id)  mergeBlocksBackwards(startBlock,endBlock);
-}
 
 function DModel() {
     var _id_count = 0;
@@ -219,110 +206,6 @@ function DModel() {
             node = node.deleteFromParent();
         }
     };
-    /*
-    this.deleteTextBackwards = function(node,offset) {
-        if(node.isEmpty()) {
-            var prevText = this.getPreviousTextNode(node);
-            while(node.isEmpty()) {
-                node = node.deleteFromParent();
-            }
-            return this.deleteTextBackwards(prevText,prevText.text.length);
-        }
-        if(node.type != exports.TEXT) throw new Error("can't delete text from a non-text element");
-        //deleting just within the current node
-        if(offset-1 >= 0) {
-            this.deleteText(node,offset-1,node,offset);
-            this.cleanForward(node);
-            return {
-                node:node,
-                offset:offset-1
-            }
-        }
-        var prevText = this.getPreviousTextNode(node);
-        var prevOffset = prevText.text.length;
-        var pos = this.deleteTextBackwards(prevText,prevOffset);
-        mergeParentBlocksIfNeeded(pos.node,node);
-        return {
-            node:pos.node,
-            offset: pos.offset
-        }
-    };
-    */
-
-    /*
-    this.deleteTextForwards = function(startNode, startOffset) {
-        if(startNode.type != exports.TEXT) throw new Error("can't delete text from non text element");
-        if(startOffset < startNode.text.length) {
-            this.deleteText(startNode,startOffset,startNode,startOffset+1);
-            return {
-                node: startNode,
-                offset: startOffset
-            }
-        } else {
-            var nextText = this.getNextTextNode(startNode);
-            var nextOffset = startOffset-startNode.text.length;
-            var pos =  this.deleteTextForwards(nextText,nextOffset);
-
-            mergeParentBlocksIfNeeded(startNode, pos.node);
-
-            //strip out empty nodes
-            while(pos.node.isEmpty()) pos.node = pos.node.deleteFromParent();
-
-            //merge adjacent text nodes
-            if(startNode.type == exports.TEXT && pos.node.type == exports.TEXT && startNode.getParent() == pos.node.getParent()) {
-                startNode.text += pos.node.text;
-                //delete the text node
-                var parent = pos.node.deleteFromParent();
-                //delete the parent if it's empty too
-                if(parent.isEmpty()) parent.deleteFromParent();
-            }
-            return {
-                node: startNode,
-                offset: startOffset
-            }
-        }
-    };
-    */
-    /*
-    this.deleteText = function(startNode, startOffset, endNode, endOffset) {
-        if(startNode === endNode && startNode.type === exports.TEXT) {
-            if(startOffset > endOffset) throw new Error("start offset can't be greater than end offset");
-            if(startNode.type !== exports.TEXT) throw new Error("can't delete from non text yet");
-            startNode.text = startNode.text.substring(0,startOffset)
-                + startNode.text.substring(endOffset);
-            return;
-        }
-
-        if(endNode.type !== exports.TEXT) {
-            return this.deleteText(startNode,startOffset,endNode.child(0),endOffset);
-        }
-
-        //two different nodes
-        //adjust the start node
-        startNode.text = startNode.text.substring(0, startOffset);
-        var it = this.getIterator(startNode);
-        while(it.hasNext()){
-            var node = it.next();
-            if(node == endNode) {
-                if(node.type == exports.TEXT) {
-                    node.text = node.text.substring(endOffset);
-                    //delete empty nodes
-                    if(node.isEmpty()) node.deleteFromParent();
-                }
-                mergeParentBlocksIfNeeded(startNode,node);
-                break;
-            } else {
-                if(node.type == exports.TEXT) {
-                    node.deleteFromParent();
-                    continue;
-                }
-                if(node.type == exports.BLOCK || node.type == exports.SPAN) {
-                    if(node.isEmpty()) node.deleteFromParent();
-                }
-            }
-        }
-    };
-    */
 
     this.toPlainText = function() {     return flattenChars(root);  };
 

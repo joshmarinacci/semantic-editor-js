@@ -51,18 +51,6 @@ exports.splitLine = function(e, editor) {
     editor.setCursorAtDocumentOffset(range.documentOffset);
 };
 
-exports.styleBold = function(e,editor) {
-    exports.styleSelection(e,editor,'strong');
-};
-
-exports.styleItalic = function(e,editor) {
-    exports.styleSelection(e,editor,'emphasis');
-};
-
-exports.styleInlineCode = function(e,editor) {
-    exports.styleSelection(e,editor,'inline-code');
-};
-
 exports.styleInlineLink = function(e,editor) {
     exports.stopKeyboardEvent(e);
     console.log("links not implemented");

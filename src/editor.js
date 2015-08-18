@@ -280,9 +280,9 @@ var actions_map = {
     "delete-backward": Keystrokes.deleteBackwards,
     "delete-forward": Keystrokes.deleteForwards,
     "split-block": Keystrokes.splitLine,
-    "style-bold": Keystrokes.styleBold,
-    "style-italic": Keystrokes.styleItalic,
-    "style-inline-code": Keystrokes.styleInlineCode,
+    "style-bold": function(e,ed) { Keystrokes.styleSelection(e,ed,'strong'); },
+    "style-italic": function(e,ed) { Keystrokes.styleSelection(e,ed,'emphasis'); },
+    "style-inline-code": function(e,ed) { Keystrokes.styleSelection(e,ed,'inline-code'); },
     "undo":Keystrokes.undo,
     "redo":Keystrokes.redo
 };

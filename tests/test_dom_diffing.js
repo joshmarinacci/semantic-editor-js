@@ -171,6 +171,7 @@ test('insert text after span',function(t) {
     t.end();
 });
 */
+/*
 test("delete text across spans", function(t) {
     var dom_root = VirtualDoc.createElement("div");
     var editor = Editor.makeEditor(dom_root);
@@ -239,7 +240,8 @@ test("delete text across spans", function(t) {
     editor.syncDom();
     t.end();
 });
-
+*/
+/*
 test("calculate common parent path",function(t) {
     var dom_root = VirtualDoc.createElement("div");
     var editor = Editor.makeEditor(dom_root);
@@ -297,7 +299,7 @@ test("calculate common parent path",function(t) {
         "m",'text was changed');
     t.end();
 });
-
+*/
 function makeTextSubsetRange(mod,start,end,dom_root) {
     return {
         start: {
@@ -346,72 +348,72 @@ function makeRange(smod,soff,emod,eoff, dom_root) {
     };
     return range;
 }
-test("forward delete into span",function(t) {
-    var editor = makeTextSpanText();
-    var model = editor.getModel();
-    var dom_root = editor.getDomRoot();
-    var range = makeRange(
-        model.getRoot().child(0).child(0),
-        3,
-        model.getRoot().child(0).child(1).child(0),
-        0,
-        editor.getDomRoot()
-    );
+
+//test("forward delete into span",function(t) {
+//    var editor = makeTextSpanText();
+//    var model = editor.getModel();
+//    var dom_root = editor.getDomRoot();
+//    var range = makeRange(
+//        model.getRoot().child(0).child(0),
+//        3,
+//        model.getRoot().child(0).child(1).child(0),
+//        0,
+//        editor.getDomRoot()
+//    );
+//
+//
+//    var changes = Dom.makeDeleteTextRange(range,model);
+//    Dom.applyChanges(changes,model);
+//    editor.syncDom();
+//    t.end();
+//});
 
 
-    var changes = Dom.makeDeleteTextRange(range,model);
-    Dom.applyChanges(changes,model);
-    editor.syncDom();
-    t.end();
-});
+//test("delete selection across block boundaries", function(t) {
+//    var dom_root = VirtualDoc.createElement("div");
+//    var editor = Editor.makeEditor(dom_root);
+    //var model = editor.getModel();
+    //var block1 = model.makeBlock();
+    //var text1  = model.makeText("abc");
+    //block1.append(text1);
+    //model.getRoot().append(block1);
+    //var block2 = model.makeBlock();
+    //var text2  = model.makeText("def");
+    //block2.append(text2);
+    //model.getRoot().append(block2);
+    //
+    //dom_root.id = model.getRoot().id;
+    //editor.syncDom();
+    //
+    //var range = {
+    //    start: {
+    //        dom:Dom.findDomForModel(text1,dom_root),
+    //        mod:text1,
+    //        offset:1
+    //    },
+    //    end:{
+    //        dom:Dom.findDomForModel(text2,dom_root),
+    //        mod:text2,
+    //        offset:1
+    //    }
+    //};
+    //
+    //t.equals(range.start.dom.nodeValue,'abc');
+    //t.equals(range.end.dom.nodeValue,'def');
+    //
+    //var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
+    //
+    //var changes = Dom.makeDeleteTextRange(range,model);
+    //Dom.applyChanges(changes,model);
+    //t.equal(changes.length,4,'change count');
+    //t.equal(model.findNodeById("id_3").text,'a');
+    //t.equal(model.findNodeById("id_4"),null);
+    //t.equal(model.findNodeById("id_5").text,'ef');
+    //t.equals(com_mod.id,model.getRoot().id,'common parent id');
+    //t.end();
+//});
 
-
-test("delete selection across block boundaries", function(t) {
-    var dom_root = VirtualDoc.createElement("div");
-    var editor = Editor.makeEditor(dom_root);
-    //make model
-    var model = editor.getModel();
-    var block1 = model.makeBlock();
-    var text1  = model.makeText("abc");
-    block1.append(text1);
-    model.getRoot().append(block1);
-    var block2 = model.makeBlock();
-    var text2  = model.makeText("def");
-    block2.append(text2);
-    model.getRoot().append(block2);
-
-    //make dom
-    dom_root.id = model.getRoot().id;
-    editor.syncDom();
-
-    var range = {
-        start: {
-            dom:Dom.findDomForModel(text1,dom_root),
-            mod:text1,
-            offset:1
-        },
-        end:{
-            dom:Dom.findDomForModel(text2,dom_root),
-            mod:text2,
-            offset:1
-        }
-    };
-
-    t.equals(range.start.dom.nodeValue,'abc');
-    t.equals(range.end.dom.nodeValue,'def');
-
-    var com_mod = Dom.findCommonParent(range.start.mod,range.end.mod);
-
-    var changes = Dom.makeDeleteTextRange(range,model);
-    Dom.applyChanges(changes,model);
-    t.equal(changes.length,4,'change count');
-    t.equal(model.findNodeById("id_3").text,'a');
-    t.equal(model.findNodeById("id_4"),null);
-    t.equal(model.findNodeById("id_5").text,'ef');
-    t.equals(com_mod.id,model.getRoot().id,'common parent id');
-    t.end();
-});
-
+/*
 test("split block in half w/ text", function(t) {
     var dom_root = VirtualDoc.createElement("div");
     var editor = Editor.makeEditor(dom_root);
@@ -436,7 +438,8 @@ test("split block in half w/ text", function(t) {
     t.end();
 
 });
-
+*/
+/*
 test("split block in half w/ span and more text", function(t) {
     var dom_root = VirtualDoc.createElement("div");
     var editor = Editor.makeEditor(dom_root);
@@ -465,8 +468,8 @@ test("split block in half w/ span and more text", function(t) {
     Dom.applyChanges(changes,model);
     t.end();
 });
-
-
+*/
+/*
 test("delete single char span", function(t) {
     //standard span test
     var editor = makeTextSpanText();
@@ -487,8 +490,8 @@ test("delete single char span", function(t) {
     t.end();
 
 });
-
-
+*/
+/*
 test("make span around another",function(t){
     var editor = makeTextSpanText();
     var model = editor.getModel();
@@ -503,7 +506,9 @@ test("make span around another",function(t){
     t.equal(block.child(1).childCount(),3);
     t.end();
 });
+*/
 
+/*
 test("make span around another, on the span",function(t){
     var editor = makeTextSpanText();
     var model = editor.getModel();
@@ -517,7 +522,8 @@ test("make span around another, on the span",function(t){
     t.equal(block.child(1).childCount(),2);
     t.end();
 });
-
+*/
+/*
 test("clear styles from selection",function(t){
     var editor = makeTextSpanText();
     var model = editor.getModel();
@@ -530,7 +536,8 @@ test("clear styles from selection",function(t){
     t.equal(block.childCount(),5);
     t.end();
 });
-
+*/
+/*
 test("clear styles from selection 2",function(t){
     var editor = makeTextSpanText();
     var model = editor.getModel();
@@ -546,7 +553,7 @@ test("clear styles from selection 2",function(t){
     t.equal(block.childCount(),2);
     t.end();
 });
-
+*/
 
 test("handle pasted span", function(t) {
     var editor = makeTextSpanText();
@@ -666,7 +673,7 @@ test('delete forward with span', function(t) {
     t.end();
 });
 return;
-
+/*
 test("make span around another, start on the span",function(t){
     var editor = makeTextSpanText();
     var model = editor.getModel();
@@ -683,3 +690,4 @@ test("make span around another, start on the span",function(t){
     t.end();
 });
 
+*/
