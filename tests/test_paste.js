@@ -332,3 +332,38 @@ test("handle pasted spans", function(t) {
 
 });
 
+
+test("pasting nukes adjacent styles", function(t) {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+
+    var block = model.makeBlock();
+    block.append(model.makeText('abc'));
+    var span = model.makeSpan();
+    span.style = 'strong';
+    span.append(model.makeText('def'));
+    block.append(span);
+    block.append(model.makeText('ghi'));
+    model.getRoot().append(block);
+    editor.syncDom();
+    //Model.print(editor.getModel());
+
+    Dom.print(editor.getDomRoot());
+    var tnode = editor.getDomRoot().childNodes[0].childNodes[2];
+    tnode.nodeValue = 'gXXXhi';
+    Dom.print(editor.getDomRoot());
+    var range = {
+        start: {
+            dom:tnode,
+            mod:null,
+        },
+        documentOffset: 10
+    };
+    Keystrokes.handlePastedText(range,editor);
+    Model.print(editor.getModel());
+
+    t.equals(editor.getModel().getRoot().child(0).child(1).style,'strong');
+
+    t.end();
+});

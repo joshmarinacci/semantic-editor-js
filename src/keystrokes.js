@@ -211,18 +211,9 @@ function handleTypedLetter(range, editor) {
     return false;
 }
 
-exports.handleInput = function(e,editor) {
+exports.handlePastedText = function(range,editor) {;
     var dom_root = editor.getDomRoot();
     var model  = editor.getModel();
-    var range = editor.getSelectionRange();
-    //console.log("dom is");
-    //Dom.print(dom_root);
-    //console.log("model is");
-    //Model.print(model);
-
-    var handled = handleTypedLetter(range,editor);
-    if(handled) return;
-
     var pdom  = Dom.findDomBlockParent(range.start.dom, dom_root);
     //console.log("start dom is",range.start.dom);
     var start = exports.scanDomBackwardsForMatch(pdom,model);
@@ -233,6 +224,18 @@ exports.handleInput = function(e,editor) {
     editor.applyChange(exports.makeChangesFromPasteRange(start,end,editor));
     //console.log('doc offset is',range.documentOffset);
     editor.setCursorAtDocumentOffset(range.documentOffset);
+}
+
+exports.handleInput = function(e,editor) {
+    var range = editor.getSelectionRange();
+    //console.log("dom is");
+    //Dom.print(dom_root);
+    //console.log("model is");
+    //Model.print(model);
+
+    var handled = handleTypedLetter(range,editor);
+    if(handled) return;
+    exports.handlePastedText(range,editor);
 
     //Model.print(editor.getModel());
 };

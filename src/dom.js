@@ -938,10 +938,12 @@ exports.setCursorAtDom = function(dom, offset) {
 
 exports.setCursorAtModel = function(mod,offset, dom_root) {
     var dom = exports.findDomForModel(mod,dom_root);
-    var range = document.createRange();
+    var range = dom_root.ownerDocument.createRange();
     range.setStart(dom,offset);
-    var sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
+    if(typeof window !== 'undefined') {
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
 };
 

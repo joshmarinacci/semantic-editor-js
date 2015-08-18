@@ -96,6 +96,14 @@ var import_map = {
         style:'link',
         isLink:true
     },
+    'span.strong': {
+        type:'span',
+        style:'strong'
+    },
+    'span.emphasis': {
+        type:'span',
+        style:'emphasis'
+    },
     'span': {
         type:'span',
         style:'plain'

@@ -111,6 +111,13 @@ var VirtualDoc = {
             },
             nodeType:Dom.Node.TEXT_NODE
         }
+    },
+    createRange: function() {
+        return {
+            setStart: function(dom,offset) {
+
+            }
+        }
     }
 };
 
