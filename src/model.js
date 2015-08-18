@@ -219,7 +219,7 @@ function DModel() {
             node = node.deleteFromParent();
         }
     };
-
+    /*
     this.deleteTextBackwards = function(node,offset) {
         if(node.isEmpty()) {
             var prevText = this.getPreviousTextNode(node);
@@ -247,7 +247,9 @@ function DModel() {
             offset: pos.offset
         }
     };
+    */
 
+    /*
     this.deleteTextForwards = function(startNode, startOffset) {
         if(startNode.type != exports.TEXT) throw new Error("can't delete text from non text element");
         if(startOffset < startNode.text.length) {
@@ -280,7 +282,8 @@ function DModel() {
             }
         }
     };
-
+    */
+    /*
     this.deleteText = function(startNode, startOffset, endNode, endOffset) {
         if(startNode === endNode && startNode.type === exports.TEXT) {
             if(startOffset > endOffset) throw new Error("start offset can't be greater than end offset");
@@ -319,6 +322,7 @@ function DModel() {
             }
         }
     };
+    */
 
     this.toPlainText = function() {     return flattenChars(root);  };
 
