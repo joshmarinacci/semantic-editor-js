@@ -189,8 +189,8 @@ function handleTypedLetter(range, editor) {
             var newtext = delegateChange(change);
             var ldiff = newtext.length - oldText.length;
             var oldBlock = range.start.mod.findBlockParent();
-            var newBlock = copyWithEdit(oldBlock,range.start.mod,newtext);
-            var chg = makeReplaceBlockChange(oldBlock.getParent(),oldBlock.getIndex(),newBlock);
+            var newBlock = exports.copyWithEdit(oldBlock,range.start.mod,newtext);
+            var chg = exports.makeReplaceBlockChange(oldBlock.getParent(),oldBlock.getIndex(),newBlock);
             editor.applyChange(chg);
             editor.setCursorAtDocumentOffset(range.documentOffset+ldiff-1);
             return true;
@@ -247,7 +247,7 @@ exports.makeBlockStyleChange = function(range, style) {
     var target_block = target_node.findBlockParent();
     var newblock = duplicateBlock(target_block);
     newblock.style = style;
-    return makeReplaceBlockChange(target_block.getParent(),target_block.getIndex(),newblock);
+    return exports.makeReplaceBlockChange(target_block.getParent(),target_block.getIndex(),newblock);
 };
 
 exports.stopKeyboardEvent = function(e) {
@@ -258,45 +258,33 @@ exports.stopKeyboardEvent = function(e) {
 };
 
 exports.findActionByEvent = function(e, browser_keymap, key_to_actions, actions_map) {
-    //console.log("keycode = ", e.keyCode);
     if(browser_keymap[e.keyCode]) {
         var keyname = browser_keymap[e.keyCode];
-        //console.log("matched the keycode",e.keyCode, keyname)
         if(e.metaKey && e.shiftKey) {
             var name = "cmd-shift-"+keyname;
-            //console.log("checking",name);
-            //console.log("actions = ", key_to_actions);
             if(key_to_actions[name]) {
                 var action = key_to_actions[name];
-                if(actions_map[action]) {
-                    return actions_map[action];
-                }
+                if(actions_map[action]) return actions_map[action];
             }
         }
         if(e.metaKey) {
             var name = "cmd-"+keyname;
             if(key_to_actions[name]) {
                 var action = key_to_actions[name];
-                if(actions_map[action]) {
-                    return actions_map[action];
-                }
+                if(actions_map[action]) return actions_map[action];
             }
         }
         if(e.ctrlKey) {
             var name = "ctrl-"+keyname;
             if(key_to_actions[name]) {
                 var action = key_to_actions[name];
-                if(actions_map[action]) {
-                    return actions_map[action];
-                }
+                if(actions_map[action]) return actions_map[action];
             }
         }
         var name = ""+keyname;
         if(key_to_actions[name]) {
             var action = key_to_actions[name];
-            if(actions_map[action]) {
-                return actions_map[action];
-            }
+            if(actions_map[action]) return actions_map[action];
         }
     }
     return null;
@@ -315,11 +303,11 @@ function makeStyleSelectionChange2(range,style) {
         var blk = root.child(i);
         var res = styleWithRange(range,blk,insideSpan,style);
         insideSpan = res.insideSpan;
-        changes.push(makeReplaceBlockChange(root,i,res.nodes[0]));
+        changes.push(exports.makeReplaceBlockChange(root,i,res.nodes[0]));
     }
     var chg = changes.shift();
     while(changes.length > 0) {
-        chg = makeComboChange(chg,changes.shift(),'combo');
+        chg = exports.makeComboChange(chg,changes.shift(),'combo');
     }
     return chg;
 
@@ -425,9 +413,7 @@ function styleWithRange(range, node, insideSpan,style) {
     }
 }
 
-exports.makeReplaceBlockChange = makeReplaceBlockChange;
-
-function copyWithEdit(node,target,text) {
+exports.copyWithEdit = function(node,target,text) {
     if(node == target) {
         return node.model.makeText(text);
     }
@@ -443,12 +429,10 @@ function copyWithEdit(node,target,text) {
         nnode.style = node.style;
     }
     node.content.forEach(function(ch) {
-        nnode.append(copyWithEdit(ch,target,text));
+        nnode.append(exports.copyWithEdit(ch,target,text));
     });
     return nnode;
 }
-
-exports.copyWithEdit = copyWithEdit;
 
 function makeSplitBlockChange(start) {
     //make two new blocks to replace the old one
@@ -457,9 +441,9 @@ function makeSplitBlockChange(start) {
     var newblock1 = newtexts[0].findBlockParent();
     var newblock2 = newtexts[1].findBlockParent();
     //do a replace and insert
-    var replace = makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock1);
-    var insert  = makeInsertBlockChange(oldblock.getParent(),oldblock.getIndex()+1,newblock2);
-    return makeComboChange(replace,insert,'split block');
+    var replace = exports.makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock1);
+    var insert  = exports.makeInsertBlockChange(oldblock.getParent(),oldblock.getIndex()+1,newblock2);
+    return exports.makeComboChange(replace,insert,'split block');
 }
 
 function makeDeleteTextRangeChange2(range,model) {
@@ -479,7 +463,7 @@ function makeDeleteTextRangeChange2(range,model) {
         if(res[0]==true) insideDelete = true;
         //if first, replace it
         if(i == old_start_index) {
-            changes.push(makeReplaceBlockChange(root,i,res[1]));
+            changes.push(exports.makeReplaceBlockChange(root,i,res[1]));
             new_start_block = res[1];
             continue;
         }
@@ -499,7 +483,7 @@ function makeDeleteTextRangeChange2(range,model) {
     //merge into one combo change
     var chg = changes.shift();
     while(changes.length > 0) {
-        chg = makeComboChange(chg,changes.shift(),'combo');
+        chg = exports.makeComboChange(chg,changes.shift(),'combo');
     }
     return chg;
 }
@@ -569,14 +553,14 @@ function deleteWithRange(range,node,insideDelete) {
     return [insideDelete,nnode];
 }
 
-function makeReplaceBlockChange(parent, index, newNode) {
+exports.makeReplaceBlockChange = function(parent, index, newNode) {
     var oldNode = parent.content[index];
     var del = makeDeleteBlockChange(parent, index, oldNode);
-    var ins = makeInsertBlockChange(parent, index, newNode);
-    return makeComboChange(del,ins,'replace block ' + newNode.id);
-}
+    var ins = exports.makeInsertBlockChange(parent, index, newNode);
+    return exports.makeComboChange(del,ins,'replace block ' + newNode.id);
+};
 
-function makeInsertBlockChange(parent, index, node) {
+exports.makeInsertBlockChange = function(parent, index, node) {
     return {
         redoit: function() {
             parent.content.splice(index,0,node);
@@ -586,9 +570,7 @@ function makeInsertBlockChange(parent, index, node) {
             parent.content.splice(index,1);
         }
     }
-}
-
-exports.makeInsertBlockChange = makeInsertBlockChange;
+};
 
 function makeDeleteBlockChange(parent, index, node) {
     return {
@@ -626,7 +608,8 @@ function duplicateBlock(block) {
     }
     throw new Error('cant duplicate',block);
 }
-function makeComboChange(chg1, chg2, name) {
+
+exports.makeComboChange = function(chg1, chg2, name) {
     return {
         redoit: function() {
             chg1.redoit();
@@ -638,9 +621,6 @@ function makeComboChange(chg1, chg2, name) {
         }
     }
 }
-
-exports.makeComboChange = makeComboChange;
-
 
 exports.makeChangesFromPasteRange = function(start,end,editor) {
     var DEBUG = false;
@@ -707,7 +687,6 @@ exports.makeChangesFromPasteRange = function(start,end,editor) {
 
     return chg;
 }
-
 
 exports.scanDomForwardsForMatch = function(dom1, model) {
     while(true) {
