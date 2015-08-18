@@ -36,7 +36,7 @@ test('basic text diff 1',function(t) {
 
 test('text diff 2', function(t) {
     var diff = Keystrokes.calculateTextDifference("foo ","foo_s");
-    console.log("diff is",diff);
+    //console.log("diff is",diff);
 
 
     t.equal(diff.same,false);
@@ -308,10 +308,10 @@ test("handle pasted spans", function(t) {
     dom_root.appendChild(div4);
 
 
-    console.log("------")
-    Model.print(model);
-    Dom.print(dom_root);
-    console.log("------")
+    //console.log("------")
+    //Model.print(model);
+    //Dom.print(dom_root);
+    //console.log("------")
 
     var range = {
         start: {
@@ -321,12 +321,12 @@ test("handle pasted spans", function(t) {
     };
 
     var pdom = Dom.findDomBlockParent(range.start.dom, dom_root);
-    console.log("pdom is",pdom.id);
-    console.log('dom_root = ',dom_root.id);
+    //console.log("pdom is",pdom.id);
+    //console.log('dom_root = ',dom_root.id);
     var start = Keystrokes.scanDomBackwardsForMatch(pdom,model);
     var end  = Keystrokes.scanDomForwardsForMatch(pdom,model);
     editor.applyChange(Keystrokes.makeChangesFromPasteRange(start,end,editor));
-    Model.print(model);
+    //Model.print(model);
 
     t.end();
 
@@ -349,10 +349,10 @@ test("pasting nukes adjacent styles", function(t) {
     editor.syncDom();
     //Model.print(editor.getModel());
 
-    Dom.print(editor.getDomRoot());
+    //Dom.print(editor.getDomRoot());
     var tnode = editor.getDomRoot().childNodes[0].childNodes[2];
     tnode.nodeValue = 'gXXXhi';
-    Dom.print(editor.getDomRoot());
+    //Dom.print(editor.getDomRoot());
     var range = {
         start: {
             dom:tnode,
@@ -361,9 +361,54 @@ test("pasting nukes adjacent styles", function(t) {
         documentOffset: 10
     };
     Keystrokes.handlePastedText(range,editor);
-    Model.print(editor.getModel());
+    //Model.print(editor.getModel());
 
     t.equals(editor.getModel().getRoot().child(0).child(1).style,'strong');
 
+    t.end();
+});
+
+
+test("pasting multi-line with junk span", function(t) {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+
+    var block = model.makeBlock();
+    block.append(model.makeText('abcd'));
+    model.append(block);
+    editor.syncDom();
+    //Dom.print(editor.getDomRoot());
+
+    var text1 = dom_root.childNodes[0].childNodes[0];
+    text1.nodeValue = 'abXXX';
+
+    var doc = dom_root.ownerDocument;
+    var div2 = doc.createElement('div');
+    div2.appendChild(doc.createTextNode('YYY'));
+    dom_root.appendChild(div2);
+    var span1 = doc.createElement('span');
+    span1.appendChild(doc.createTextNode("\n"));
+    dom_root.appendChild(span1);
+    var div3 = doc.createElement('div');
+    dom_root.appendChild(div3);
+    var div4 = doc.createElement('div');
+    div4.appendChild(doc.createTextNode('cd'));
+    dom_root.appendChild(div4);
+
+
+    //Dom.print(editor.getDomRoot());
+
+    var range = {
+        collapsed:true,
+        start: {
+            dom:div4.childNodes[0],
+            mod:null,
+        },
+        documentOffset: 9
+    };
+    Keystrokes.handlePastedText(range,editor);
+    //Model.print(editor.getModel());
+    t.equal(editor.getModel().getRoot().child(2).type,Model.BLOCK);
     t.end();
 });

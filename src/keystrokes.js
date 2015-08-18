@@ -692,6 +692,11 @@ exports.makeChangesFromPasteRange = function(start,end,editor) {
             block.append(mod2);
             mod2 = block;
         }
+        if(mod2.type == Model.SPAN) {
+            var block = model.makeBlock();
+            block.append(mod2);
+            mod2 = block;
+        }
         var chg = exports.makeInsertBlockChange(parent,start.mod.getIndex()+count,mod2);
         changes.push(chg);
     }
