@@ -112,7 +112,6 @@ function delegateChange(change) {
 
     if(change.newChar == '"') {
         var prevchar = change.newText.substring(change.offset-1,change.offset);
-        console.log("prevchar is",prevchar);
         var right_double_quote = '\u201D';
         var left_double_quote = '\u201C';
         var non_breaking_space = String.fromCharCode(160);
@@ -147,8 +146,7 @@ function handleTypedLetter(range, editor) {
             var ldiff = newtext.length - oldText.length;
             var oldBlock = range.start.mod.findBlockParent();
             var newBlock = exports.copyWithEdit(oldBlock,range.start.mod,newtext);
-            var chg = exports.makeReplaceBlockChange(oldBlock.getParent(),oldBlock.getIndex(),newBlock);
-            editor.applyChange(chg);
+            editor.applyChange(exports.makeReplaceBlockChange(oldBlock.getParent(),oldBlock.getIndex(),newBlock));
             editor.setCursorAtDocumentOffset(range.documentOffset+ldiff-1);
             return true;
         }
@@ -159,30 +157,18 @@ function handleTypedLetter(range, editor) {
 exports.handlePastedText = function(range,editor) {;
     var dom_root = editor.getDomRoot();
     var model  = editor.getModel();
-    var pdom  = Dom.findDomBlockParent(range.start.dom, dom_root);
-    //console.log("start dom is",range.start.dom);
-    var start = exports.scanDomBackwardsForMatch(pdom,model);
-    var end   = exports.scanDomForwardsForMatch(pdom,model);
-    //console.log("pdom = ",pdom.id);
-    //console.log("scanned backwards for",start.dom.id,start.mod.id);
-    //console.log("scanned forwards for",end.dom.id,end.mod.id);
+    var parent_dom  = Dom.findDomBlockParent(range.start.dom, dom_root);
+    var start = exports.scanDomBackwardsForMatch(parent_dom,model);
+    var end   = exports.scanDomForwardsForMatch(parent_dom,model);
     editor.applyChange(exports.makeChangesFromPasteRange(start,end,editor));
-    //console.log('doc offset is',range.documentOffset);
     editor.setCursorAtDocumentOffset(range.documentOffset);
-}
+};
 
 exports.handleInput = function(e,editor) {
     var range = editor.getSelectionRange();
-    //console.log("dom is");
-    //Dom.print(editor.getDomRoot());
-    //console.log("model is");
-    //Model.print(model);
-
     var handled = handleTypedLetter(range,editor);
     if(handled) return;
     exports.handlePastedText(range,editor);
-
-    //Model.print(editor.getModel());
 };
 
 exports.changeBlockStyle = function(e, editor, style) {
@@ -196,8 +182,7 @@ exports.changeBlockStyle = function(e, editor, style) {
         var blk = root.child(i);
         var dupe = duplicateBlock(blk);
         dupe.style = style;
-        var chg = exports.makeReplaceBlockChange(blk.getParent(),blk.getIndex(),dupe);
-        changes.push(chg);
+        changes.push(exports.makeReplaceBlockChange(blk.getParent(),blk.getIndex(),dupe));
     }
     editor.applyChange(exports.makeComboChange(changes));
     editor.setCursorAtDocumentOffset(range.documentOffset);
@@ -212,31 +197,12 @@ exports.stopKeyboardEvent = function(e) {
 
 exports.findActionByEvent = function(e, browser_keymap, key_to_actions, actions_map) {
     if(browser_keymap[e.keyCode]) {
-        var keyname = browser_keymap[e.keyCode];
-        if(e.metaKey && e.shiftKey) {
-            var name = "cmd-shift-"+keyname;
-            if(key_to_actions[name]) {
-                var action = key_to_actions[name];
-                if(actions_map[action]) return actions_map[action];
-            }
-        }
-        if(e.metaKey) {
-            var name = "cmd-"+keyname;
-            if(key_to_actions[name]) {
-                var action = key_to_actions[name];
-                if(actions_map[action]) return actions_map[action];
-            }
-        }
-        if(e.ctrlKey) {
-            var name = "ctrl-"+keyname;
-            if(key_to_actions[name]) {
-                var action = key_to_actions[name];
-                if(actions_map[action]) return actions_map[action];
-            }
-        }
-        var name = ""+keyname;
-        if(key_to_actions[name]) {
-            var action = key_to_actions[name];
+        var keyname = ""+browser_keymap[e.keyCode];
+        if(e.ctrlKey)  keyname = 'ctrl-'+keyname;
+        if(e.shiftKey) keyname = 'shift-'+keyname;
+        if(e.metaKey)  keyname = 'cmd-'+keyname;
+        if(key_to_actions[keyname]) {
+            var action = key_to_actions[keyname];
             if(actions_map[action]) return actions_map[action];
         }
     }
