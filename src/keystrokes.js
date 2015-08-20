@@ -242,11 +242,7 @@ exports.changeBlockStyle = function(e, editor, style) {
         var chg = exports.makeReplaceBlockChange(blk.getParent(),blk.getIndex(),dupe);
         changes.push(chg);
     }
-    var chg = changes.shift();
-    while(changes.length > 0) {
-        chg = exports.makeComboChange(chg,changes.shift(),'combo');
-    }
-    editor.applyChange(chg);
+    editor.applyChange(exports.makeComboChange(changes));
     editor.setCursorAtDocumentOffset(range.documentOffset);
 };
 
@@ -305,12 +301,7 @@ function makeStyleSelectionChange2(range,style) {
         insideSpan = res.insideSpan;
         changes.push(exports.makeReplaceBlockChange(root,i,res.nodes[0]));
     }
-    var chg = changes.shift();
-    while(changes.length > 0) {
-        chg = exports.makeComboChange(chg,changes.shift(),'combo');
-    }
-    return chg;
-
+    return exports.makeComboChange(changes);
 }
 
 function styleWithRange(range, node, insideSpan,style) {
@@ -434,6 +425,19 @@ exports.copyWithEdit = function(node,target,text) {
     return nnode;
 }
 
+exports.makeComboChange = function(changes) {
+    var copy = changes.slice();
+    var revcopy = changes.slice().reverse();
+    return {
+        redoit: function() {
+            copy.forEach(function(cp) { cp.redoit(); });
+        },
+        undoit: function() {
+            revcopy.forEach(function(cp) { cp.undoit(); });
+        }
+    }
+};
+
 function makeSplitBlockChange(start) {
     //make two new blocks to replace the old one
     var oldblock = start.mod.findBlockParent();
@@ -443,7 +447,7 @@ function makeSplitBlockChange(start) {
     //do a replace and insert
     var replace = exports.makeReplaceBlockChange(oldblock.getParent(),oldblock.getIndex(),newblock1);
     var insert  = exports.makeInsertBlockChange(oldblock.getParent(),oldblock.getIndex()+1,newblock2);
-    return exports.makeComboChange(replace,insert,'split block');
+    return exports.makeComboChange([replace,insert],'split block');
 }
 
 function makeDeleteTextRangeChange2(range,model) {
@@ -480,12 +484,7 @@ function makeDeleteTextRangeChange2(range,model) {
             changes.push(makeDeleteBlockChange(root,i,blk));
         }
     }
-    //merge into one combo change
-    var chg = changes.shift();
-    while(changes.length > 0) {
-        chg = exports.makeComboChange(chg,changes.shift(),'combo');
-    }
-    return chg;
+    return exports.makeComboChange(changes);
 }
 
 function deleteWithRange(range,node,insideDelete) {
@@ -557,7 +556,7 @@ exports.makeReplaceBlockChange = function(parent, index, newNode) {
     var oldNode = parent.content[index];
     var del = makeDeleteBlockChange(parent, index, oldNode);
     var ins = exports.makeInsertBlockChange(parent, index, newNode);
-    return exports.makeComboChange(del,ins,'replace block ' + newNode.id);
+    return exports.makeComboChange([del,ins],'replace block ' + newNode.id);
 };
 
 exports.makeInsertBlockChange = function(parent, index, node) {
@@ -609,18 +608,6 @@ function duplicateBlock(block) {
     throw new Error('cant duplicate',block);
 }
 
-exports.makeComboChange = function(chg1, chg2, name) {
-    return {
-        redoit: function() {
-            chg1.redoit();
-            chg2.redoit();
-        },
-        undoit: function() {
-            chg2.undoit();
-            chg1.undoit();
-        }
-    }
-}
 
 exports.makeChangesFromPasteRange = function(start,end,editor) {
     var DEBUG = false;
@@ -678,15 +665,8 @@ exports.makeChangesFromPasteRange = function(start,end,editor) {
         changes.push(chg);
     }
 
-
-    //merge into one combo change
-    var chg = changes.shift();
-    while(changes.length > 0) {
-        chg = exports.makeComboChange(chg,changes.shift(),'combo');
-    }
-
-    return chg;
-}
+    return exports.makeComboChange(changes);
+};
 
 exports.scanDomForwardsForMatch = function(dom1, model) {
     while(true) {
