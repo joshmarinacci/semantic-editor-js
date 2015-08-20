@@ -48,7 +48,7 @@ exports.splitLine = function(e, editor) {
     var range = editor.getSelectionRange();
     var chg = makeSplitBlockChange(range.start);
     editor.applyChange(chg);
-    editor.setCursorAtDocumentOffset(range.documentOffset);
+    editor.setCursorAtDocumentOffset(range.documentOffset,Model.RIGHT_BIAS);
 };
 
 exports.styleInlineLink = function(e,editor) {

@@ -204,10 +204,12 @@ test('split fwd delete, split fwd delete', function(t) {
     editor.setSelectionAtDocumentOffset(2,2);
     Keystrokes.splitLine(null,editor);
     t.equals(editor.getModel().getRoot().child(1).child(0).text,'cdef');
+    editor.setCursorAtDocumentOffset(2,Model.LEFT_BIAS);
     Keystrokes.deleteForwards(null,editor);
     t.equals(editor.getModel().getRoot().child(0).child(1).text,'def');
     Keystrokes.splitLine(null,editor);
     t.equals(editor.getModel().getRoot().child(1).child(0).text,'');
+    editor.setCursorAtDocumentOffset(2,Model.LEFT_BIAS);
     Keystrokes.deleteForwards(null,editor);
     t.equals(editor.getModel().getRoot().child(0).child(1).text,'ef');
 

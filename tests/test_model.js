@@ -495,3 +495,31 @@ test("nested spans",function(t) {
     t.end();
 });
     */
+
+
+test('selection bias',function(t) {
+    var model = Model.makeModel();
+    var blk = model.makeBlock();
+    var txt1 = model.makeText('abc');
+    blk.append(txt1);
+    var txt2 = model.makeText('def');
+    blk.append(txt2);
+    model.getRoot().append(blk);
+    Model.print(model);
+    t.equal(txt1.id, Model.documentOffsetToModel(model.getRoot(),0,Model.LEFT_BIAS).node.id);
+    t.equal(txt1.id, Model.documentOffsetToModel(model.getRoot(),1,Model.LEFT_BIAS).node.id);
+    t.equal(txt1.id, Model.documentOffsetToModel(model.getRoot(),2,Model.LEFT_BIAS).node.id);
+    t.equal(txt1.id, Model.documentOffsetToModel(model.getRoot(),3,Model.LEFT_BIAS).node.id);
+    t.equal(txt2.id, Model.documentOffsetToModel(model.getRoot(),4,Model.LEFT_BIAS).node.id);
+    t.equal(txt2.id, Model.documentOffsetToModel(model.getRoot(),5,Model.LEFT_BIAS).node.id);
+    t.equal(txt2.id, Model.documentOffsetToModel(model.getRoot(),6,Model.LEFT_BIAS).node.id);
+
+    t.equal(txt1.id, Model.documentOffsetToModel(model.getRoot(),0,Model.RIGHT_BIAS).node.id);
+    t.equal(txt1.id, Model.documentOffsetToModel(model.getRoot(),1,Model.RIGHT_BIAS).node.id);
+    t.equal(txt1.id, Model.documentOffsetToModel(model.getRoot(),2,Model.RIGHT_BIAS).node.id);
+    t.equal(txt2.id, Model.documentOffsetToModel(model.getRoot(),3,Model.RIGHT_BIAS).node.id);
+    t.equal(txt2.id, Model.documentOffsetToModel(model.getRoot(),4,Model.RIGHT_BIAS).node.id);
+    t.equal(txt2.id, Model.documentOffsetToModel(model.getRoot(),5,Model.RIGHT_BIAS).node.id);
+
+    t.end();
+});

@@ -418,16 +418,23 @@ exports.modelToDocumentOffset = function(node,target) {
     }
 };
 
-exports.documentOffsetToModel = function(root, off) {
+exports.RIGHT_BIAS = 'right';
+exports.LEFT_BIAS  = 'left';
+
+exports.documentOffsetToModel = function(root, off, bias) {
+    if(!bias) bias = exports.LEFT_BIAS;
     if(root.type == exports.TEXT) {
-        if(off <= root.text.length) {
+        if(off == root.text.length && bias == exports.LEFT_BIAS) {
+            return { found: true, offset: off, node: root};
+        }
+        if(off < root.text.length) {
             return {found:true, offset:off, node:root};
         }
         return {found:false, offset:off-root.text.length};
     } else {
         var toff = off;
         for(var i=0; i<root.content.length; i++) {
-            var res = exports.documentOffsetToModel(root.content[i],toff);
+            var res = exports.documentOffsetToModel(root.content[i],toff, bias);
             if(res.found===true) return res;
             toff = res.offset;
         }

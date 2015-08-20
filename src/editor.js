@@ -521,9 +521,9 @@ Editor.prototype.setSelectionAtDocumentOffset = function(off1, off2) {
     this._fake_range = range;
 };
 
-Editor.prototype.setCursorAtDocumentOffset = function(off) {
+Editor.prototype.setCursorAtDocumentOffset = function(off, bias) {
     if(off < 0) off = 0;
-    var nmod = Model.documentOffsetToModel(this.getModel().getRoot(),off);
+    var nmod = Model.documentOffsetToModel(this.getModel().getRoot(),off,bias);
     if(this._fake_range && this._fake_range != null) {
         this._fake_range.start.mod = nmod.node;
         this._fake_range.start.offset = nmod.offset;
