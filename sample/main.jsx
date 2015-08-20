@@ -25,7 +25,7 @@ var BlockDropdown = React.createClass({
     selectedStyle: function(name,e) {
         var model = PostDataStore.getModel();
         if(this.props.type == 'block') {
-            Keystrokes.changeBlockStyle(model.getStyles().block[name], PostDataStore.getRealEditor());
+            Keystrokes.changeBlockStyle(null, PostDataStore.getRealEditor(), model.getStyles().block[name]);
         }
         if(this.props.type == 'inline') {
             Keystrokes.styleSelection(null, PostDataStore.getRealEditor(), model.getStyles().inline[name]);

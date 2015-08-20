@@ -130,10 +130,8 @@ function makeThreeBlocks() {
 test('block style change', function(t) {
     var editor = makeThreeBlocks();
     t.equals(editor.getModel().getRoot().child(1).style,'body');
-    var range = makeRange(editor,8,9);
-    t.equals(range.start.mod.id,'id_5');
-    var chg = Keystrokes.makeBlockStyleChange(range,'header');
-    editor.applyChange(chg);
+    editor.setSelectionAtDocumentOffset(8,8,false);
+    Keystrokes.changeBlockStyle(null,editor,'header');
     t.equals(editor.getModel().getRoot().child(1).style,'header');
     editor.undoChange();
     t.equals(editor.getModel().getRoot().child(1).style,'body');

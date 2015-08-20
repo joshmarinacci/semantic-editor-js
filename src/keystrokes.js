@@ -228,26 +228,16 @@ exports.handleInput = function(e,editor) {
     //Model.print(editor.getModel());
 };
 
-exports.changeBlockStyle = function(style, editor) {
-    var model = editor.getModel();
+exports.changeBlockStyle = function(e, editor, style) {
+    exports.stopKeyboardEvent(e);
     var range = editor.getSelectionRange();
-    var mod_b = range.start.mod.findBlockParent();
-    mod_b.style = style;
-    var par = mod_b.getParent();
-    var dom_root = editor.getDomRoot();
-    var dom_b = Dom.findDomForModel(par,dom_root);
-    Dom.rebuildDomFromModel(par,dom_b, dom_root, document, editor.getMapping());
-    editor.markAsChanged();
-    var nmod = Model.documentOffsetToModel(model.getRoot(),range.documentOffset);
-    Dom.setCursorAtModel(nmod.node, nmod.offset, dom_root);
-};
-
-exports.makeBlockStyleChange = function(range, style) {
     var target_node = range.start.mod;
     var target_block = target_node.findBlockParent();
     var newblock = duplicateBlock(target_block);
     newblock.style = style;
-    return exports.makeReplaceBlockChange(target_block.getParent(),target_block.getIndex(),newblock);
+    var chg = exports.makeReplaceBlockChange(target_block.getParent(),target_block.getIndex(),newblock);
+    editor.applyChange(chg);
+    editor.setCursorAtDocumentOffset(range.documentOffset);
 };
 
 exports.stopKeyboardEvent = function(e) {
