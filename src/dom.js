@@ -2,21 +2,20 @@ var doc = require('./model');
 var Model = doc;
 
 if(typeof document === 'undefined') {
-    var TEXT_NODE = 'TEXT_NODE';
-    var ELEMENT_NODE = 'ELEMENT_NODE';
-    var COMMENT_NODE = 'COMMENT_NODE';
+    exports.Node = {
+        ELEMENT_NODE: 'ELEMENT_NODE',
+        TEXT_NODE:    'TEXT_NODE',
+        COMMENT_NODE: 'COMMENT_NODE'
+    };
 } else {
-    var TEXT_NODE = document.TEXT_NODE;
-    var ELEMENT_NODE = document.ELEMENT_NODE;
-    var COMMENT_NODE = document.COMMENT_NODE;
+    exports.Node = {
+        ELEMENT_NODE: document.ELEMENT_NODE,
+        TEXT_NODE: document.TEXT_NODE,
+        COMMENT_NODE: document.COMMENT_NODE
+    };
 }
 
 
-exports.Node = {
-    ELEMENT_NODE: ELEMENT_NODE,
-    TEXT_NODE: TEXT_NODE,
-    COMMENT_NODE: COMMENT_NODE
-};
 function clearChildren(root) {
     while (root.firstChild) root.removeChild(root.firstChild);
 }
@@ -49,29 +48,27 @@ exports.saveSelection = function (model) {
     };
     ret.startpos.node = exports.findModelFromPosition(ret.startpos,model);
     ret.endpos.node = exports.findModelFromPosition(ret.endpos,model);
-
     return ret;
 };
 
 exports.findParentBlockDom = function(elem) {
     var parent = elem.parentElement;
-    if(parent.tagName == 'DIV') {
-        return parent;
-    }
+    if(parent.tagName == 'DIV') return parent;
     return null;
 };
 
 function findParentNonTextNode(dom) {
     var node = dom;
     var path = [];
-    while(node.nodeType == TEXT_NODE || node.id == "") {
+    while(node.nodeType == exports.Node.TEXT_NODE || node.id == "") {
         var parent = node.parentNode;
-        var nn = -1;
-        for(var i=0; i<parent.childNodes.length; i++) {
-            if(parent.childNodes[i] == node) {
-                nn = i;
-            }
-        }
+        var nn = exports.domIndexOf(node);
+        //var nn = -1;
+        //for(var i=0; i<parent.childNodes.length; i++) {
+        //    if(parent.childNodes[i] == node) {
+        //        nn = i;
+        //    }
+        //}
         path.unshift(nn);
         node = parent;
     }
@@ -108,9 +105,7 @@ exports.getCaretClientPosition = function() {
 
 function findMatchingMappingRule(type,style,mapping) {
     var rule = mapping[style];
-    if(rule && rule.type == type) {
-        return rule;
-    }
+    if(rule && rule.type == type) return rule;
     return null;
 }
 
@@ -143,37 +138,33 @@ exports.modelToDom = function(mod,dom, document, mapping) {
     console.log("didn't match a rule!", mod.type, mod.style);
 };
 
-exports.domIndexOf = function(dom_child) {
-    return Array.prototype.indexOf.call(dom_child.parentNode.childNodes,dom_child);
-}
-
-
-exports.findModelForDom = function(model,domch) {
-    if(domch.nodeType == ELEMENT_NODE) {
-        return model.findNodeById(domch.id);
-    }
-    if(domch.nodeType == TEXT_NODE) {
-        var parent_mod = exports.findModelForDom(model,domch.parentNode);
-        if(parent_mod == null) return null;
-        var n = exports.domIndexOf(domch);
-        return parent_mod.child(n);
-    }
-    console.log("UNKNOWN DOM NODE TYPE",domch.nodeType,TEXT_NODE);
+exports.domIndexOf = function(child) {
+    return Array.prototype.indexOf.call(child.parentNode.childNodes,child);
 };
 
-exports.findDomForModel = function(modch, dom_root) {
-    if(!dom_root) throw new Error("dom root is null");
-    if(modch == null) throw new Error("model node is null");
-    if(modch.type == Model.BLOCK || modch.type == Model.SPAN) {
-        return dom_root.ownerDocument.getElementById(modch.id);
+exports.findModelForDom = function(model,domch) {
+    if(domch.nodeType == exports.Node.ELEMENT_NODE) {
+        return model.findNodeById(domch.id);
     }
-    if(modch.type == Model.TEXT) {
-        var mod_par = modch.getParent();
-        var dom_par = dom_root.ownerDocument.getElementById(mod_par.id);
-        return dom_par.childNodes[modch.getIndex()];
+    if(domch.nodeType == exports.Node.TEXT_NODE) {
+        var parent_mod = exports.findModelForDom(model,domch.parentNode);
+        if(parent_mod == null) return null;
+        return parent_mod.child(exports.domIndexOf(domch));
     }
-    if(modch.type == Model.ROOT) return dom_root;
-    console.log("can't handle model node type", modch.type);
+    console.log("UNKNOWN DOM NODE TYPE",domch.nodeType,exports.Node.TEXT_NODE);
+};
+
+exports.findDomForModel = function(mod, root) {
+    if(!root) throw new Error("dom root is null");
+    if(mod == null) throw new Error("model node is null");
+    if(mod.type == Model.BLOCK) return root.ownerDocument.getElementById(mod.id);
+    if(mod.type == Model.SPAN)  return root.ownerDocument.getElementById(mod.id);
+    if(mod.type == Model.ROOT)  return root;
+    if(mod.type == Model.TEXT) {
+        var dom_par = root.ownerDocument.getElementById(mod.getParent().id);
+        return dom_par.childNodes[mod.getIndex()];
+    }
+    throw new Error("can't handle model node type " + mod.type);
 };
 
 exports.findDomBlockParent = function(dom, dom_root) {
@@ -183,13 +174,13 @@ exports.findDomBlockParent = function(dom, dom_root) {
 
 exports.print = function(dom,tab) {
     if(!tab) tab = "";
-    if(dom.nodeType == ELEMENT_NODE) {
+    if(dom.nodeType == exports.Node.ELEMENT_NODE) {
         console.log(tab + dom.nodeName + "#"+dom.id + " " + dom.classList);
         for(var i=0; i< dom.childNodes.length; i++) {
             exports.print(dom.childNodes[i],tab+"  ");
         }
     }
-    if(dom.nodeType == TEXT_NODE) console.log(tab + 'TEXT:' + '"' + dom.nodeValue+'"');
+    if(dom.nodeType == exports.Node.TEXT_NODE) console.log(tab + 'TEXT:' + '"' + dom.nodeValue+'"');
 };
 
 exports.syncDom = function(dom_root,model, mapping) {
@@ -197,19 +188,16 @@ exports.syncDom = function(dom_root,model, mapping) {
 };
 
 exports.rebuildDomFromModel = function(mod, dom, dom_root, doc, mapping) {
-    if(typeof doc == 'undefined') {
-        console.log(new Error().stack);
-        throw new Error("undefined doc");
-    }
+    if(typeof doc == 'undefined') throw new Error("undefined doc");
     if(mod.type == Model.TEXT) {
         dom.nodeValue = mod.text;
-    } else {
-        clearChildren(dom);
-        mod.content.forEach(function(modch){
-            dom.appendChild(exports.modelToDom(modch,dom_root,doc,mapping));
-        });
-        dom.id = mod.id;
+        return;
     }
+    clearChildren(dom);
+    mod.content.forEach(function(modch){
+        dom.appendChild(exports.modelToDom(modch,dom_root,doc,mapping));
+    });
+    dom.id = mod.id;
 };
 
 exports.rebuildModelFromDom = function(dom, model, mapping) {
@@ -217,29 +205,25 @@ exports.rebuildModelFromDom = function(dom, model, mapping) {
 };
 
 function genModelFromDom(node,model, mapping) {
-    if(node.nodeType == TEXT_NODE) return model.makeText(node.nodeValue);
-    if(node.nodeType == ELEMENT_NODE) {
+    if(node.nodeType == exports.Node.TEXT_NODE) return model.makeText(node.nodeValue);
+    if(node.nodeType == exports.Node.ELEMENT_NODE) {
         var name = node.nodeName.toLowerCase() + '.'+node.className;
         if(mapping[name]) return genModelFromMapping(mapping[name],name,node,mapping, model);
         var name = node.nodeName.toLowerCase();
         if(mapping[name]) return genModelFromMapping(mapping[name],name,node,mapping, model);
-        console.log("WARNING: no mapping for element of type ",node.nodeName);
-        console.log("using generic DIV");
+        console.log("WARNING: no mapping for element of type ",node.nodeName, "using generic div");
         return genModelFromMapping(mapping['div'],'div',node,mapping,model);
     }
-    if(node.nodeType == COMMENT_NODE) return null;
+    if(node.nodeType == exports.Node.COMMENT_NODE) return null;
     throw new Error("cant convert dom node " + node.nodeType + " " + node.nodeName);
 }
 
 function genModelFromMapping(mp, name, node, mappings, model) {
     var nd = null;
     if(mp.skip === true) return null;
-    if(mp.type == 'span')   nd = model.makeSpan();
-    if(mp.type == 'block')  nd = model.makeBlock();
-    if(nd == null) {
-        throw new Error("cant convert dom node" + node.nodeName);
-    }
-    nd.style = mp.style;
+    if(mp.type == 'span')   nd = model.makeSpan().setStyle(mp.style);
+    if(mp.type == 'block')  nd = model.makeBlock().setStyle(mp.style);
+    if(nd == null) throw new Error("cant convert dom node" + node.nodeName);
     if(mp.isLink === true) nd.meta = { href: node.getAttribute("href") };
     for(var i=0; i<node.childNodes.length; i++) {
         var mod = genModelFromDom(node.childNodes[i],model, mappings);
@@ -257,38 +241,33 @@ exports.findDomParentWithId = function(con) {
 
 exports.domToDocumentOffset = function(node, target) {
     if (node == target) return {found: true, offset: 0};
-    if (node.nodeType == TEXT_NODE) {
+    if (node.nodeType == exports.Node.TEXT_NODE) {
         return { found: false, offset: node.nodeValue.length };
-    } else {
-        var total = 0;
-        var found = false;
-        for(var i=0; i<node.childNodes.length; i++) {
-            var res = exports.domToDocumentOffset(node.childNodes[i],target);
-            total += res.offset;
-            if(res.found === true) {
-                found = true;
-                break;
-            }
-        }
-        return { found:found, offset:total };
     }
+    var total = 0;
+    var found = false;
+    for(var i=0; i<node.childNodes.length; i++) {
+        var res = exports.domToDocumentOffset(node.childNodes[i],target);
+        total += res.offset;
+        if(res.found === true) {
+            found = true;
+            break;
+        }
+    }
+    return { found:found, offset:total };
 };
 
 exports.documentOffsetToDom = function(root, off) {
-    if(root.nodeType == TEXT_NODE) {
-        if(off <= root.nodeValue.length) {
-            return {found:true, offset:off, node:root};
-        }
+    if(root.nodeType == exports.Node.TEXT_NODE) {
+        if(off <= root.nodeValue.length) return {found:true, offset:off, node:root};
         return { found:false, offset:off-root.nodeValue.length };
-    } else {
-        var toff = off;
-        for(var i=0; i<root.childNodes.length; i++) {
-            var res = exports.documentOffsetToDom(root.childNodes[i],toff);
-            if(res.found===true) return res;
-            toff = res.offset;
-        }
-        return {found:false, offset: toff};
     }
+    for(var i=0; i<root.childNodes.length; i++) {
+        var res = exports.documentOffsetToDom(root.childNodes[i],off);
+        if(res.found===true) return res;
+        off = res.offset;
+    }
+    return {found:false, offset: off};
 };
 
 exports.setCursorAtDom = function(dom, offset) {
