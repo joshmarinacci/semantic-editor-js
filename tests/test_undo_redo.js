@@ -140,6 +140,19 @@ test('block style change', function(t) {
     t.end();
 });
 
+test('multi-line block style change', function(t) {
+    var editor = makeThreeBlocks();
+    Model.print(editor.getModel());
+    t.equals(editor.getModel().getRoot().child(0).style,'body');
+    t.equals(editor.getModel().getRoot().child(1).style,'body');
+    t.equals(editor.getModel().getRoot().child(2).style,'body');
+    editor.setSelectionAtDocumentOffset(5,15,false);
+    Keystrokes.changeBlockStyle(null,editor,'header');
+    t.equals(editor.getModel().getRoot().child(0).style,'header');
+    t.equals(editor.getModel().getRoot().child(1).style,'header');
+    t.equals(editor.getModel().getRoot().child(2).style,'header');
+    t.end();
+});
 
 test("multi-line delete backwards",function(t) {
     var editor = makeThreeBlocks();

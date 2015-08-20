@@ -523,7 +523,6 @@ Editor.prototype.setSelectionAtDocumentOffset = function(off1, off2) {
 
 Editor.prototype.setCursorAtDocumentOffset = function(off) {
     if(off < 0) off = 0;
-    //console.log("setting cursor to offset", off);
     var nmod = Model.documentOffsetToModel(this.getModel().getRoot(),off);
     if(this._fake_range && this._fake_range != null) {
         this._fake_range.start.mod = nmod.node;
@@ -537,11 +536,8 @@ Editor.prototype.setCursorAtDocumentOffset = function(off) {
 
 
 function makeRange(editor,off1,off2) {
-    //Dom.print(editor.getDomRoot());
     var s = findDomTextAtOffset(editor.getDomRoot(),off1);
     var e = findDomTextAtOffset(editor.getDomRoot(),off2);
-    //console.log("id = ",s[1].nodeValue,s[2]);
-    //console.log("id = ",e[1].nodeValue,e[2]);
     return {
         start: {
             dom: s[1],
@@ -557,7 +553,6 @@ function makeRange(editor,off1,off2) {
 }
 
 function findDomTextAtOffset(node, off) {
-    //console.log("looking at",node.id,off);
     if(node.nodeType == Dom.Node.ELEMENT_NODE) {
         for(var i=0; i<node.childNodes.length; i++) {
             var ret = findDomTextAtOffset(node.childNodes[i],off);
@@ -568,22 +563,16 @@ function findDomTextAtOffset(node, off) {
     }
     if(node.nodeType == Dom.Node.TEXT_NODE) {
         if(node.nodeValue.length > off) {
-            //console.log("found it",off,node.nodeValue.length);
             return [true,  node, off];
         } else {
-            //console.log("no found",off,node.nodeValue.length);
             return [false, node, off-node.nodeValue.length];
         }
     }
 }
 
-
-
-
 exports.makeEditor = function(domRoot) {
     return new Editor(domRoot);
 };
-
 
 exports.makeModel = function() {
     return Model.makeModel();

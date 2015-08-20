@@ -231,11 +231,21 @@ exports.handleInput = function(e,editor) {
 exports.changeBlockStyle = function(e, editor, style) {
     exports.stopKeyboardEvent(e);
     var range = editor.getSelectionRange();
-    var target_node = range.start.mod;
-    var target_block = target_node.findBlockParent();
-    var newblock = duplicateBlock(target_block);
-    newblock.style = style;
-    var chg = exports.makeReplaceBlockChange(target_block.getParent(),target_block.getIndex(),newblock);
+    var start_block = range.start.mod.findBlockParent();
+    var end_block = range.end.mod.findBlockParent();
+    var root = editor.getModel().getRoot();
+    var changes = [];
+    for(var i=start_block.getIndex(); i<= end_block.getIndex(); i++) {
+        var blk = root.child(i);
+        var dupe = duplicateBlock(blk);
+        dupe.style = style;
+        var chg = exports.makeReplaceBlockChange(blk.getParent(),blk.getIndex(),dupe);
+        changes.push(chg);
+    }
+    var chg = changes.shift();
+    while(changes.length > 0) {
+        chg = exports.makeComboChange(chg,changes.shift(),'combo');
+    }
     editor.applyChange(chg);
     editor.setCursorAtDocumentOffset(range.documentOffset);
 };
