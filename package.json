@@ -7,7 +7,8 @@
     "test": "node tests/tests.js",
     "build": "browserify -r ./src/editor.js:editor -r ./src/model.js:model -r ./src/dom.js:dom -r ./src/keystrokes.js:keystrokes -o bundle.js --debug --verbose",
     "build-sample": "browserify --transform reactify ./sample/main.jsx -o ./sample/bundle.js --debug --verbose",
-    "watch-sample": "watchify --debug --transform reactify ./sample/main.jsx -o ./sample/bundle.js --debug --verbose"
+    "watch-sample": "watchify --debug --transform reactify ./sample/main.jsx -o ./sample/bundle.js --debug --verbose",
+    "measure": "node tests/measure.js"
   },
   "author": "",
   "license": "ISC",

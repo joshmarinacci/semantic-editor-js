@@ -17,12 +17,8 @@ function DNode(type,text,model) {
     if(type == 'block' || type == 'span' || type == 'root') {
         this.content = [];
         this.append = function(node) {
-            if(node == this) {
-                throw new Error("can't add myself to myself. that makes a loop");
-            }
-            if(this.parent == node) {
-                throw new Error("can't add parent to myself. that makes a loop");
-            }
+            if(node == this) throw new Error("can't add myself to myself. that makes a loop");
+            if(this.parent == node)  throw new Error("can't add parent to myself. that makes a loop");
             this.content.push(node);
             node.parent = this;
             return this;

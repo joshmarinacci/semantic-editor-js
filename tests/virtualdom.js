@@ -4,7 +4,6 @@
 var Dom   = require('../src/dom');
 
 var VirtualDoc = {
-    _change_count:0,
     _ids:{},
     idChanged: function(old_id, new_id, node) {
         delete this._ids[old_id];
@@ -12,12 +11,6 @@ var VirtualDoc = {
     },
     getElementById: function(id) {
         return this._ids[id];
-    },
-    resetChangeCount: function() {
-        this._change_count = 0;
-    },
-    getChangeCount: function() {
-        return this._change_count;
     },
     createElement:function(name) {
         return {
@@ -69,7 +62,6 @@ var VirtualDoc = {
                 var old = this._id;
                 this._id = txt;
                 this.ownerDocument.idChanged(old,this._id,this);
-                this.ownerDocument._change_count++;
             },
             get firstChild() {
                 if(this.childNodes.length >= 1) return this.childNodes[0];
@@ -78,7 +70,6 @@ var VirtualDoc = {
             removeChild: function(ch) {
                 var n = this.childNodes.indexOf(ch);
                 this.childNodes.splice(n,1);
-                this.ownerDocument._change_count++;
                 return ch;
             },
             setAttribute: function(name,value) {
@@ -98,7 +89,6 @@ var VirtualDoc = {
             },
             set nodeValue(txt) {
                 this._nodeValue = txt;
-                this.ownerDocument._change_count++;
             },
             get id() {
                 return this._id;
@@ -107,7 +97,6 @@ var VirtualDoc = {
                 var old = this._id;
                 this._id = txt;
                 this.ownerDocument.idChanged(old,this._id,this);
-                this.ownerDocument._change_count++;
             },
             nodeType:Dom.Node.TEXT_NODE
         }

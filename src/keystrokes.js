@@ -180,8 +180,7 @@ exports.changeBlockStyle = function(e, editor, style) {
     var changes = [];
     for(var i=start_block.getIndex(); i<= end_block.getIndex(); i++) {
         var blk = root.child(i);
-        var dupe = duplicateBlock(blk);
-        dupe.style = style;
+        var dupe = duplicateBlock(blk).setStyle(style);
         changes.push(exports.makeReplaceBlockChange(blk.getParent(),blk.getIndex(),dupe));
     }
     editor.applyChange(exports.makeComboChange(changes));
