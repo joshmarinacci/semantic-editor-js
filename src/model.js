@@ -25,6 +25,7 @@ function DNode(type,text,model) {
             }
             this.content.push(node);
             node.parent = this;
+            return this;
         };
         this.child = function(index) {
             return this.content[index];
@@ -75,6 +76,10 @@ function DNode(type,text,model) {
     this.getIndex = function() {
         return this.getParent().content.indexOf(this);
     };
+    this.setStyle = function(style) {
+        this.style = style;
+        return this;
+    }
 }
 
 function flattenChars(par) {

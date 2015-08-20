@@ -228,17 +228,12 @@ function makeStyleSelectionChange(range,style) {
 }
 
 function styleWithRange(range, node, insideSpan,style) {
-    //console.log('style with range',node.id,insideSpan);
 
     if(node == range.start.mod && node == range.end.mod) {
-        //console.log("start and end node");
         var before = node.model.makeText(node.text.substring(0,range.start.offset));
         var middle = node.model.makeText(node.text.substring(range.start.offset,range.end.offset));
         var after  = node.model.makeText(node.text.substring(range.end.offset));
-        //console.log("split text to",before.text,middle.text,after.text);
-        var span = node.model.makeSpan();
-        span.style = style;
-        span.append(middle);
+        var span = node.model.makeSpan().setStyle(style).append(middle);
         return {
             nodes:[before,span,after],
             insideSpan:false
@@ -246,13 +241,9 @@ function styleWithRange(range, node, insideSpan,style) {
     }
 
     if(node == range.start.mod) {
-        //console.log("starting node");
         var before = node.model.makeText(node.text.substring(0,range.start.offset));
         var middle = node.model.makeText(node.text.substring(range.start.offset));
-        //console.log("split text to",before.text,middle.text);
-        var span = node.model.makeSpan();
-        span.style = style;
-        span.append(middle);
+        var span = node.model.makeSpan().setStyle(style).append(middle);
         return {
             nodes:[before,span],
             insideSpan:true
@@ -260,13 +251,9 @@ function styleWithRange(range, node, insideSpan,style) {
     }
 
     if(node == range.end.mod) {
-        //console.log("ending node");
         var middle = node.model.makeText(node.text.substring(0,range.end.offset));
         var after  = node.model.makeText(node.text.substring(range.end.offset));
-        //console.log("split text to",middle.text,after.text);
-        var span = node.model.makeSpan();
-        span.style = style;
-        span.append(middle);
+        var span = node.model.makeSpan().setStyle(style).append(middle);
         return {
             nodes:[span,after],
             insideSpan:false
@@ -274,11 +261,9 @@ function styleWithRange(range, node, insideSpan,style) {
     }
 
     if(node.type == Model.BLOCK) {
-        var new_node = node.model.makeBlock();
-        new_node.style = node.style;
+        var new_node = node.model.makeBlock().setStyle(node.style);
         node.content.forEach(function(ch) {
             var ret = styleWithRange(range,ch,insideSpan,style);
-            //console.log("returned node count", ret.nodes.length);
             insideSpan = ret.insideSpan;
             ret.nodes.forEach(function(new_ch) {
                 new_node.append(new_ch);
@@ -291,12 +276,9 @@ function styleWithRange(range, node, insideSpan,style) {
     }
 
     if(node.type == Model.TEXT) {
-        //console.log("middle node", insideSpan);
         if(insideSpan) {
             var new_node = node.model.makeText(node.text);
-            var span = node.model.makeSpan();
-            span.style = style;
-            span.append(new_node);
+            var span = node.model.makeSpan().setStyle(style).append(new_node);
             return {
                 insideSpan: insideSpan,
                 nodes: [span]
@@ -310,11 +292,9 @@ function styleWithRange(range, node, insideSpan,style) {
         }
     }
     if(node.type == Model.SPAN) {
-        var new_node = node.model.makeSpan();
-        new_node.style = node.style;
+        var new_node = node.model.makeSpan().setStyle(style);
         node.content.forEach(function(ch) {
             var ret = styleWithRange(range,ch,insideSpan,style);
-            console.log("returned node count", ret.nodes.length);
             insideSpan = ret.insideSpan;
             ret.nodes.forEach(function(new_ch) {
                 new_node.append(new_ch);
@@ -335,18 +315,16 @@ exports.copyWithEdit = function(node,target,text) {
         return node.model.makeText(node.text);
     }
     if(node.type == Model.BLOCK) {
-        var nnode = node.model.makeBlock();
-        nnode.style = node.style;
+        var nnode = node.model.makeBlock().setStyle(node.style);
     }
     if(node.type == Model.SPAN) {
-        var nnode = node.model.makeSpan();
-        nnode.style = node.style;
+        var nnode = node.model.makeSpan().setStyle(node.style);
     }
     node.content.forEach(function(ch) {
         nnode.append(exports.copyWithEdit(ch,target,text));
     });
     return nnode;
-}
+};
 
 exports.makeComboChange = function(changes) {
     var copy = changes.slice();
@@ -411,10 +389,8 @@ function makeDeleteTextRangeChange(range,model) {
 }
 
 function deleteWithRange(range,node,insideDelete) {
-    //console.log("node is",node.id, 'inside delete',insideDelete);
     //if at both start and end
     if(node == range.start.mod && node == range.end.mod) {
-        //console.log("entirely within one text node");
         var before = range.start.mod.text.substring(0,range.start.offset);
         var after = range.start.mod.text.substring(range.end.offset);
         var nn = node.model.makeText(before+after);
@@ -423,22 +399,18 @@ function deleteWithRange(range,node,insideDelete) {
     //if at start
     if(node.id == range.start.mod.id) {
         var nn = node.model.makeText(range.start.mod.text.substring(0,range.start.offset));
-        //console.log("starting node is now",nn.text);
         return [true,nn];
     }
     //if at end
     if(node.id == range.end.mod.id) {
         var nn = node.model.makeText(range.end.mod.text.substring(range.end.offset));
-        //console.log("ending node is now",nn.text);
         return [false,nn];
     }
     if(node.type == Model.BLOCK) {
-        var nnode = node.model.makeBlock();
-        nnode.style = node.style;
+        var nnode = node.model.makeBlock().setStyle(node.style);
     }
     if(node.type == Model.SPAN) {
-        var nnode = node.model.makeSpan();
-        nnode.style = node.style;
+        var nnode = node.model.makeSpan().setStyle(node.style);
     }
     if(node.type == Model.TEXT) {
         var nnode = node.model.makeText(node.text);
@@ -509,20 +481,17 @@ function makeDeleteBlockChange(parent, index, node) {
 function duplicateBlock(block) {
     if(block == null) throw new Error('null block. cant duplicate');
     if(block.type == Model.TEXT) {
-        var blk = block.model.makeText(block.text);
-        return blk;
+        return block.model.makeText(block.text);
     }
     if(block.type == Model.SPAN) {
-        var blk = block.model.makeSpan();
-        blk.style = block.style;
+        var blk = block.model.makeSpan().setStyle(block.style);
         block.content.forEach(function(ch){
             blk.append(duplicateBlock(ch));
         });
         return blk;
     }
     if(block.type == Model.BLOCK) {
-        var blk = block.model.makeBlock();
-        blk.style = block.style;
+        var blk = block.model.makeBlock().setStyle(block.style);
         block.content.forEach(function(ch){
             blk.append(duplicateBlock(ch));
         });
@@ -552,40 +521,28 @@ exports.makeChangesFromPasteRange = function(start,end,editor) {
             Model.print(mod2);
         }
         if(mod2 == null) {
-            //console.log("converted to null. skipping");
             count--;
             continue;
         }
         if(dom == start.dom) {
             if(DEBUG) console.log('at start');
             var mod1 = start.mod;
-            var chg = exports.makeReplaceBlockChange(parent,mod1.getIndex(),mod2);
-            changes.push(chg);
+            changes.push(exports.makeReplaceBlockChange(parent,mod1.getIndex(),mod2));
             continue;
         }
         if(dom == end.dom) {
             if(DEBUG) console.log('at end');
-            var chg = exports.makeInsertBlockChange(parent, start.mod.getIndex()+count, mod2);
-            changes.push(chg);
+            changes.push(exports.makeInsertBlockChange(parent, start.mod.getIndex()+count, mod2));
             continue;
         }
         if(DEBUG) console.log('in the middle');
-        if(mod2.type == Model.TEXT) {
-            var block = model.makeBlock();
-            block.append(mod2);
-            mod2 = block;
-        }
-        if(mod2.type == Model.SPAN) {
-            var block = model.makeBlock();
-            block.append(mod2);
-            mod2 = block;
-        }
+        if(mod2.type == Model.TEXT)  mod2 = model.makeBlock().append(mod2); //wrap it
+        if(mod2.type == Model.SPAN)  mod2 = model.makeBlock().append(mod2); //wrap it
         if(DEBUG) {
             console.log("final mod");
             Model.print(mod2);
         }
-        var chg = exports.makeInsertBlockChange(parent,start.mod.getIndex()+count,mod2);
-        changes.push(chg);
+        changes.push(exports.makeInsertBlockChange(parent,start.mod.getIndex()+count,mod2));
     }
 
     return exports.makeComboChange(changes);
