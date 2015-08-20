@@ -16,8 +16,7 @@ exports.deleteBackwards = function(e, editor) {
         if(range.start.mod == range.end.mod && range.start.offset == range.end.offset) return;
     }
 
-    var chg = makeDeleteTextRangeChange2(range,model);
-    editor.applyChange(chg);
+    editor.applyChange(makeDeleteTextRangeChange(range,model));
     editor.setCursorAtDocumentOffset(range.documentOffset);
 };
 
@@ -37,17 +36,14 @@ exports.deleteForwards = function(e, editor) {
         range.end.mod = nmod.node;
     }
 
-    var chg = makeDeleteTextRangeChange2(range,model);
-    editor.applyChange(chg);
+    editor.applyChange(makeDeleteTextRangeChange(range,model));
     editor.setCursorAtDocumentOffset(range.documentOffset);
 };
 
 exports.splitLine = function(e, editor) {
     exports.stopKeyboardEvent(e);
-    var model = editor.getModel();
     var range = editor.getSelectionRange();
-    var chg = makeSplitBlockChange(range.start);
-    editor.applyChange(chg);
+    editor.applyChange(makeSplitBlockChange(range.start));
     editor.setCursorAtDocumentOffset(range.documentOffset,Model.RIGHT_BIAS);
 };
 
@@ -59,8 +55,7 @@ exports.styleInlineLink = function(e,editor) {
 exports.styleSelection = function(e,editor,style) {
     exports.stopKeyboardEvent(e);
     var range = editor.getSelectionRange();
-    var chg = makeStyleSelectionChange2(range,style);
-    editor.applyChange(chg);
+    editor.applyChange(makeStyleSelectionChange(range,style));
     editor.setCursorAtDocumentOffset(range.documentOffset);
 };
 
@@ -79,54 +74,17 @@ exports.calculateTextDifference = function(txt1, txt2) {
     while(true) {
         if(i >= txt1.length) {
             if(txt2.length > txt1.length) {
-                //console.log("it's longer");
-                return {
-                    same:false,
-                    newChar:txt2[i],
-                    newString:txt2[i],
-                    offset:i
-                }
+                return { same:false, newChar:txt2[i], offset:i }
             }
-            return {
-                same:true
-            }
+            return { same:true }
         }
-        var ch1 = txt1[i];
-        var ch2 = txt2[i];
-        if(ch1 == ch2) {
+        if(txt1[i] == txt2[i]) {
             i++;
             continue;
         }
-        //console.log("they differ",ch1,ch2, ch1.charCodeAt(0), ch2.charCodeAt(0), txt1.length,txt2.length);
-        var ch2b = txt2[i+1];
-        if(ch1 == ch2b) {
-            //console.log('inserted char',ch2);
-            return {
-                same:false,
-                newChar: ch2,
-                newString:ch2,
-                offset:i
-            }
-        }
-        if(txt1.length == txt2.length) {
-            //console.log("changed a char");
-            return {
-                same:false,
-                newChar:ch2,
-                newString:ch2,
-                offset:i
-            }
-        }
-        if(txt1.length < txt2.length) {
-            //console.log("changed and inserted");
-            return {
-                same:false,
-                newChar:txt2.substring(i+1,i+2),
-                newString: txt2.substring(i,i+2),
-                offset:i
-            }
-        }
-
+        if(txt1[i] == txt2[i+1])          return { same:false, newChar: txt2[i],   offset:i };
+        if(txt1.length == txt2.length)    return { same:false, newChar: txt2[i],   offset:i };
+        if(txt1.length < txt2.length)     return { same:false, newChar: txt2[i+1], offset:i };
         break;
     }
 };
@@ -182,7 +140,6 @@ function handleTypedLetter(range, editor) {
             var change = {
                 oldText:oldText,
                 newText:newText,
-                newString:diff.newString,
                 newChar:diff.newChar,
                 offset:diff.offset
             };
@@ -286,7 +243,7 @@ exports.findActionByEvent = function(e, browser_keymap, key_to_actions, actions_
     return null;
 };
 
-function makeStyleSelectionChange2(range,style) {
+function makeStyleSelectionChange(range,style) {
     var model = range.start.mod.model;
     var root = model.getRoot();
     var old_start_block = range.start.mod.findBlockParent();
@@ -450,7 +407,7 @@ function makeSplitBlockChange(start) {
     return exports.makeComboChange([replace,insert],'split block');
 }
 
-function makeDeleteTextRangeChange2(range,model) {
+function makeDeleteTextRangeChange(range,model) {
     //console.log("deleting with range",range.toString());
     var root = model.getRoot();
     var old_start_block = range.start.mod.findBlockParent();
