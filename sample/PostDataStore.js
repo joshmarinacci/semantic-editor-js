@@ -12,7 +12,6 @@ block1.append(text1);
 block1.style = 'header';
 model.append(block1);
 
-/*
 var block2 = model.makeBlock();
 block2.append(model.makeText("This is a paragraph of text. It can have plain text or styled text. "));
 var span1 = model.makeSpan();
@@ -28,9 +27,26 @@ span3.style = 'inline-code';
 span3.append(model.makeText("And this is some inline code. "));
 block2.append(span3);
 
+var span4 = model.makeSpan();
+span4.style = 'glossary';
+span4.meta = {
+    glossary:'A glossary is a list of definitions. We can render them inline.'
+};
+span4.append(model.makeText("This is a glossary note. "));
+block2.append(span4);
+
+var span5 = model.makeSpan();
+span5.style = 'link';
+span5.meta = {
+    href:'http://www.wikipedia.org/'
+};
+span5.append(model.makeText("This is a link. "));
+block2.append(span5);
+
 block2.append(model.makeText("And now we are back to some regular plain body text. "));
 block2.append(model.makeText("You can select some text and use the inline dropdown to change it's style. "))
 block2.append(model.makeText("Notice how each block has a type along the right edge. This lets you know what block type you are editing. "));
+
 model.append(block2);
 
 var block2a = model.makeBlock();
@@ -79,8 +95,6 @@ block8.append(model.makeText("Use whatever styles make sense for your applicatio
 block8.append(model.makeText("Use whatever you want then export it to JSON or semantic HTML as you wish. "));
 model.append(block8);
 
-
-*/
 
 var std_styles = {
     block:{

@@ -2,8 +2,8 @@
     margin: 0.5em;
     padding: 0.5em;
     position: relative;
-    line-height: 140%;
     padding-right: 5em;
+    line-height: 200%;
 }
 
 .semantic-view *:after {
@@ -18,6 +18,29 @@
     color: #aaa;
     font-variant: normal;
 }
+
+.semantic-view a {
+    position: relative;
+    font-family: serif;
+    border: 0px solid gray;
+    background-color: #d9d9d9;
+    border-radius: 0.5em;
+    padding: 0.1em 0.4em;
+    margin: 0;
+    text-decoration: none;
+    color: black;
+}
+
+
+.semantic-view a:before {
+    content: attr(href);
+    position: absolute;
+    bottom: -2.5em;
+    font-size: 50%;
+    color: gray;
+    font-family: sans-serif;
+}
+
 
 .semantic-view div.header {
     font-size: 150%;
@@ -117,4 +140,41 @@
 
 .semantic-view img {
     max-width: 100%;
+}
+
+.semantic-view .glossary {
+    position: relative;
+    background-color: lightgreen;
+    border-radius: 0.5em;
+    padding: 0.25em 0.4em;
+    margin: 0.2em;
+}
+
+.semantic-view .glossary:after {
+    content:'..';
+    position: relative;
+    top:auto;
+    left:auto;
+    right:auto;
+    bottom:auto;
+    padding: 0.25em 0.5em;
+    color: black;
+    font-weight: bold;
+    font-size: 100%;
+}
+.semantic-view .glossary:after {
+    background-color: #d6fad2;
+    border-radius: 1em;
+    content:'this is some glossary text about the definition of the word glossary';
+    position: absolute;
+    bottom: 2em;
+    border: 1px solid green;
+    min-width: 20em;
+    text-align: left;
+    left: -8em;
+    display: none;
+}
+
+.semantic-view .glossary:hover:after {
+    display: block;
 }

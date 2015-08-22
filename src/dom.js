@@ -226,8 +226,14 @@ function genModelFromMapping(mp, name, node, mappings, model) {
     if(nd == null) throw new Error("cant convert dom node" + node.nodeName);
     if(mp.isLink === true) nd.meta = { href: node.getAttribute("href") };
     for(var i=0; i<node.childNodes.length; i++) {
-        var mod = genModelFromDom(node.childNodes[i],model, mappings);
+        var mod = genModelFromDom(node.childNodes[i], model, mappings);
         if(mod != null) nd.append(mod);
+    }
+    if(node.id) {
+        var old_node = model.findNodeById(node.id);
+        if(old_node.meta) {
+            nd.meta = old_node.meta;
+        }
     }
     if(nd.childCount() <= 0) return null;
     return nd;
