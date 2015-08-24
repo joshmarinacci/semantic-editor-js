@@ -181,6 +181,9 @@ var semantic_map = {
     'link': {
         type:'span',
         element:'a',
+        attributes: [
+            { metaName:'href', attrName:'href'}
+        ],
         import: {
             elements:['a']
         },
@@ -214,6 +217,9 @@ var semantic_map = {
     'image': {
         type:'span',
         element:'img',
+        attributes: [
+            { metaName:'src', attrName:'src'}
+        ],
         import: {
             elements: ['img']
         },

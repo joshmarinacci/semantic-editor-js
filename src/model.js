@@ -13,6 +13,7 @@ function DNode(type,text,model) {
     this.id = model.genId();
     this.style = 'body';
     this.parent = null;
+    this.meta = {};
 
     if(type == 'block' || type == 'span' || type == 'root') {
         this.content = [];

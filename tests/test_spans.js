@@ -306,3 +306,23 @@ test('adding link messes up other spans', function(t) {
     Model.print(model);
     t.end();
 });
+
+test('link copies href properly', function(t) {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model  = editor.getModel();
+    var blk = model.makeBlock();
+    blk.append(model.makeText("abc"));
+    var span1 = model.makeSpan().append(model.makeText("def")).setStyle('link');
+    span1.meta.href = 'http://www.yahoo.com/';
+    blk.append(span1);
+    model.getRoot().append(blk);
+    editor.syncDom();
+    Model.print(model);
+
+
+    Dom.print(editor.getDomRoot());
+    t.equal(editor.getModel().getRoot().child(0).child(1).meta.href,'http://www.yahoo.com/');
+    t.equal(editor.getDomRoot().childNodes[0].childNodes[1].getAttribute('href'),'http://www.yahoo.com/')
+    t.end();
+});

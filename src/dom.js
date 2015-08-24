@@ -123,7 +123,7 @@ exports.modelToDom = function(mod,dom, document, mapping) {
         rule = mapping.default_span;
     }
     if(rule !== null) {
-        if(!rule.element) { console.log("MISSING RULE.ELEMENT");}
+        if(!rule.element) throw new Error("MISSING RULE.ELEMENT");
         var elem = document.createElement(rule.element);
         elem.id = mod.id;
         elem.classList.add(mod.style);
@@ -131,8 +131,11 @@ exports.modelToDom = function(mod,dom, document, mapping) {
             elem.appendChild(exports.modelToDom(modch,dom,document, mapping));
         });
         //console.log("the mod is",mod);
-        if(rule.isImage === true && mod.meta && mod.meta.src)  elem.setAttribute('src', mod.meta.src);
-        if(rule.isLink  === true && mod.meta && mod.meta.href) elem.setAttribute('href',mod.meta.href);
+        if(rule.attributes) {
+            rule.attributes.forEach(function(attr){
+                elem.setAttribute(attr.attrName,mod.meta[attr.metaName]);
+            });
+        }
         return elem;
     }
     console.log("didn't match a rule!", mod.type, mod.style);
