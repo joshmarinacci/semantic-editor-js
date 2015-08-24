@@ -110,7 +110,7 @@ will usually be `div` or `span` but you can chose another if you want.
 The `attributes` is a list of attributes that should be mirrored between the `meta` object in the model
 and the DOM.  In this case, we create a new glossary definition in the text with:
 
-```
+``` javascript
 var span = editor.getModel().createSpan();
 span.append(editor.getModel().createText("PDX"));
 span.setStyle('glossary');
