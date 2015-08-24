@@ -29,7 +29,7 @@ semantic styles. You can modify the rendering and import/export filters. (see ex
 
 Create a DIV in your document then make a new editor attached to it like this:
 
-```
+``` html
 <div id="myeditor" class="semantic-view" contenteditable="true" spellcheck="false"></div>
 <script>
 var editor = Editor.makeEditor(document.getElementById('myeditor'));
@@ -38,7 +38,7 @@ var editor = Editor.makeEditor(document.getElementById('myeditor'));
 
 Create a simple document
 
-```
+``` javascript
 var model = editor.getModel();
 var block1 = model.makeBlock();
 var text1  = model.makeText("abc");
@@ -55,7 +55,7 @@ Default styling is done with the `semantic.css` file.
  
 Add a new action with `editor.addAction(name, function)`. ex:
 
-```
+``` javascript
 editor.addAction('print-as-plain',function(nativeEvent, editor) {
    console.log(editor.getModel().toPlainText());
 });
@@ -63,7 +63,7 @@ editor.addAction('print-as-plain',function(nativeEvent, editor) {
  
 Add a key binding with `editor.addKeyBinding(name, keystroke)`. ex:
 
-```
+``` javascript
 editor.addKeyBinding('print-as-plain', 'cmd-shift-p');
 ```
 
@@ -71,7 +71,7 @@ editor.addKeyBinding('print-as-plain', 'cmd-shift-p');
 Set a new model with `editor.setModel()` then update the view with `editor.syncDom()`. 
 Retrieve the model with `editor.getModel()`. ex:
 
-```
+``` javascript
 var mod = editor.makeModel();
 var blk1 = mod.makeBlock();
 blk1.style = 'header';
@@ -91,7 +91,7 @@ an entry to the editor's semantic mapping.
 
 The following creates a new `glossary` style. 
 
-```
+``` javascript
 var mapping = editor.getMapping();
 mapping.glossary = {
     type:'span',
@@ -119,7 +119,7 @@ span.meta.definition = 'The Portland International Airport';
 
 On screen this node's `definition` property will be will be rendered to the DOM in the `data-def` attribute: 
 
-```
+``` html
 <span data-def="The Portland International Airport">PDX</span>
 ```
 
