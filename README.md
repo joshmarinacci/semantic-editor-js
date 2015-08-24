@@ -85,7 +85,7 @@ console.log('the model as JSON is ', editor.getModel().toJSON());
 
 # Add a Custom Style
 
-What is the point of a semantic editor if you can't define your own semantics. Suppose you want
+What is the point of a semantic editor if you can't define your own semantics?! :) Suppose you want
 to write a document with inline glossary definitions.  You can define this new style by adding
 an entry to the editor's semantic mapping. 
 
@@ -117,7 +117,7 @@ span.setStyle('glossary');
 span.meta.definition = 'The Portland International Airport';
 ```
 
-At runtime this node will be rendered to the DOM as 
+On screen this node's `definition` property will be will be rendered to the DOM in the `data-def` attribute: 
 
 ```
 <span data-def="The Portland International Airport">PDX</span>
@@ -127,7 +127,7 @@ You can then add custom CSS to your page for a popup like this. The CSS creates
 an extra hidden element which appears only when the mouse cursor is over the glossary
 span.  The content comes from the `data-def` attribute of the span.
 
-```
+``` css
 .semantic-view .glossary:after {
     background-color: #d6fad2;
     border-radius: 1em;
