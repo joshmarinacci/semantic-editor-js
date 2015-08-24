@@ -16,7 +16,7 @@ exports.deleteBackwards = function(e, editor) {
         if(range.start.mod == range.end.mod && range.start.offset == range.end.offset) return;
     }
 
-    editor.applyChange(makeDeleteTextRangeChange(range,model));
+    editor.applyChange(makeDeleteTextRangeChange(range));
     editor.setCursorAtDocumentOffset(range.documentOffset);
 };
 
@@ -36,7 +36,7 @@ exports.deleteForwards = function(e, editor) {
         range.end.mod = nmod.node;
     }
 
-    editor.applyChange(makeDeleteTextRangeChange(range,model));
+    editor.applyChange(makeDeleteTextRangeChange(range));
     editor.setCursorAtDocumentOffset(range.documentOffset);
 };
 
@@ -307,12 +307,8 @@ function styleWithRange(range, node, insideSpan,style) {
 }
 
 exports.copyWithEdit = function(node,target,text) {
-    if(node == target) {
-        return node.model.makeText(text);
-    }
-    if(node.type == Model.TEXT) {
-        return node.model.makeText(node.text);
-    }
+    if(node == target)             return node.model.makeText(text);
+    if(node.type == Model.TEXT)    return node.model.makeText(node.text);
     if(node.type == Model.BLOCK) {
         var nnode = node.model.makeBlock().setStyle(node.style);
     }
@@ -350,7 +346,7 @@ function makeSplitBlockChange(start) {
     return exports.makeComboChange([replace,insert],'split block');
 }
 
-function makeDeleteTextRangeChange(range,model) {
+function makeDeleteTextRangeChange(range) {
     var old_start_block = range.start.mod.findBlockParent();
     var root = old_start_block.getParent();
     var old_start_index = old_start_block.getIndex();
@@ -435,21 +431,21 @@ function deleteWithRange(range,node,insideDelete) {
 
     if(nnode.type == Model.BLOCK) {
         if(nnode.childCount() == 0) nnode = null;
-        return [insideDelete,nnode];
+        return [insideDelete, nnode];
     }
     if(nnode.type == Model.SPAN) {
         if(nnode.childCount() == 0) nnode = null;
-        return [insideDelete,nnode];
+        return [insideDelete, nnode];
     }
     if(insideDelete) nnode = null;
-    return [insideDelete,nnode];
+    return [insideDelete, nnode];
 }
 
 exports.makeReplaceBlockChange = function(parent, index, newNode) {
     var oldNode = parent.content[index];
     var del = makeDeleteBlockChange(parent, index, oldNode);
     var ins = exports.makeInsertBlockChange(parent, index, newNode);
-    return exports.makeComboChange([del,ins],'replace block ' + newNode.id);
+    return exports.makeComboChange([del, ins],'replace block ' + newNode.id);
 };
 
 exports.makeInsertBlockChange = function(parent, index, node) {
@@ -478,9 +474,7 @@ function makeDeleteBlockChange(parent, index, node) {
 
 function duplicateBlock(block) {
     if(block == null) throw new Error('null block. cant duplicate');
-    if(block.type == Model.TEXT) {
-        return block.model.makeText(block.text);
-    }
+    if(block.type == Model.TEXT)   return block.model.makeText(block.text);
     if(block.type == Model.SPAN) {
         var blk = block.model.makeSpan().setStyle(block.style);
         block.content.forEach(function(ch){
@@ -499,47 +493,30 @@ function duplicateBlock(block) {
 }
 
 
-exports.makeChangesFromPasteRange = function(start,end,editor) {
-    var DEBUG = false;
+exports.makeChangesFromPasteRange = function(start, end, editor) {
     var model = editor.getModel();
     var changes = [];
     var count = -1;
-    //console.log("dom = ");
-    if(DEBUG) Dom.print(editor.getDomRoot());
     var parent = editor.getModel().getRoot();
     for(var i = Dom.domIndexOf(start.dom); i<= Dom.domIndexOf(end.dom); i++) {
-        if(DEBUG) console.log("-------- at block " + i);
         count++;
         var dom = start.dom.parentNode.childNodes[i];
         var mod2 = Dom.rebuildModelFromDom(dom,model, editor.getImportMapping());
-        if(DEBUG) {
-            console.log("dom")
-            Dom.print(dom);
-            console.log("mod")
-            Model.print(mod2);
-        }
         if(mod2 == null) {
             count--;
             continue;
         }
         if(dom == start.dom) {
-            if(DEBUG) console.log('at start');
             var mod1 = start.mod;
             changes.push(exports.makeReplaceBlockChange(parent,mod1.getIndex(),mod2));
             continue;
         }
         if(dom == end.dom) {
-            if(DEBUG) console.log('at end');
             changes.push(exports.makeInsertBlockChange(parent, start.mod.getIndex()+count, mod2));
             continue;
         }
-        if(DEBUG) console.log('in the middle');
         if(mod2.type == Model.TEXT)  mod2 = model.makeBlock().append(mod2); //wrap it
         if(mod2.type == Model.SPAN)  mod2 = model.makeBlock().append(mod2); //wrap it
-        if(DEBUG) {
-            console.log("final mod");
-            Model.print(mod2);
-        }
         changes.push(exports.makeInsertBlockChange(parent,start.mod.getIndex()+count,mod2));
     }
 
@@ -550,18 +527,15 @@ exports.scanDomForwardsForMatch = function(dom1, model) {
     while(true) {
         var dom1n = Dom.domIndexOf(dom1);
         var len = dom1.parentNode.childNodes.length;
-        //console.log("checking",dom1.id,":",dom1n,'len',len);
         var mod1 = model.findNodeById(dom1.id);
         if(mod1 == null) {
             //use the last block
             mod1 = model.getRoot().child(model.getRoot().childCount()-1);
         }
-        //console.log("mod1 = ",mod1?mod1.id:"null");
         if(dom1n+1 >= len) {
-            //console.log('at the end');
             return {
                 dom: dom1,
-                mod: mod1,
+                mod: mod1
             }
         }
         if(!dom1.id) {
@@ -575,27 +549,20 @@ exports.scanDomForwardsForMatch = function(dom1, model) {
             console.log('counldnt find mod2. continueing');
             dom1 = dom2;
         } else {
-            //console.log("next is valid and matches",mod2.id);
             return {
                 dom: dom1,
                 mod: mod1
             }
         }
     }
-
-}
+};
 
 exports.scanDomBackwardsForMatch = function(dom1, model) {
     while(true) {
         var dom1n = Dom.domIndexOf(dom1);
-        //console.log("checking",dom1.id,":",dom1n);
         if (dom1n <= 0) {
-            //console.log('at the start');
             var mod1 = model.findNodeById(dom1.id);
-            if(mod1 == null) {
-                mod1 = model.getRoot().child(0);
-            }
-            //console.log("mod1 = ", mod1.id);
+            if(mod1 == null) mod1 = model.getRoot().child(0);
             return {
                 dom: dom1,
                 mod: mod1
@@ -603,25 +570,19 @@ exports.scanDomBackwardsForMatch = function(dom1, model) {
         }
         var mod1 = model.findNodeById(dom1.id);
         if (mod1 == null) {
-            //console.log("mod1 not found");
             dom1 = dom1.parentNode.childNodes[dom1n - 1];
             continue;
         }
 
         var dom2 = dom1.parentNode.childNodes[dom1n - 1];
-        //console.log("dom2.id = ", dom2.id);
         var mod2 = model.findNodeById(dom2.id);
         if (mod2 == null) {
-            //console.log('cant find the model');
             dom1 = dom2;
         } else {
-            //console.log("found it. it's good");
             return {
                 dom: dom1,
                 mod: mod1
             }
         }
     }
-
-
-}
+};
