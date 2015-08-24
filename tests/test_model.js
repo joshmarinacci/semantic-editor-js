@@ -63,32 +63,6 @@ test('delete text, two text nodes',function(t) {
 });
 */
 
-test('iterator',function(t) {
-    var model = doc.makeModel();
-    var block1 = model.makeBlock();
-    var text1 = model.makeText("foo");
-    block1.append(text1);
-    var text2 = model.makeText("bar");
-    block1.append(text2);
-    model.append(block1);
-
-    var block2 = model.makeBlock();
-    model.append(block2);
-    var text3 = model.makeText('baz');
-    block2.append(text3);
-
-    var it = model.getIterator(model.getRoot().child(0));
-    var total = 0;
-    while(it.hasNext()) {
-        var node = it.next();
-        if(node.type == doc.TEXT) {
-            total+= node.text.length;
-        }
-    }
-    t.equal(9,total);
-    t.end();
-});
-
 /*
 test("delete text across two blocks w/ text inbetween", function(t) {
     var model = makeSimpleTextBlock("abcdefg");
