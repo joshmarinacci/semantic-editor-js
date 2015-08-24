@@ -291,7 +291,7 @@ function styleWithRange(range, node, insideSpan,style) {
         }
     }
     if(node.type == Model.SPAN) {
-        var new_node = node.model.makeSpan().setStyle(style);
+        var new_node = node.model.makeSpan().setStyle(node.style);
         node.content.forEach(function(ch) {
             var ret = styleWithRange(range,ch,insideSpan,style);
             insideSpan = ret.insideSpan;

@@ -44,7 +44,7 @@ span5.append(model.makeText("This is a link. "));
 block2.append(span5);
 
 block2.append(model.makeText("And now we are back to some regular plain body text. "));
-block2.append(model.makeText("You can select some text and use the inline dropdown to change it's style. "))
+block2.append(model.makeText("You can select some text and use the inline dropdown to change it's style. "));
 block2.append(model.makeText("Notice how each block has a type along the right edge. This lets you know what block type you are editing. "));
 
 model.append(block2);

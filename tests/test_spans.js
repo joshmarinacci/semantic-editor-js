@@ -279,3 +279,30 @@ test('editing span from multiple lines', function(t) {
     t.equal(model.getRoot().child(1).child(0).child(0).text,'JaXva');
     t.end();
 });
+
+
+
+test('adding link messes up other spans', function(t) {
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model  = editor.getModel();
+    var blk = model.makeBlock();
+    blk.append(model.makeText("abc"));
+    var span1 = model.makeSpan().append(model.makeText("def")).setStyle('strong');
+    blk.append(span1);
+    blk.append(model.makeText("ghijkl"));
+    model.getRoot().append(blk);
+    editor.syncDom();
+    editor.setSelectionAtDocumentOffset(8,10);
+    var range = editor.getSelectionRange();
+    Model.print(model);
+
+    //verify, style link, verify
+    t.equal(model.getRoot().child(0).child(1).style,'strong');
+    Keystrokes.styleSelection(null,editor,'link');
+    t.equal(model.getRoot().child(0).child(1).style,'strong');
+
+
+    Model.print(model);
+    t.end();
+});
