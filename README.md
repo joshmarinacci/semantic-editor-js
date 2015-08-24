@@ -50,6 +50,9 @@ editor.syncDom();
 
 Default styling is done with the `semantic.css` file.
  
+ 
+# Add a New Action and Key Binding
+ 
 Add a new action with `editor.addAction(name, function)`. ex:
 
 ```
