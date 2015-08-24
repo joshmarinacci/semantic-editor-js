@@ -1,8 +1,3 @@
-/**
- * Created by josh on 8/1/15.
- */
-
-
 var Model = require('./model');
 var Dom   = require('./dom');
 var Keystrokes = require('./keystrokes');
@@ -242,55 +237,54 @@ var semantic_map = {
 var mapping_cache = {};
 
 /*
-suppose you wanted to make control R style text with bold, you'd
-add a keymap for
-
-"control-r":"style-strong",
-
-If you wanted to make command shift E insert the text poop you'd
-first add a keymap for
-
-"command-shift-e":"insert-poop",
-
-then add the action:
-
-"insert-poop": {
-    consume: true,
-    fun: function(event, selection, editor) {
-        editor.insertTextAtSelection("poop",selection);
-    }
-}
-
-To make command shift E insert the poop emoji, you'd do:
-
-"insert-poop": {
-    consume: true,
-    fun: function(event, selection, editor) {
-        editor.insertTextAtSelection("poop",selection);
-    }
-}
-
-by using these semantic actions like insertTextAtSelection
-it will do all of the proper wordprocessory things like
-replacing the selection with the text if something is selected,
-or else inserting at the current cursor point and moving the
-cursor forward the correct amount. it also inserts the change
-into the undo stack so that undo and redo work correctly.
-
-you must manually attach the editor's main key listener to the document. this give you
-the opportunity to filter events before the editor does anything with them,
-or synthesize or proxy events.
+ * suppose you wanted to make control R style text with bold, you'd
+ * add a keymap for
+ *
+ * "control-r":"style-strong",
+ * If you wanted to make command shift E insert the text poop you'd
+ * first add a keymap for
+ *
+ * "command-shift-e":"insert-poop",
+ *
+ * then add the action:
+ *
+ * "insert-poop": {
+ *    consume: true,
+ *    fun: function(event, selection, editor) {
+ *        editor.insertTextAtSelection("poop",selection);
+ *    }
+ * }
+ *
+ * To make command shift E insert the poop emoji, you'd do:
+ *
+ * "insert-poop": {
+ *    consume: true,
+ *    fun: function(event, selection, editor) {
+ *        editor.insertTextAtSelection("poop",selection);
+ *    }
+ * }
+ *
+ * By using these semantic actions like `insertTextAtSelection`
+ * it will do all of the proper wordprocessory things like
+ * replacing the selection with the text if something is selected,
+ * or else inserting at the current cursor point and moving the
+ * cursor forward the correct amount. it also inserts the change
+ * into the undo stack so that undo and redo work correctly.
+ *
+ * You must manually attach the editor's main key listener to the document. this give you
+ * the opportunity to filter events before the editor does anything with them,
+ * or synthesize or proxy events.
 */
 
 var actions_map = {
-    "delete-backward": Keystrokes.deleteBackwards,
-    "delete-forward": Keystrokes.deleteForwards,
-    "split-block": Keystrokes.splitLine,
-    "style-bold": function(e,ed) { Keystrokes.styleSelection(e,ed,'strong'); },
-    "style-italic": function(e,ed) { Keystrokes.styleSelection(e,ed,'emphasis'); },
+    "delete-backward":   Keystrokes.deleteBackwards,
+    "delete-forward":    Keystrokes.deleteForwards,
+    "split-block":       Keystrokes.splitLine,
+    "style-bold":        function(e,ed) { Keystrokes.styleSelection(e,ed,'strong'); },
+    "style-italic":      function(e,ed) { Keystrokes.styleSelection(e,ed,'emphasis'); },
     "style-inline-code": function(e,ed) { Keystrokes.styleSelection(e,ed,'inline-code'); },
-    "undo":Keystrokes.undo,
-    "redo":Keystrokes.redo
+    "undo":              Keystrokes.undo,
+    "redo":              Keystrokes.redo
 };
 
 var code_key_map = {
@@ -342,7 +336,6 @@ var key_action_map = {
     "cmd-shift-z":  "redo"
 };
 
-
 function Editor(domRoot) {
     this._model = Model.makeModel();
     if(domRoot) {
@@ -366,9 +359,7 @@ Editor.prototype.setDomRoot = function(dom_root) {
     this.syncDom();
 };
 
-Editor.prototype.getDomRoot = function() {
-    return this._dom_root;
-};
+Editor.prototype.getDomRoot = function() {  return this._dom_root;  };
 
 
 Editor.prototype._handleKeydown = function(evt) {
@@ -389,30 +380,20 @@ Editor.prototype._fireEvent = function(name, payload) {
     }
 };
 
-Editor.prototype.markAsChanged = function() {
-    this._fireEvent('change',{});
-};
+Editor.prototype.markAsChanged = function() { this._fireEvent('change',{}); };
 
-Editor.prototype.getModel = function() {
-    return this._model;
-};
+Editor.prototype.getModel = function()     {  return this._model; };
 
 Editor.prototype.setModel = function(model) {
     this._model = model;
     this.syncDom(this.getMapping());
 };
 
-Editor.prototype.setCursorAtModel = function(mod,off) {
-    Dom.setCursorAtModel(mod,off,this.getDomRoot());
-};
+Editor.prototype.setCursorAtModel = function(mod,off) {  Dom.setCursorAtModel(mod,off,this.getDomRoot()); };
 
-Editor.prototype.toJSON = function() {
-    return this._model.toJSON();
-};
+Editor.prototype.toJSON   = function()     {  return this._model.toJSON();  };
 
-Editor.prototype.fromJSON = function(json) {
-    this._model = Model.fromJSON(json);
-};
+Editor.prototype.fromJSON = function(json) {  this._model = Model.fromJSON(json); };
 
 Editor.prototype._simulateKeyboardEvent = function(evt) {
     var act = Keystrokes.findActionByEvent(evt, code_key_map,
@@ -420,39 +401,27 @@ Editor.prototype._simulateKeyboardEvent = function(evt) {
     if(act) act(evt,this);
 }
 
-Editor.prototype.toPlainText = function() {
-    return this._model.toPlainText();
-}
+Editor.prototype.toPlainText = function() {  return this._model.toPlainText();  }
 
 /*
  * add a key binding. Should be something like
  * editor.addKeyBinding("insert-poop-emoji","shift-command-a")
  */
-Editor.prototype.addKeyBinding = function(name, keydef) {
-    this._key_action_map[keydef] = name;
-};
+Editor.prototype.addKeyBinding = function(name, keydef) {   this._key_action_map[keydef] = name;  };
 
 /*
  * add an action. something like
  * editor.addAction("insert-poop-emoji", function(event,editor) { } );
  */
-Editor.prototype.addAction = function(name, action) {
-    actions_map[name] = action;
-};
+Editor.prototype.addAction = function(name, action) {  actions_map[name] = action;  };
 
 Editor.prototype.syncDom = function() {
-    if(this._dom_root && this._model) {
-        Dom.syncDom(this._dom_root, this._model, this.getMapping());
-    }
+    if(this._dom_root && this._model) Dom.syncDom(this._dom_root, this._model, this.getMapping());
 };
 
-Editor.prototype.getMapping = function() {
-    return semantic_map;
-};
+Editor.prototype.getMapping = function() {         return semantic_map; };
 
-Editor.prototype.getImportMapping = function() {
-    return import_map;
-};
+Editor.prototype.getImportMapping = function() {   return import_map;   };
 
 
 /* =========== change deltas and undo/redo support ============ */
@@ -580,10 +549,6 @@ function findDomTextAtOffset(node, off) {
     }
 }
 
-exports.makeEditor = function(domRoot) {
-    return new Editor(domRoot);
-};
+exports.makeEditor = function(domRoot) {  return new Editor(domRoot);  };
 
-exports.makeModel = function() {
-    return Model.makeModel();
-};
+exports.makeModel = function() { return Model.makeModel(); };
