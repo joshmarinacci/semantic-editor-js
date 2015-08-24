@@ -1,6 +1,6 @@
 {
   "name": "semantic-editor-js",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "semantic editor for html",
   "main": "index.js",
   "scripts": {
