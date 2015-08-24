@@ -5,6 +5,16 @@ var Model = require('../src/model');
 var Editor = require('../src/editor');
 
 var editor = Editor.makeEditor();
+
+//create a mapping for 'dfn' for glossary definitions.
+editor.getMapping().glossary = {
+    type:'span',
+    element:'span',
+    attributes: [
+        { metaName:'definition', attrName:'data-def'}
+    ]
+};
+
 var model = editor.getModel();
 var block1 = model.makeBlock();
 var text1 = model.makeText("This is a document header");
@@ -30,10 +40,12 @@ block2.append(span3);
 var span4 = model.makeSpan();
 span4.style = 'glossary';
 span4.meta = {
-    glossary:'A glossary is a list of definitions. We can render them inline.'
+    definition:"A Glossary is a list of definitions. I'm using a custom style 'glossary' to make this popup."
 };
-span4.append(model.makeText("This is a glossary note. "));
+span4.append(model.makeText("glossary"));
+block2.append(model.makeText("This is a "));
 block2.append(span4);
+block2.append(model.makeText(" definition"));
 
 var span5 = model.makeSpan();
 span5.style = 'link';

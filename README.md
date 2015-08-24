@@ -80,6 +80,73 @@ editor.syncDom();
 console.log('the model as JSON is ', editor.getModel().toJSON());
 ```
 
+# Add a Custom Style
+
+What is the point of a semantic editor if you can't define your own semantics. Suppose you want
+to write a document with inline glossary definitions.  You can define this new style by adding
+an entry to the editor's semantic mapping. 
+
+The following creates a new `glossary` style. 
+
+```
+var mapping = editor.getMapping();
+mapping.glossary = {
+    type:'span',
+    element:'span',
+    attributes: [
+        { metaName:'definition', attrName:'data-def'}
+    ]
+};
+```
+
+The `type` determines what kind of style this is. The only valid values are `span` and `block`.
+ 
+The `element` determines what HTML element will be used to render the glossary term on screen. This
+will usually be `div` or `span` but you can chose another if you want.
+
+The `attributes` is a list of attributes that should be mirrored between the `meta` object in the model
+and the DOM.  In this case, we create a new glossary definition in the text with:
+
+```
+var span = editor.getModel().createSpan();
+span.append(editor.getModel().createText("PDX"));
+span.setStyle('glossary');
+span.meta.definition = 'The Portland International Airport';
+```
+
+At runtime this node will be rendered to the DOM as 
+
+```
+<span data-def="The Portland International Airport">PDX</span>
+```
+
+You can then add custom CSS to your page for a popup like this. The CSS creates
+an extra hidden element which appears only when the mouse cursor is over the glossary
+span.  The content comes from the `data-def` attribute of the span.
+
+```
+.semantic-view .glossary:after {
+    background-color: #d6fad2;
+    border-radius: 1em;
+    content:attr(data-def);
+    position: absolute;
+    bottom: 2em;
+    border: 1px solid green;
+    min-width: 20em;
+    text-align: left;
+    left: -8em;
+    display: none;
+}
+
+.semantic-view .glossary:hover:after {
+    display: block;
+}
+```
+
+
+
+
+
 
 # Import and Export
 

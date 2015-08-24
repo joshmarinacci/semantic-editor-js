@@ -172,7 +172,7 @@
 .semantic-view .glossary:after {
     background-color: #d6fad2;
     border-radius: 1em;
-    content:'this is some glossary text about the definition of the word glossary';
+    content:attr(data-def);
     position: absolute;
     bottom: 2em;
     border: 1px solid green;
