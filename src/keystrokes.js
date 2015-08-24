@@ -351,9 +351,8 @@ function makeSplitBlockChange(start) {
 }
 
 function makeDeleteTextRangeChange(range,model) {
-    //console.log("deleting with range",range.toString());
-    var root = model.getRoot();
     var old_start_block = range.start.mod.findBlockParent();
+    var root = old_start_block.getParent();
     var old_start_index = old_start_block.getIndex();
     var old_end_block   = range.end.mod.findBlockParent();
     var old_end_index   = old_end_block.getIndex();

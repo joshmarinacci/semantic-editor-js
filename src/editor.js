@@ -506,6 +506,10 @@ Editor.prototype.getSelectionRange = function() {
     range.documentOffset =
         range.start.offset +
         Model.modelToDocumentOffset(model.getRoot(), range.start.mod).offset;
+    range.toString = function () {
+        return "Range: " + this.start.mod.id + " " + this.start.offset
+            + " -> " + this.end.mod.id + " " + this.end.offset
+    };
     return range;
 };
 

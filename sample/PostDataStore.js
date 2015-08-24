@@ -95,6 +95,17 @@ block8.append(model.makeText("Use whatever styles make sense for your applicatio
 block8.append(model.makeText("Use whatever you want then export it to JSON or semantic HTML as you wish. "));
 model.append(block8);
 
+var block9 = model.makeBlock();
+block9.setStyle('ordered-list');
+block9.append(model.makeBlock().append(model.makeText("list item 1")).setStyle('list-item'));
+block9.append(model.makeBlock().append(model.makeText("list item 2")).setStyle('list-item'));
+model.append(block9);
+
+var block10 = model.makeBlock();
+block10.setStyle('unordered-list');
+block10.append(model.makeBlock().append(model.makeText("list item 1")).setStyle('list-item'));
+block10.append(model.makeBlock().append(model.makeText("list item 2")).setStyle('list-item'));
+model.append(block10);
 
 var std_styles = {
     block:{

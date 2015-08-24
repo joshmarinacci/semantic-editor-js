@@ -71,6 +71,13 @@
 
 .semantic-view .list-item {
     border: 1px solid darkgreen;
+    display: list-item;
+}
+.semantic-view .ordered-list .list-item {
+    list-style: decimal;
+}
+.semantic-view .unordered-list .list-item {
+    list-style: disc;
 }
 
 .semantic-view .block-code {
