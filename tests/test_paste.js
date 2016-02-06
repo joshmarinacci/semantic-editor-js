@@ -40,7 +40,7 @@ test('text diff 2', function(t) {
 
 
     t.equal(diff.same,false);
-    t.equal(diff.newString,'_s');
+    t.equal(diff.newChar,'s');
     t.equal(diff.offset,3);
     t.end();
 });
