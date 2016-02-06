@@ -45,6 +45,7 @@ test('text diff 2', function(t) {
     t.end();
 });
 
+/*
 test('long paste html spans and text', function(t) {
     //make the model
     var dom_root = VirtualDoc.createElement('div');
@@ -53,7 +54,7 @@ test('long paste html spans and text', function(t) {
     var block = model.makeBlock();
     block.append(model.makeText('abcdef'));
     model.getRoot().append(block);
-    //Model.print(model);
+    Model.print(model);
     editor.syncDom();
 
     //edit the dom
@@ -66,7 +67,7 @@ test('long paste html spans and text', function(t) {
     var dom_span2 = VirtualDoc.createElement('span');
     dom_span2.appendChild(VirtualDoc.createTextNode("def"));
     dom_root.childNodes[0].appendChild(dom_span2);
-    //Dom.print(dom_root);
+    Dom.print(dom_root);
 
     //calc the range
     var range = {
@@ -75,9 +76,11 @@ test('long paste html spans and text', function(t) {
             mod:null,
         }
     }
+
+
     var changeRange = Dom.calculateChangeRange(model,dom_root,range.start);
 
-    //console.log('change range is',changeRange.start.dom.id,changeRange.start.mod.id);
+    console.log('change range is',changeRange.start.dom.id,changeRange.start.mod.id);
     var mod2 = Dom.rebuildModelFromDom(changeRange.start.dom, editor.getModel(), editor.getImportMapping());
     //console.log("new model");
     //Model.print(mod2);
@@ -93,6 +96,7 @@ test('long paste html spans and text', function(t) {
 
     t.end();
 });
+*/
 
 function makeTestBlocks() {
     var dom_root = VirtualDoc.createElement('div');
@@ -332,7 +336,7 @@ test("handle pasted spans", function(t) {
 
 });
 
-
+/*
 test("pasting nukes adjacent styles", function(t) {
     var dom_root = VirtualDoc.createElement('div');
     var editor = Editor.makeEditor(dom_root);
@@ -367,8 +371,9 @@ test("pasting nukes adjacent styles", function(t) {
 
     t.end();
 });
+*/
 
-
+/*
 test("pasting multi-line with junk span", function(t) {
     var dom_root = VirtualDoc.createElement('div');
     var editor = Editor.makeEditor(dom_root);
@@ -412,7 +417,9 @@ test("pasting multi-line with junk span", function(t) {
     t.equal(editor.getModel().getRoot().child(2).type,Model.BLOCK);
     t.end();
 });
+*/
 
+/*
 test("pasting multi-line at end", function(t) {
     var dom_root = VirtualDoc.createElement('div');
     var editor = Editor.makeEditor(dom_root);
@@ -454,5 +461,91 @@ test("pasting multi-line at end", function(t) {
     Keystrokes.handlePastedText(range,editor);
     //Model.print(editor.getModel());
     t.equal(editor.getModel().getRoot().child(2).type,Model.BLOCK);
+    t.end();
+});
+*/
+
+test("pasting blocks inside of span", function(t) {
+
+    //setup the model and dom
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model = editor.getModel();
+    var block = model.makeBlock();
+    block.append(model.makeText('This is a document header'));
+    model.append(block);
+    editor.syncDom();
+    Model.print(editor.getModel());
+
+    var doc = dom_root.ownerDocument;
+    Dom.print(dom_root);
+
+    console.log("==== pasting");
+
+    var div = dom_root.childNodes[0]; //first div #id_2
+    div.childNodes[0].nodeValue = 'This is a doc';
+    div.appendChild(doc.createElement("span"));
+    div.childNodes[1].appendChild(doc.createTextNode("foo"));
+
+
+    //a span containing div
+    var span2 = doc.createElement('span');
+    var div2 = doc.createElement('div');
+    div2.appendChild(doc.createTextNode("bar"));
+    span2.appendChild(div2);
+    var div2b = doc.createElement('div');
+    div2b.appendChild(doc.createTextNode('baz'));
+    span2.appendChild(div2b);
+    var div3 = doc.createElement('div');
+    span2.appendChild(div3);
+    dom_root.appendChild(span2);
+
+    var div4 = doc.createElement('div');
+    div4.appendChild(doc.createTextNode('ument header'));
+    dom_root.appendChild(div4);
+    Dom.print(dom_root);
+
+
+    var range = {
+        collapsed:true,
+        start: {
+            dom:div3,
+            mod:null,
+            offset:0
+        },
+        end: {
+            dom:div3,
+            mod:null,
+            offset:0
+        },
+        documentOffset: 25
+    };
+
+    console.log("==== cleaning");
+    Keystrokes.handlePastedText(range,editor);
+    console.log("====== done");
+    Model.print(editor.getModel());
+
+
+    //verify that each child is a block
+    for(var i=0; i< editor.getModel().getRoot().childCount(); i++) {
+        var ch = editor.getModel().getRoot().child(i);
+        //console.log("child",ch.type);
+        if(ch.type !== 'block') t.fail();
+        for(var j=0; j<ch.childCount(); j++) {
+            var ch2 = ch.child(j);
+            //console.log("  child",ch2.type);
+            if(ch2.type == 'block') t.fail("block with block child");
+            if(ch2.type == 'span') {
+                for(var k=0; k<ch2.childCount(); k++) {
+                    var ch3 = ch2.child(k);
+                    //console.log("    k = ",ch3.type);
+                    if(ch3.type == 'block') t.fail('span with block child');
+                }
+            }
+        }
+    }
+
+
     t.end();
 });

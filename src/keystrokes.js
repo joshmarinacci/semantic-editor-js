@@ -498,25 +498,46 @@ exports.makeChangesFromPasteRange = function(start, end, editor) {
     var changes = [];
     var count = -1;
     var parent = editor.getModel().getRoot();
+    //go through every child from the start to the end
     for(var i = Dom.domIndexOf(start.dom); i<= Dom.domIndexOf(end.dom); i++) {
         count++;
         var dom = start.dom.parentNode.childNodes[i];
+        //build a model from the dom using the import mapping
         var mod2 = Dom.rebuildModelFromDom(dom,model, editor.getImportMapping());
+        //if no model was returned then just skip it and continue
         if(mod2 == null) {
             count--;
             continue;
         }
+        //if this is the start, then replace block with a new one
         if(dom == start.dom) {
             var mod1 = start.mod;
             changes.push(exports.makeReplaceBlockChange(parent,mod1.getIndex(),mod2));
             continue;
         }
+        //if this is the end then append a new block
         if(dom == end.dom) {
             changes.push(exports.makeInsertBlockChange(parent, start.mod.getIndex()+count, mod2));
             continue;
         }
+        //if text then wrap it in a block. text can't be top level
         if(mod2.type == Model.TEXT)  mod2 = model.makeBlock().append(mod2); //wrap it
+
+        //if span containing just a block child, then promote the block
+        if(mod2.type == Model.SPAN) {
+            for(var j=0; j<mod2.childCount(); j++) {
+                var ch2 = mod2.child(j);
+                if(ch2.type == Model.BLOCK) {
+                    console.log("has a block child. must hoist");
+                    changes.push(exports.makeInsertBlockChange(parent,start.mod.getIndex()+count,ch2));
+                    count++;
+                }
+            }
+            continue;
+        }
+        //if span then wrap it in a block. spans can't be top level
         if(mod2.type == Model.SPAN)  mod2 = model.makeBlock().append(mod2); //wrap it
+        //insert the new block
         changes.push(exports.makeInsertBlockChange(parent,start.mod.getIndex()+count,mod2));
     }
 

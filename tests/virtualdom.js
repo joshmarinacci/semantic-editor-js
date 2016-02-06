@@ -31,6 +31,11 @@ var VirtualDoc = {
                 this.childNodes.splice(n,0,newNode);
                 newNode.parentNode = this;
             },
+            insertAfter: function(newNode, referenceNode) {
+                var n = this.childNodes.indexOf(referenceNode);
+                this.childNodes.splice(n+1,0,newNode);
+                newNode.parentNode = this;
+            },
             classList:{
                 _list:{},
                 add:function(ch) {
