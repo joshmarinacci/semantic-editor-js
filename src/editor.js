@@ -510,41 +510,69 @@ Editor.prototype.setCursorAtDocumentOffset = function(off, bias) {
         this._fake_range.end.offset = nmod.offset;
         return;
     }
+    if(nmod.found === false) {
+        if(bias == Model.RIGHT_BIAS && nmod.lastText != null) {
+            Dom.setCursorAtModel(nmod.lastText, nmod.offset, this.getDomRoot());
+            return;
+        }
+    }
     Dom.setCursorAtModel(nmod.node, nmod.offset, this.getDomRoot());
 };
 
 
 function makeRange(editor,off1,off2) {
     var s = findDomTextAtOffset(editor.getDomRoot(),off1);
-    var e = findDomTextAtOffset(editor.getDomRoot(),off2);
-    return {
-        start: {
+    if(s[0] == false) {
+        console.log('WARNING. COULDNT FIND text at offset',off2);
+        var start = {
+            dom: s[3],
+            mod: Dom.findModelForDom(editor.getModel(), s[3]),
+            offset: s[3].nodeValue.length
+        };
+
+    }else {
+        var start = {
             dom: s[1],
-            mod: Dom.findModelForDom(editor.getModel(),s[1]),
-            offset:s[2]
-        },
-        end: {
+            mod: Dom.findModelForDom(editor.getModel(), s[1]),
+            offset: s[2]
+        };
+    }
+
+    var e = findDomTextAtOffset(editor.getDomRoot(),off2);
+    if(e[0] == false) {
+        console.log('WARNING. COULDNT FIND text at offset',off2);
+        var end = {
+            dom: e[3],
+            mod: Dom.findModelForDom(editor.getModel(),e[3]),
+            offset:e[3].nodeValue.length
+        }
+    } else {
+        var end = {
             dom: e[1],
             mod: Dom.findModelForDom(editor.getModel(),e[1]),
             offset:e[2]
         }
     }
+
+    return { start: start, end: end }
 }
 
 function findDomTextAtOffset(node, off) {
     if(node.nodeType == Dom.Node.ELEMENT_NODE) {
+        var lastText = null;
         for(var i=0; i<node.childNodes.length; i++) {
             var ret = findDomTextAtOffset(node.childNodes[i],off);
             if(ret[0] === true) return ret;
+            lastText = ret[3];
             off = ret[2];
         }
-        return [false, null, off];
+        return [false, null, off, lastText];
     }
     if(node.nodeType == Dom.Node.TEXT_NODE) {
         if(node.nodeValue.length > off) {
-            return [true,  node, off];
+            return [true,  node, off, node];
         } else {
-            return [false, node, off-node.nodeValue.length];
+            return [false, node, off-node.nodeValue.length, node];
         }
     }
 }

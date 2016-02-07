@@ -9,3 +9,4 @@ var test_undo_redo = require('./test_undo_redo');
 var test_spans = require('./test_spans');
 var test_dom   = require('./test_dom');
 var test_blocks = require('./test_blocks');
+var test_paste = require('./test_paste');

@@ -51,3 +51,22 @@ test('back delete inside of a list item',function(t){
 
     t.end();
 });
+
+test('enter at end of document',function(t){
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model  = editor.getModel();
+    var block = model.makeBlock();
+    block.append(model.makeText("foo"));
+    model.getRoot().append(block);
+    Model.print(model);
+    editor.syncDom();
+
+
+    editor.setSelectionAtDocumentOffset(3,3,false);
+    Keystrokes.splitLine(null,editor);
+
+    Model.print(editor.getModel());
+
+    t.end();
+});

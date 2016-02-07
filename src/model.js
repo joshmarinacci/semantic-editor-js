@@ -319,14 +319,16 @@ exports.documentOffsetToModel = function(root, off, bias) {
     if(root.type == exports.TEXT) {
         if(off == root.text.length && bias == exports.LEFT_BIAS) return { found: true, offset: off, node: root};
         if(off < root.text.length) return {found:true, offset:off, node:root};
-        return { found:false, offset:off-root.text.length };
+        return { found:false, offset:off-root.text.length, lastText:root };
     } else {
         var toff = off;
+        var lastText = null;
         for(var i=0; i<root.content.length; i++) {
             var res = exports.documentOffsetToModel(root.content[i],toff, bias);
             if(res.found===true) return res;
             toff = res.offset;
+            lastText = res.lastText;
         }
-        return { found:false, offset: toff };
+        return { found:false, offset: toff, lastText:lastText };
     }
 };
