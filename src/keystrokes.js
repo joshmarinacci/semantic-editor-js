@@ -313,7 +313,7 @@ exports.copyWithEdit = function(node,target,text) {
         var nnode = node.model.makeBlock().setStyle(node.style);
     }
     if(node.type == Model.SPAN) {
-        var nnode = node.model.makeSpan().setStyle(node.style);
+        var nnode = shallowCloneSpan(node);
     }
     node.content.forEach(function(ch) {
         nnode.append(exports.copyWithEdit(ch,target,text));
@@ -382,6 +382,19 @@ function makeDeleteTextRangeChange(range) {
     return exports.makeComboChange(changes);
 }
 
+function shallowCloneSpan(src) {
+    var dst = src.model.makeSpan();
+    dst.setStyle(src.style);
+    if(src.meta) {
+        if(src.meta) {
+            dst.meta = {};
+            for(var key in src.meta) {
+                dst.meta[key] = src.meta[key];
+            }
+        }
+    }
+    return dst;
+}
 function deleteWithRange(range,node,insideDelete) {
     //if at both start and end
     if(node == range.start.mod && node == range.end.mod) {
@@ -404,7 +417,7 @@ function deleteWithRange(range,node,insideDelete) {
         var nnode = node.model.makeBlock().setStyle(node.style);
     }
     if(node.type == Model.SPAN) {
-        var nnode = node.model.makeSpan().setStyle(node.style);
+        var nnode = shallowCloneSpan(node);
     }
     if(node.type == Model.TEXT) {
         var nnode = node.model.makeText(node.text);

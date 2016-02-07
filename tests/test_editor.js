@@ -7,6 +7,7 @@ var Editor = require('../src/editor');
 var Dom = require('../src/dom');
 var Model = require('../src/model');
 var vdom = require('./virtualdom');
+var Keystrokes = require('../src/keystrokes')
 
 /*
 test("make editor", function(t) {
@@ -138,35 +139,62 @@ test("type before a link", function(t) {
     t.end();
 });
 */
-/*
+
+
 test("type middle of a link", function(t) {
     var std = makeEditorWithLink('abc','def','ghi','http://poop.com/');
     //var link = std.model.getRoot().child(0).child(1)
     t.equals(std.mod_link_1().child(0).text,'def');
     t.equals(std.mod_link_1().meta.href,'http://poop.com/');
     t.equals(std.dom_link_1().childNodes[0].nodeValue,'def');
+
+    std.ed.setSelectionAtDocumentOffset(4,4);
+
     //insert some text
     std.dom_link_1().childNodes[0].nodeValue = 'deXf';
-    //std.ed.syncModel();
-    std.ed.syncDom();
-    t.equals(std.mod_link_1().child(0).text,'deXf');
-    t.equals(std.mod_link_1().meta.href,'http://poop.com/');
-    t.equals(std.dom_link_1().childNodes[0].nodeValue,'deXf');
+    Keystrokes.handleInput(null,std.ed);
+
+    var link = std.ed.getModel().getRoot().child(0).child(1);
+    t.equals(link.child(0).text,'deXf');
+    t.equals(link.meta.href,'http://poop.com/');
     t.end();
 });
-*/
+
+test("backspace middle of a link", function(t) {
+    var std = makeEditorWithLink('abc','def','ghi','http://poop.com/');
+    //var link = std.model.getRoot().child(0).child(1)
+    t.equals(std.mod_link_1().child(0).text,'def');
+    t.equals(std.mod_link_1().meta.href,'http://poop.com/');
+    t.equals(std.dom_link_1().childNodes[0].nodeValue,'def');
+
+    std.ed.setSelectionAtDocumentOffset(5,5);
+
+    //insert some text
+    //std.dom_link_1().childNodes[0].nodeValue = 'deXf';
+    Keystrokes.deleteBackwards(null,std.ed);
+    Model.print(std.ed.getModel());
+
+    var link = std.ed.getModel().getRoot().child(0).child(1);
+    t.equals(link.child(0).text,'df');
+    t.equals(link.meta.href,'http://poop.com/');
+    //t.equals(std.dom_link_1().childNodes[0].nodeValue,'deXf');
+    t.end();
+});
+
 
 /*
 test("type after a link", function(t) {
     var std = makeEditorWithLink('abc','def','ghi','http://poop.com/');
-    //var link = std.model.getRoot().child(0).child(1)
+    Model.print(std.ed.getModel());
     t.equals(std.mod_text_1().text,'abc');
     t.equals(std.mod_link_1().meta.href,'http://poop.com/');
     t.equals(std.dom_text_1().nodeValue,'abc');
+
     //insert some text
     std.dom_text_2().nodeValue = 'ghXi';
-    std.ed.syncModel();
+    //std.ed.syncModel();
     std.ed.syncDom();
+
     t.equals(std.mod_text_2().text,'ghXi');
     t.equals(std.mod_link_1().meta.href,'http://poop.com/');
     t.equals(std.dom_text_2().nodeValue,'abXc');
