@@ -321,7 +321,7 @@ exports.copyWithEdit = function(node,target,text) {
     return nnode;
 };
 
-exports.makeComboChange = function(changes) {
+exports.makeComboChange = function(changes,id) {
     var copy = changes.slice();
     var revcopy = changes.slice().reverse();
     return {
@@ -330,7 +330,8 @@ exports.makeComboChange = function(changes) {
         },
         undoit: function() {
             revcopy.forEach(function(cp) { cp.undoit(); });
-        }
+        },
+        id:id
     }
 };
 
@@ -554,7 +555,7 @@ exports.makeChangesFromPasteRange = function(start, end, editor) {
         changes.push(exports.makeInsertBlockChange(parent,start.mod.getIndex()+count,mod2));
     }
 
-    return exports.makeComboChange(changes);
+    return exports.makeComboChange(changes,'combo');
 };
 
 exports.scanDomForwardsForMatch = function(dom1, model) {
