@@ -180,6 +180,7 @@ function domToModel(dom,model,options) {
         return model.makeText(dom.nodeValue);
     }
 }
+/*
 domToNewModel = function(dom_root, options) {
     if(typeof options == 'undefined') options = {
         style_to_element_map: {}
@@ -207,7 +208,7 @@ domToNewModel = function(dom_root, options) {
     }
     return model;
 };
-
+*/
 
 function clearChildren(root) {
     while (root.firstChild) root.removeChild(root.firstChild);
