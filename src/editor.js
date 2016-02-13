@@ -332,6 +332,7 @@ var key_action_map = {
     "cmd-shift-c":  "style-inline-code",
     "cmd-shift-a":  "style-inline-link",
     "enter":        "split-block",
+    "shift-enter":  "split-block",
     "cmd-z":        "undo",
     "cmd-shift-z":  "redo"
 };
