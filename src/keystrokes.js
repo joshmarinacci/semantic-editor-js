@@ -47,16 +47,11 @@ exports.splitLine = function(e, editor) {
     editor.setCursorAtDocumentOffset(range.documentOffset,Model.RIGHT_BIAS);
 };
 
-exports.styleInlineLink = function(e,editor) {
-    exports.stopKeyboardEvent(e);
-    console.log("links not implemented");
-};
-
 exports.styleSelection = function(e,editor,style) {
     exports.stopKeyboardEvent(e);
     var range = editor.getSelectionRange();
     editor.applyChange(makeStyleSelectionChange(range,style));
-    editor.setCursorAtDocumentOffset(range.documentOffset);
+    editor.setSelectionAtDocumentOffset(range.documentOffset, range.endDocumentOffset);
 };
 
 exports.undo = function(e,editor) {

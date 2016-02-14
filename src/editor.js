@@ -482,6 +482,9 @@ Editor.prototype.getSelectionRange = function() {
     range.documentOffset =
         range.start.offset +
         Model.modelToDocumentOffset(model.getRoot(), range.start.mod).offset;
+    range.endDocumentOffset =
+        range.end.offset +
+        Model.modelToDocumentOffset(model.getRoot(), range.end.mod).offset;
     range.toString = function () {
         return "Range: " + this.start.mod.id + " " + this.start.offset
             + " -> " + this.end.mod.id + " " + this.end.offset
@@ -493,12 +496,26 @@ Editor.prototype.setSelectionAtDocumentOffset = function(off1, off2) {
     var range = makeRange(this,off1,off2);
     range.collapsed = (off1 === off2);
     range.documentOffset = range.start.offset +
-        Model.modelToDocumentOffset(this.getModel().getRoot(), range.start.mod).offset;
+        Model.modelToDocumentOffset(this.getModel().getRoot(),
+            range.start.mod).offset;
+    range.endDocumentOffset = range.end.offset +
+        Model.modelToDocumentOffset(this.getModel().getRoot(),
+            range.end.mod).offset;
     range.toString = function () {
         return "Range: " + this.start.mod.id + " " + this.start.offset
             + " -> " + this.end.mod.id + " " + this.end.offset
+            + " doc: " + this.documentOffset + " -> " + this.endDocumentOffset
     };
-    this._fake_range = range;
+    if(typeof window !== 'undefined') {
+        var rng = document.createRange();
+        rng.setStart(range.start.dom, range.start.offset);
+        rng.setEnd(range.end.dom, range.end.offset);
+        var selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(rng);
+    } else {
+        this._fake_range = range;
+    }
 };
 
 Editor.prototype.setCursorAtDocumentOffset = function(off, bias) {

@@ -326,3 +326,33 @@ test('link copies href properly', function(t) {
     t.equal(editor.getDomRoot().childNodes[0].childNodes[1].getAttribute('href'),'http://www.yahoo.com/')
     t.end();
 });
+
+
+test("selection correct after bold", function(t){
+    var dom_root = VirtualDoc.createElement('div');
+    var editor = Editor.makeEditor(dom_root);
+    var model  = editor.getModel();
+    var blk = model.makeBlock();
+    blk.append(model.makeText("abcdef"));
+    model.append(blk);
+    editor.syncDom();
+    editor.setSelectionAtDocumentOffset(2,5);
+    var range = editor.getSelectionRange();
+    console.log("---");
+    Model.print(model);
+    console.log("range is " + range);
+
+    Keystrokes.styleSelection(null,editor,'bold');
+    var range = editor.getSelectionRange();
+    console.log("---");
+    Model.print(model);
+    console.log("range is " + range);
+    //editor.setSelectionAtDocumentOffset(2,5);
+    //Model.print(model);
+
+    t.equal(range.documentOffset,2);
+    t.equal(range.endDocumentOffset,5);
+
+
+    t.end();
+});
